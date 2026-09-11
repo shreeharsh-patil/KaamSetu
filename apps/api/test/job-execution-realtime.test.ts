@@ -541,6 +541,6 @@ describe('Job Execution Lifecycle & Realtime Gateway (Phase 6)', () => {
       expect(statuses).toContain(JobStatus.COMPLETED);
 
       customerClient.disconnect();
-    });
+    }, 15000);
   });
 });

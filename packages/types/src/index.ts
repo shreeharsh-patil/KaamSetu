@@ -1214,3 +1214,110 @@ export interface ICreateAuditLogInput {
   details?: Record<string, unknown> | undefined;
 }
 
+// ---------------- Phase 11: AI & Speech Provider Layer ----------------
+
+export interface AIRequestOptions {
+  timeoutMs?: number | undefined;
+  temperature?: number | undefined;
+  maxTokens?: number | undefined;
+}
+
+export interface JobClassificationResult {
+  categorySlug?: string | undefined;
+  suggestedCategoryName?: string | undefined;
+  suggestedSkills: string[];
+  urgency?: JobUrgency | undefined;
+  estimatedPrice?: number | undefined;
+  confidence: number; // 0 to 1
+}
+
+export interface ExtractedProfileResult {
+  suggestedSkills: string[];
+  languages: string[];
+  bio?: string | undefined;
+  experienceYears?: number | undefined;
+  confidence: number; // 0 to 1
+}
+
+export interface SimplifiedJobDescriptionResult {
+  simplifiedText: string;
+  keyTasks: string[];
+  language: string;
+}
+
+export interface TranslationResult {
+  translatedText: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  isFallback: boolean;
+}
+
+export interface IAIProvider {
+  readonly name: string;
+  classifyJob(text: string, options?: AIRequestOptions): Promise<JobClassificationResult>;
+  extractWorkerProfile(textOrTranscript: string, options?: AIRequestOptions): Promise<ExtractedProfileResult>;
+  simplifyJobDescription(rawText: string, options?: AIRequestOptions): Promise<SimplifiedJobDescriptionResult>;
+  translateText(
+    text: string,
+    targetLanguage: string,
+    sourceLanguage?: string,
+    options?: AIRequestOptions
+  ): Promise<TranslationResult>;
+}
+
+export interface SpeechRequestOptions {
+  timeoutMs?: number | undefined;
+  audioFormat?: string | undefined;
+}
+
+export interface SpeechToTextResult {
+  transcript: string;
+  detectedLanguage?: string | undefined;
+  confidence: number;
+}
+
+export interface TextToSpeechResult {
+  audioBase64: string;
+  mimeType: string;
+  durationMs?: number | undefined;
+}
+
+export interface LanguageDetectionResult {
+  languageCode: string;
+  confidence: number;
+}
+
+export interface ISpeechProvider {
+  readonly name: string;
+  speechToText(
+    audioData: Uint8Array | string,
+    mimeType?: string,
+    options?: SpeechRequestOptions
+  ): Promise<SpeechToTextResult>;
+  textToSpeech(
+    text: string,
+    language: string,
+    options?: SpeechRequestOptions
+  ): Promise<TextToSpeechResult>;
+  detectLanguage(
+    input: string | Uint8Array,
+    options?: SpeechRequestOptions
+  ): Promise<LanguageDetectionResult>;
+}
+
+export type CircuitBreakerState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+
+export interface CircuitBreakerStatus {
+  state: CircuitBreakerState;
+  failureCount: number;
+  consecutiveSuccesses: number;
+  lastFailureTime: Date | null;
+  lastStateChange: Date;
+}
+
+export interface AIProviderStatus {
+  providerName: string;
+  available: boolean;
+  circuitBreaker: CircuitBreakerStatus;
+}
+

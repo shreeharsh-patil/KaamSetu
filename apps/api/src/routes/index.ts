@@ -16,6 +16,8 @@ import { reviewRoutes } from '../modules/reviews/review.routes.js';
 import { verificationRoutes } from '../modules/verification/verification.routes.js';
 import { reportRoutes } from '../modules/reports/report.routes.js';
 import { disputeRoutes } from '../modules/disputes/dispute.routes.js';
+import { aiRoutes } from '../modules/ai/ai.routes.js';
+import { speechRoutes } from '../modules/speech/speech.routes.js';
 import { authenticate, requireRole } from '../middlewares/auth.middleware.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
@@ -85,6 +87,12 @@ export function createApiRouter(): Router {
 
   // Job disputes endpoints under /api/v1/disputes (Phase 9)
   apiV1Router.use('/disputes', disputeRoutes);
+
+  // AI assistant endpoints under /api/v1/ai (Phase 11)
+  apiV1Router.use('/ai', aiRoutes);
+
+  // Speech processing endpoints under /api/v1/speech (Phase 11)
+  apiV1Router.use('/speech', speechRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);

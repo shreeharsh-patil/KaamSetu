@@ -598,6 +598,101 @@ export const listDisputesQuerySchema = z.object({
 });
 export type ListDisputesQueryDto = z.infer<typeof listDisputesQuerySchema>;
 
+// ---------------- AI & Speech Provider Validation (Phase 11) ----------------
+
+// AI Structured Output Validation Schemas
+export const jobClassificationOutputSchema = z.object({
+  categorySlug: z.string().optional(),
+  suggestedCategoryName: z.string().optional(),
+  suggestedSkills: z.array(z.string()).default([]),
+  urgency: z.nativeEnum(JobUrgency).optional(),
+  estimatedPrice: z.number().positive().optional(),
+  confidence: z.number().min(0).max(1).default(0.8),
+});
+export type JobClassificationOutputDto = z.infer<typeof jobClassificationOutputSchema>;
+
+export const extractedProfileOutputSchema = z.object({
+  suggestedSkills: z.array(z.string()).default([]),
+  languages: z.array(z.string()).default([]),
+  bio: z.string().optional(),
+  experienceYears: z.number().min(0).max(60).optional(),
+  confidence: z.number().min(0).max(1).default(0.8),
+});
+export type ExtractedProfileOutputDto = z.infer<typeof extractedProfileOutputSchema>;
+
+export const simplifiedJobDescriptionOutputSchema = z.object({
+  simplifiedText: z.string().min(1),
+  keyTasks: z.array(z.string()).default([]),
+  language: z.string().default('en'),
+});
+export type SimplifiedJobDescriptionOutputDto = z.infer<typeof simplifiedJobDescriptionOutputSchema>;
+
+export const translationOutputSchema = z.object({
+  translatedText: z.string(),
+  sourceLanguage: z.string(),
+  targetLanguage: z.string(),
+  isFallback: z.boolean().default(false),
+});
+export type TranslationOutputDto = z.infer<typeof translationOutputSchema>;
+
+// Speech Structured Output Validation Schemas
+export const speechToTextOutputSchema = z.object({
+  transcript: z.string(),
+  detectedLanguage: z.string().optional(),
+  confidence: z.number().min(0).max(1).default(0.9),
+});
+export type SpeechToTextOutputDto = z.infer<typeof speechToTextOutputSchema>;
+
+export const textToSpeechOutputSchema = z.object({
+  audioBase64: z.string(),
+  mimeType: z.string().default('audio/mp3'),
+  durationMs: z.number().positive().optional(),
+});
+export type TextToSpeechOutputDto = z.infer<typeof textToSpeechOutputSchema>;
+
+export const languageDetectionOutputSchema = z.object({
+  languageCode: z.string(),
+  confidence: z.number().min(0).max(1).default(0.9),
+});
+export type LanguageDetectionOutputDto = z.infer<typeof languageDetectionOutputSchema>;
+
+// API Request Input Schemas
+export const classifyJobInputSchema = z.object({
+  text: z.string().min(3, 'Job text must be at least 3 characters').max(2000),
+});
+export type ClassifyJobInputDto = z.infer<typeof classifyJobInputSchema>;
+
+export const simplifyDescriptionInputSchema = z.object({
+  description: z.string().min(5, 'Description must be at least 5 characters').max(3000),
+  targetLanguage: z.string().max(10).optional().default('en'),
+});
+export type SimplifyDescriptionInputDto = z.infer<typeof simplifyDescriptionInputSchema>;
+
+export const translateTextInputSchema = z.object({
+  text: z.string().min(1, 'Text cannot be empty').max(5000),
+  targetLanguage: z.string().min(2).max(10),
+  sourceLanguage: z.string().min(2).max(10).optional(),
+});
+export type TranslateTextInputDto = z.infer<typeof translateTextInputSchema>;
+
+export const extractProfileInputSchema = z.object({
+  text: z.string().min(5, 'Profile text must be at least 5 characters').max(3000),
+});
+export type ExtractProfileInputDto = z.infer<typeof extractProfileInputSchema>;
+
+export const transcribeAudioInputSchema = z.object({
+  audio: z.string().min(10, 'Audio base64 string is required'),
+  mimeType: z.string().max(100).optional().default('audio/wav'),
+  language: z.string().max(10).optional(),
+});
+export type TranscribeAudioInputDto = z.infer<typeof transcribeAudioInputSchema>;
+
+export const synthesizeSpeechInputSchema = z.object({
+  text: z.string().min(1, 'Text is required').max(2000),
+  language: z.string().max(10).optional().default('en'),
+});
+export type SynthesizeSpeechInputDto = z.infer<typeof synthesizeSpeechInputSchema>;
+
 // ---------------- Authentication Schemas (Phase 2) ----------------
 export const requestOtpSchema = z.object({
   phone: phoneSchema,
