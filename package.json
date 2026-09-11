@@ -1,0 +1,26 @@
+{
+  "name": "kaamsetu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KaamSetu - Hyperlocal skilled-worker service platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @kaamsetu/api dev",
+    "build": "pnpm --filter \"@kaamsetu/*\" build",
+    "start": "pnpm --filter @kaamsetu/api start",
+    "test": "pnpm --filter @kaamsetu/api test",
+    "test:coverage": "pnpm --filter @kaamsetu/api test:coverage",
+    "lint": "pnpm --filter @kaamsetu/api lint",
+    "lint:fix": "pnpm --filter @kaamsetu/api lint:fix",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "typecheck": "pnpm --filter \"@kaamsetu/*\" typecheck"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "packageManager": "pnpm@11.21.0"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@kaamsetu/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@kaamsetu/types": "workspace:*",
+    "typescript": "^5.8.2"
+  }
+}

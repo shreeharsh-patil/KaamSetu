@@ -1,0 +1,13 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  bcrypt: true
+  esbuild: true
+  msgpackr-extract: true
+
+onlyBuiltDependencies:
+  - bcrypt
+  - esbuild
+  - msgpackr-extract
