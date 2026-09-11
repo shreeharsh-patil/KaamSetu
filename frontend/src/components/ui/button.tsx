@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Spinner } from "./spinner";
@@ -38,6 +39,7 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
   isLoading?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
@@ -49,6 +51,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       variant,
       size,
+      asChild = false,
       isLoading = false,
       leftIcon,
       rightIcon,
@@ -58,27 +61,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    const Comp = asChild ? Slot : "button";
     return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
+      <Comp
         ref={ref}
         disabled={disabled || isLoading}
-        aria-busy={isLoading}
+        className={cn(buttonVariants({ variant, size, className }))}
         {...props}
       >
-        {isLoading ? (
-          <>
-            <Spinner size="sm" className="mr-1" />
-            <span>{children}</span>
-          </>
-        ) : (
-          <>
-            {leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>}
-            <span>{children}</span>
-            {rightIcon && <span className="inline-flex shrink-0">{rightIcon}</span>}
-          </>
-        )}
-      </button>
+        {isLoading && <Spinner className="mr-2 h-4 w-4 animate-spin" />}
+        {!isLoading && leftIcon && <span className="shrink-0">{leftIcon}</span>}
+        {children}
+        {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
+      </Comp>
     );
   }
 );

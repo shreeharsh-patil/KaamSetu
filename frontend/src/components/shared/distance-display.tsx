@@ -2,20 +2,29 @@ import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DistanceDisplayProps {
-  distanceKm: number;
+  distanceKm?: number;
+  meters?: number;
   areaName?: string;
   className?: string;
 }
 
 export function DistanceDisplay({
   distanceKm,
+  meters,
   areaName,
   className,
 }: DistanceDisplayProps) {
+  const effectiveKm =
+    distanceKm !== undefined
+      ? distanceKm
+      : meters !== undefined
+      ? meters / 1000
+      : 0;
+
   const formatted =
-    distanceKm < 1
-      ? `${Math.round(distanceKm * 1000)} m away`
-      : `${distanceKm.toFixed(1)} km away`;
+    effectiveKm < 1
+      ? `${Math.round(effectiveKm * 1000)} m away`
+      : `${effectiveKm.toFixed(1)} km away`;
 
   return (
     <span

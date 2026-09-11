@@ -23,3 +23,29 @@ export const queryKeys = {
     profile: (id: string) => [...queryKeys.workers.all, "profile", id] as const,
   },
 } as const;
+
+export const QUERY_KEYS = {
+  ...queryKeys,
+  AUTH: {
+    ...queryKeys.auth,
+    USER: queryKeys.auth.user,
+    SESSIONS: queryKeys.auth.sessions,
+  },
+  CATEGORIES: {
+    ...queryKeys.categories,
+    LIST: queryKeys.categories.list,
+    DETAIL: queryKeys.categories.detail,
+  },
+  JOBS: {
+    ...queryKeys.jobs,
+    LIST: queryKeys.jobs.list,
+    DETAIL: queryKeys.jobs.detail,
+    OFFERS: queryKeys.jobs.offers,
+  },
+  WORKERS: {
+    ...queryKeys.workers,
+    NEARBY: queryKeys.workers.nearby,
+    PROFILE: queryKeys.workers.profile,
+  },
+} as const;
+

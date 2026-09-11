@@ -212,3 +212,39 @@ async function handleSilentTokenRefresh(): Promise<string | null> {
 
   return refreshPromise;
 }
+
+apiClient.get = <T>(endpoint: string, options?: RequestOptions): Promise<T> => {
+  return apiClient<T>(endpoint, { ...options, method: "GET" });
+};
+
+apiClient.post = <T>(
+  endpoint: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> => {
+  return apiClient<T>(endpoint, { ...options, method: "POST", body });
+};
+
+apiClient.put = <T>(
+  endpoint: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> => {
+  return apiClient<T>(endpoint, { ...options, method: "PUT", body });
+};
+
+apiClient.patch = <T>(
+  endpoint: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> => {
+  return apiClient<T>(endpoint, { ...options, method: "PATCH", body });
+};
+
+apiClient.delete = <T>(
+  endpoint: string,
+  options?: RequestOptions
+): Promise<T> => {
+  return apiClient<T>(endpoint, { ...options, method: "DELETE" });
+};
+
