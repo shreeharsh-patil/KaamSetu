@@ -1,6 +1,6 @@
 import { z, ZodSchema } from 'zod';
 import type { ErrorDetails } from '@kaamsetu/types';
-import { UserRole, UserStatus } from '@kaamsetu/types';
+import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel } from '@kaamsetu/types';
 
 export const objectIdSchema = z
   .string()
@@ -134,21 +134,90 @@ export const createWorkerProfileSchema = z.object({
 
 export const updateWorkerProfileSchema = createWorkerProfileSchema.partial();
 
+export const longitudeSchema = z
+  .number()
+  .min(-180, 'Longitude must be between -180 and 180 degrees')
+  .max(180, 'Longitude must be between -180 and 180 degrees');
+
+export const latitudeSchema = z
+  .number()
+  .min(-90, 'Latitude must be between -90 and 90 degrees')
+  .max(90, 'Latitude must be between -90 and 90 degrees');
+
+export const coordinatesSchema = z.tuple([longitudeSchema, latitudeSchema]);
+
+export const serviceRadiusSchema = z
+  .number()
+  .min(1, 'Service radius must be at least 1 km')
+  .max(100, 'Service radius cannot exceed 100 km');
+
+export const updateWorkerLocationSchema = z.object({
+  coordinates: coordinatesSchema,
+});
+
+export const updateWorkerAvailabilitySchema = z.object({
+  availabilityStatus: z.nativeEnum(WorkerAvailability),
+});
+
+export const workerVerificationStatusSchema = z.nativeEnum(WorkerVerificationStatus);
+
+export const updateWorkerServiceRadiusSchema = z.object({
+  radiusKm: serviceRadiusSchema,
+});
+
+export const addWorkerSkillSchema = z.object({
+  skillId: objectIdSchema,
+  experienceYears: z.number().min(0, 'Experience years cannot be negative').max(50, 'Experience cannot exceed 50 years'),
+  level: z.nativeEnum(SkillLevel).default(SkillLevel.INTERMEDIATE),
+});
+
+export const workerPricingSchema = z.object({
+  hourlyRate: z.number().min(0, 'Hourly rate cannot be negative').max(100000, 'Hourly rate is too high').nullable().optional(),
+  customRateDescription: z.string().max(250).nullable().optional(),
+  currency: z.string().default('INR').optional(),
+});
+
+export const workerPortfolioItemSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, 'Title is required').max(100),
+  description: z.string().max(500).nullable().optional(),
+  imageUrl: z.string().url('Image URL must be valid'),
+});
+
+export const patchWorkerMeSchema = z.object({
+  displayName: z.string().min(2, 'Display name must be at least 2 characters').max(100).optional(),
+  fullName: z.string().min(2).max(100).optional(),
+  bio: z.string().max(1000, 'Bio cannot exceed 1000 characters').nullable().optional(),
+  languages: z.array(z.string().min(2).max(10)).max(10).optional(),
+  pricing: workerPricingSchema.optional(),
+  hourlyRate: z.number().min(0).max(100000).nullable().optional(),
+  portfolio: z.array(workerPortfolioItemSchema).max(20).optional(),
+});
+
 // Customer Profile Validation Schemas
 export const customerAddressSchema = z.object({
   id: z.string().optional(),
-  label: z.string().min(1).max(50),
-  addressLine: z.string().min(5).max(255),
-  city: z.string().min(2).max(100),
-  state: z.string().min(2).max(100),
+  label: z.string().min(1, 'Address label is required').max(50),
+  addressLine: z.string().min(3, 'Address line must be at least 3 characters').max(255),
+  city: z.string().min(2, 'City is required').max(100),
+  state: z.string().min(2, 'State is required').max(100),
   pincode: z.string().regex(/^\d{6}$/, 'Invalid Indian 6-digit pincode'),
-  coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]).optional(),
+  coordinates: coordinatesSchema.optional(),
   isDefault: z.boolean().optional().default(false),
+});
+
+export const addCustomerAddressSchema = customerAddressSchema.omit({ id: true });
+export const updateCustomerAddressSchema = addCustomerAddressSchema.partial();
+
+export const patchCustomerMeSchema = z.object({
+  displayName: z.string().min(2, 'Display name must be at least 2 characters').max(100).optional(),
+  fullName: z.string().min(2).max(100).optional(),
 });
 
 export const createCustomerProfileSchema = z.object({
   userId: objectIdSchema,
-  fullName: z.string().min(2, 'Full name must be at least 2 characters').max(100),
+  fullName: z.string().min(2, 'Full name must be at least 2 characters').max(100).optional(),
+  displayName: z.string().min(2).max(100).optional(),
   addresses: z.array(customerAddressSchema).optional().default([]),
 });
 

@@ -25,11 +25,15 @@ export function errorHandlerMiddleware(
     details = err.details;
   }
   // 2. Zod validation errors
-  else if (err instanceof ZodError) {
+  else if (
+    err instanceof ZodError ||
+    (typeof err === 'object' && err !== null && (err as { name?: string }).name === 'ZodError')
+  ) {
+    const zodErr = err as ZodError;
     statusCode = 422;
     code = 'VALIDATION_ERROR';
     message = 'Validation failed';
-    details = err.issues.map((issue) => ({
+    details = zodErr.issues.map((issue) => ({
       field: issue.path.join('.'),
       message: issue.message,
       code: issue.code,

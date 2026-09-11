@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { healthRoutes } from '../modules/health/health.routes.js';
 import { authRoutes } from '../modules/auth/auth.routes.js';
+import { workerRoutes } from '../modules/worker-profiles/worker-profile.routes.js';
+import { customerRoutes } from '../modules/customer-profiles/customer-profile.routes.js';
 import { env } from '../config/index.js';
 
 export function createApiRouter(): Router {
@@ -17,6 +19,12 @@ export function createApiRouter(): Router {
 
   // Auth endpoints under /api/v1/auth
   apiV1Router.use('/auth', authRoutes);
+
+  // Worker profile endpoints under /api/v1/workers
+  apiV1Router.use('/workers', workerRoutes);
+
+  // Customer profile endpoints under /api/v1/customers
+  apiV1Router.use('/customers', customerRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);

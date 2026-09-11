@@ -186,28 +186,97 @@ export interface IUpdateSkillInput {
   deletedAt?: Date | null | undefined;
 }
 
+// ---------------- Worker Profile Enums & Interfaces (Phase 3) ----------------
+
+export enum WorkerAvailability {
+  AVAILABLE = 'AVAILABLE',
+  BUSY = 'BUSY',
+  OFFLINE = 'OFFLINE',
+}
+
+export enum WorkerVerificationStatus {
+  UNVERIFIED = 'UNVERIFIED',
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+}
+
+export enum SkillLevel {
+  BEGINNER = 'BEGINNER',
+  INTERMEDIATE = 'INTERMEDIATE',
+  EXPERT = 'EXPERT',
+}
+
+export interface IGeoPoint {
+  type: 'Point';
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface IAggregateRating {
+  average: number;
+  count: number;
+}
+
+export interface IWorkerSkillItem {
+  skillId: string;
+  skillName?: string | undefined;
+  experienceYears: number;
+  level: SkillLevel;
+  verified: boolean;
+}
+
+export interface IWorkerPricing {
+  hourlyRate?: number | null | undefined;
+  customRateDescription?: string | null | undefined;
+  currency?: string | undefined;
+}
+
+export interface IWorkerPortfolioItem {
+  id?: string | undefined;
+  title: string;
+  description?: string | null | undefined;
+  imageUrl: string;
+}
+
+export interface IWorkerStats {
+  completedJobs: number;
+  cancelledJobs: number;
+  responseTimeMinutes?: number | null | undefined;
+}
+
 // Worker Profile Entity
 export interface IWorkerProfileEntity {
   id: string;
   userId: string;
-  fullName: string;
+  displayName: string;
+  fullName?: string | undefined; // backward compat alias
   bio?: string | null | undefined;
-  primaryCategoryId: string;
-  skillIds: string[];
-  serviceArea: {
+  primaryCategoryId?: string | undefined;
+  skillIds?: string[] | undefined;
+  skills: IWorkerSkillItem[];
+  languages: string[];
+  serviceLocation: IGeoPoint;
+  serviceArea?: {
     type: 'Point';
-    coordinates: [number, number]; // [longitude, latitude]
+    coordinates: [number, number];
     radiusKm: number;
     address?: string | null | undefined;
     city?: string | null | undefined;
     pincode?: string | null | undefined;
-  };
+  } | undefined;
+  serviceRadiusKm: number;
+  availabilityStatus: WorkerAvailability;
+  isAvailable?: boolean | undefined;
+  pricing: IWorkerPricing;
   hourlyRate?: number | null | undefined;
-  isAvailable: boolean;
-  ratingAverage: number;
-  ratingCount: number;
-  completedJobsCount: number;
-  kycStatus: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  portfolio: IWorkerPortfolioItem[];
+  rating: IAggregateRating;
+  ratingAverage?: number | undefined;
+  ratingCount?: number | undefined;
+  stats: IWorkerStats;
+  completedJobsCount?: number | undefined;
+  verificationStatus: WorkerVerificationStatus;
+  kycStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | undefined;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null | undefined;
@@ -215,52 +284,109 @@ export interface IWorkerProfileEntity {
 
 export interface ICreateWorkerProfileInput {
   userId: string;
-  fullName: string;
+  displayName?: string | undefined;
+  fullName?: string | undefined;
   bio?: string | null | undefined;
-  primaryCategoryId: string;
+  primaryCategoryId?: string | undefined;
   skillIds?: string[] | undefined;
-  serviceArea: {
+  skills?: IWorkerSkillItem[] | undefined;
+  languages?: string[] | undefined;
+  serviceLocation?: IGeoPoint | undefined;
+  serviceArea?: {
     type?: 'Point' | undefined;
     coordinates: [number, number];
     radiusKm?: number | undefined;
     address?: string | null | undefined;
     city?: string | null | undefined;
     pincode?: string | null | undefined;
-  };
+  } | undefined;
+  serviceRadiusKm?: number | undefined;
+  availabilityStatus?: WorkerAvailability | undefined;
+  pricing?: IWorkerPricing | undefined;
   hourlyRate?: number | null | undefined;
   isAvailable?: boolean | undefined;
+  portfolio?: IWorkerPortfolioItem[] | undefined;
 }
 
 export interface IUpdateWorkerProfileInput {
+  displayName?: string | undefined;
   fullName?: string | undefined;
   bio?: string | null | undefined;
   primaryCategoryId?: string | undefined;
   skillIds?: string[] | undefined;
+  skills?: IWorkerSkillItem[] | undefined;
+  languages?: string[] | undefined;
+  serviceLocation?: IGeoPoint | undefined;
   serviceArea?: Partial<IWorkerProfileEntity['serviceArea']> | undefined;
+  serviceRadiusKm?: number | undefined;
+  availabilityStatus?: WorkerAvailability | undefined;
+  pricing?: IWorkerPricing | undefined;
+  portfolio?: IWorkerPortfolioItem[] | undefined;
   hourlyRate?: number | null | undefined;
   isAvailable?: boolean | undefined;
   ratingAverage?: number | undefined;
   ratingCount?: number | undefined;
   completedJobsCount?: number | undefined;
   kycStatus?: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | undefined;
+  verificationStatus?: WorkerVerificationStatus | undefined;
   deletedAt?: Date | null | undefined;
+}
+
+export interface IPublicWorkerProfile {
+  id: string;
+  displayName: string;
+  bio?: string | null | undefined;
+  skills: Array<{
+    skillId: string;
+    skillName?: string | undefined;
+    experienceYears: number;
+    level: SkillLevel;
+    verified: boolean;
+  }>;
+  languages: string[];
+  serviceLocation: IGeoPoint;
+  serviceRadiusKm: number;
+  availabilityStatus: WorkerAvailability;
+  pricing: IWorkerPricing;
+  portfolio: IWorkerPortfolioItem[];
+  rating: IAggregateRating;
+  stats: {
+    completedJobs: number;
+  };
+  verificationStatus: WorkerVerificationStatus;
+  createdAt: Date;
+}
+
+// ---------------- Customer Profile Types (Phase 3) ----------------
+
+export interface ICustomerAddress {
+  id: string;
+  label: string; // e.g. "Home", "Office"
+  addressLine: string;
+  city: string;
+  state: string;
+  pincode: string;
+  coordinates?: [number, number] | undefined;
+  isDefault: boolean;
+}
+
+export interface ICustomerJobStats {
+  totalBookings: number;
+  activeBookings: number;
+  cancelledBookings: number;
 }
 
 // Customer Profile Entity
 export interface ICustomerProfileEntity {
   id: string;
   userId: string;
-  fullName: string;
-  addresses: Array<{
-    id?: string | undefined;
-    label: string; // e.g. "Home", "Office"
-    addressLine: string;
-    city: string;
-    state: string;
-    pincode: string;
-    coordinates?: [number, number] | undefined;
-    isDefault: boolean;
-  }>;
+  displayName: string;
+  fullName?: string | undefined; // backward compat alias
+  savedAddresses: ICustomerAddress[];
+  addresses?: ICustomerAddress[] | undefined; // backward compat alias
+  defaultAddress?: ICustomerAddress | null | undefined;
+  rating: IAggregateRating;
+  jobStats: ICustomerJobStats;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null | undefined;
@@ -268,13 +394,17 @@ export interface ICustomerProfileEntity {
 
 export interface ICreateCustomerProfileInput {
   userId: string;
-  fullName: string;
-  addresses?: ICustomerProfileEntity['addresses'] | undefined;
+  displayName?: string | undefined;
+  fullName?: string | undefined;
+  savedAddresses?: ICustomerAddress[] | undefined;
+  addresses?: ICustomerAddress[] | undefined;
 }
 
 export interface IUpdateCustomerProfileInput {
+  displayName?: string | undefined;
   fullName?: string | undefined;
-  addresses?: ICustomerProfileEntity['addresses'] | undefined;
+  savedAddresses?: ICustomerAddress[] | undefined;
+  addresses?: ICustomerAddress[] | undefined;
   deletedAt?: Date | null | undefined;
 }
 

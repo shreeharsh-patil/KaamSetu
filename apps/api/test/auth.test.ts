@@ -20,15 +20,19 @@ describe('Authentication & Session Management (Phase 2)', () => {
   });
 
   afterAll(async () => {
+    const authUsers = await UserModel.find({ phoneNumber: /^\+9198888/ }).select('_id');
+    const authUserIds = authUsers.map((u) => u._id);
+    await SessionModel.deleteMany({ userId: { $in: authUserIds } });
     await UserModel.deleteMany({ phoneNumber: /^\+9198888/ });
-    await SessionModel.deleteMany({});
     await disconnectMongoDB();
   });
 
   beforeEach(async () => {
     DevOTPProvider.clear();
+    const authUsers = await UserModel.find({ phoneNumber: /^\+9198888/ }).select('_id');
+    const authUserIds = authUsers.map((u) => u._id);
+    await SessionModel.deleteMany({ userId: { $in: authUserIds } });
     await UserModel.deleteMany({ phoneNumber: /^\+9198888/ });
-    await SessionModel.deleteMany({});
   });
 
   it('should request OTP and return cooldownSeconds', async () => {

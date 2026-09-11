@@ -4,10 +4,13 @@ import {
   mapWorkerDocumentToEntity,
   IWorkerProfileDocument,
 } from './worker-profile.model.js';
-import type {
+import {
   IWorkerProfileEntity,
   ICreateWorkerProfileInput,
   IUpdateWorkerProfileInput,
+  IWorkerSkillItem,
+  WorkerAvailability,
+  WorkerVerificationStatus,
 } from '@kaamsetu/types';
 
 export interface IWorkerProfileRepository {
@@ -25,6 +28,19 @@ export interface IWorkerProfileRepository {
     data: IUpdateWorkerProfileInput,
     session?: ClientSession | null
   ): Promise<IWorkerProfileEntity | null>;
+  updateByUserId(
+    userId: string,
+    data: IUpdateWorkerProfileInput,
+    session?: ClientSession | null
+  ): Promise<IWorkerProfileEntity | null>;
+  addSkill(userId: string, skill: IWorkerSkillItem): Promise<IWorkerProfileEntity | null>;
+  removeSkill(userId: string, skillId: string): Promise<IWorkerProfileEntity | null>;
+  updateLocation(userId: string, coordinates: [number, number]): Promise<IWorkerProfileEntity | null>;
+  updateAvailability(
+    userId: string,
+    availabilityStatus: WorkerAvailability
+  ): Promise<IWorkerProfileEntity | null>;
+  updateServiceRadius(userId: string, radiusKm: number): Promise<IWorkerProfileEntity | null>;
   softDelete(id: string, session?: ClientSession | null): Promise<boolean>;
 }
 
@@ -63,9 +79,9 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
 
     const query: Record<string, unknown> = {
       deletedAt: null,
-      isAvailable: true,
-      'serviceArea.coordinates': {
-        $near: {
+      availabilityStatus: WorkerAvailability.AVAILABLE,
+      serviceLocation: {
+        $nearSphere: {
           $geometry: {
             type: 'Point',
             coordinates: [longitude, latitude],
@@ -87,22 +103,48 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
     data: ICreateWorkerProfileInput,
     session?: ClientSession | null
   ): Promise<IWorkerProfileEntity> {
+    const displayName = data.displayName || data.fullName || 'Skilled Worker';
+    const coordinates: [number, number] =
+      data.serviceLocation?.coordinates ||
+      data.serviceArea?.coordinates ||
+      [73.8567, 18.5204];
+    const radiusKm = data.serviceRadiusKm ?? data.serviceArea?.radiusKm ?? 15;
+
     const docData: Partial<IWorkerProfileDocument> = {
       userId: new Types.ObjectId(data.userId),
-      fullName: data.fullName,
+      displayName,
       bio: data.bio ?? null,
-      primaryCategoryId: new Types.ObjectId(data.primaryCategoryId),
-      skillIds: (data.skillIds || []).map((id) => new Types.ObjectId(id)),
-      serviceArea: {
+      primaryCategoryId:
+        data.primaryCategoryId && Types.ObjectId.isValid(data.primaryCategoryId)
+          ? new Types.ObjectId(data.primaryCategoryId)
+          : undefined,
+      skills: (data.skills || []).map((s) => ({
+        skillId: new Types.ObjectId(s.skillId),
+        experienceYears: s.experienceYears,
+        level: s.level,
+        verified: s.verified ?? false,
+      })),
+      languages: data.languages || ['en'],
+      serviceLocation: {
         type: 'Point',
-        coordinates: data.serviceArea.coordinates,
-        radiusKm: data.serviceArea.radiusKm ?? 15,
-        address: data.serviceArea.address ?? null,
-        city: data.serviceArea.city ?? null,
-        pincode: data.serviceArea.pincode ?? null,
+        coordinates,
       },
-      hourlyRate: data.hourlyRate ?? null,
-      isAvailable: data.isAvailable ?? true,
+      serviceRadiusKm: radiusKm,
+      availabilityStatus:
+        data.availabilityStatus ??
+        (data.isAvailable === false ? WorkerAvailability.OFFLINE : WorkerAvailability.AVAILABLE),
+      pricing: {
+        hourlyRate: data.pricing?.hourlyRate ?? data.hourlyRate ?? null,
+        customRateDescription: data.pricing?.customRateDescription ?? null,
+        currency: data.pricing?.currency ?? 'INR',
+      },
+      portfolio: ((data.portfolio || []).map((p) => ({
+        title: p.title,
+        description: p.description ?? null,
+        imageUrl: p.imageUrl,
+        createdAt: new Date(),
+      })) as unknown) as IWorkerProfileDocument['portfolio'],
+      verificationStatus: WorkerVerificationStatus.UNVERIFIED,
     };
 
     const doc = new WorkerProfileModel(docData);
@@ -117,13 +159,33 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
   ): Promise<IWorkerProfileEntity | null> {
     if (!Types.ObjectId.isValid(id)) return null;
 
-    const updateData: Record<string, unknown> = { ...data };
+    const updateData: Record<string, unknown> = {};
+
+    if (data.displayName || data.fullName) {
+      updateData['displayName'] = data.displayName || data.fullName;
+    }
+    if (data.bio !== undefined) updateData['bio'] = data.bio;
+    if (data.languages !== undefined) updateData['languages'] = data.languages;
+    if (data.pricing !== undefined) updateData['pricing'] = data.pricing;
+    if (data.hourlyRate !== undefined) updateData['pricing.hourlyRate'] = data.hourlyRate;
+    if (data.portfolio !== undefined) updateData['portfolio'] = data.portfolio;
+    if (data.availabilityStatus !== undefined) updateData['availabilityStatus'] = data.availabilityStatus;
+    if (data.serviceRadiusKm !== undefined) updateData['serviceRadiusKm'] = data.serviceRadiusKm;
+    if (data.serviceLocation !== undefined) updateData['serviceLocation'] = data.serviceLocation;
+    if (data.ratingAverage !== undefined) updateData['rating.average'] = data.ratingAverage;
+    if (data.ratingCount !== undefined) updateData['rating.count'] = data.ratingCount;
+    if (data.completedJobsCount !== undefined) updateData['stats.completedJobs'] = data.completedJobsCount;
 
     if (data.primaryCategoryId && Types.ObjectId.isValid(data.primaryCategoryId)) {
       updateData['primaryCategoryId'] = new Types.ObjectId(data.primaryCategoryId);
     }
-    if (data.skillIds) {
-      updateData['skillIds'] = data.skillIds.map((sid) => new Types.ObjectId(sid));
+    if (data.skills) {
+      updateData['skills'] = data.skills.map((s) => ({
+        skillId: new Types.ObjectId(s.skillId),
+        experienceYears: s.experienceYears,
+        level: s.level,
+        verified: s.verified,
+      }));
     }
 
     const doc = await WorkerProfileModel.findOneAndUpdate(
@@ -135,12 +197,139 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
     return doc ? mapWorkerDocumentToEntity(doc) : null;
   }
 
+  async updateByUserId(
+    userId: string,
+    data: IUpdateWorkerProfileInput,
+    session?: ClientSession | null
+  ): Promise<IWorkerProfileEntity | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
+
+    const updateData: Record<string, unknown> = {};
+
+    if (data.displayName || data.fullName) {
+      updateData['displayName'] = data.displayName || data.fullName;
+    }
+    if (data.bio !== undefined) updateData['bio'] = data.bio;
+    if (data.languages !== undefined) updateData['languages'] = data.languages;
+    if (data.pricing !== undefined) updateData['pricing'] = data.pricing;
+    if (data.hourlyRate !== undefined) updateData['pricing.hourlyRate'] = data.hourlyRate;
+    if (data.portfolio !== undefined) updateData['portfolio'] = data.portfolio;
+    if (data.availabilityStatus !== undefined) updateData['availabilityStatus'] = data.availabilityStatus;
+    if (data.serviceRadiusKm !== undefined) updateData['serviceRadiusKm'] = data.serviceRadiusKm;
+    if (data.serviceLocation !== undefined) updateData['serviceLocation'] = data.serviceLocation;
+
+    const doc = await WorkerProfileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      { $set: updateData },
+      { new: true, session: session ?? undefined }
+    ).exec();
+
+    return doc ? mapWorkerDocumentToEntity(doc) : null;
+  }
+
+  async addSkill(userId: string, skill: IWorkerSkillItem): Promise<IWorkerProfileEntity | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
+
+    // Pull any existing skill with the same skillId to prevent duplicate skills
+    await WorkerProfileModel.updateOne(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      { $pull: { skills: { skillId: new Types.ObjectId(skill.skillId) } } }
+    ).exec();
+
+    // Push the updated or newly added skill
+    const doc = await WorkerProfileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      {
+        $push: {
+          skills: {
+            skillId: new Types.ObjectId(skill.skillId),
+            experienceYears: skill.experienceYears,
+            level: skill.level,
+            verified: skill.verified ?? false,
+          },
+        },
+      },
+      { new: true }
+    ).exec();
+
+    return doc ? mapWorkerDocumentToEntity(doc) : null;
+  }
+
+  async removeSkill(userId: string, skillId: string): Promise<IWorkerProfileEntity | null> {
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(skillId)) return null;
+
+    const doc = await WorkerProfileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      { $pull: { skills: { skillId: new Types.ObjectId(skillId) } } },
+      { new: true }
+    ).exec();
+
+    return doc ? mapWorkerDocumentToEntity(doc) : null;
+  }
+
+  async updateLocation(
+    userId: string,
+    coordinates: [number, number]
+  ): Promise<IWorkerProfileEntity | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
+
+    const doc = await WorkerProfileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      {
+        $set: {
+          serviceLocation: {
+            type: 'Point',
+            coordinates,
+          },
+        },
+      },
+      { new: true }
+    ).exec();
+
+    return doc ? mapWorkerDocumentToEntity(doc) : null;
+  }
+
+  async updateAvailability(
+    userId: string,
+    availabilityStatus: WorkerAvailability
+  ): Promise<IWorkerProfileEntity | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
+
+    const doc = await WorkerProfileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      { $set: { availabilityStatus } },
+      { new: true }
+    ).exec();
+
+    return doc ? mapWorkerDocumentToEntity(doc) : null;
+  }
+
+  async updateServiceRadius(
+    userId: string,
+    serviceRadiusKm: number
+  ): Promise<IWorkerProfileEntity | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
+
+    const doc = await WorkerProfileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId), deletedAt: null },
+      { $set: { serviceRadiusKm } },
+      { new: true }
+    ).exec();
+
+    return doc ? mapWorkerDocumentToEntity(doc) : null;
+  }
+
   async softDelete(id: string, session?: ClientSession | null): Promise<boolean> {
     if (!Types.ObjectId.isValid(id)) return false;
 
     const result = await WorkerProfileModel.updateOne(
       { _id: id, deletedAt: null },
-      { $set: { deletedAt: new Date(), isAvailable: false } },
+      {
+        $set: {
+          deletedAt: new Date(),
+          availabilityStatus: WorkerAvailability.OFFLINE,
+        },
+      },
       { session: session ?? undefined }
     ).exec();
 
@@ -149,3 +338,4 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
 }
 
 export const workerProfileRepository = new WorkerProfileRepository();
+
