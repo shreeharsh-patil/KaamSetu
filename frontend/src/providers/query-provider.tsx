@@ -1,8 +1,9 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { ApiError } from "@/lib/api/errors";
+import { setupSocketQuerySync, connectSocket } from "@/lib/socket/socket-client";
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -36,6 +37,14 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         },
       })
   );
+
+  useEffect(() => {
+    connectSocket();
+    const cleanup = setupSocketQuerySync(queryClient);
+    return () => {
+      cleanup();
+    };
+  }, [queryClient]);
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
