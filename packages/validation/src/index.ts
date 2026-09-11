@@ -1,6 +1,6 @@
 import { z, ZodSchema } from 'zod';
 import type { ErrorDetails } from '@kaamsetu/types';
-import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel, JobUrgency, JobStatus } from '@kaamsetu/types';
+import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel, JobUrgency, JobStatus, JobOfferStatus } from '@kaamsetu/types';
 
 export const objectIdSchema = z
   .string()
@@ -311,6 +311,34 @@ export const listJobsQuerySchema = z.object({
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().min(1).max(50)),
 });
+
+// ---------------- Job Offers Validation (Phase 5) ----------------
+export const rejectOfferSchema = z.object({
+  reason: z.string().max(500).optional(),
+});
+export type RejectOfferInputDto = z.infer<typeof rejectOfferSchema>;
+
+export const listJobOffersQuerySchema = z.object({
+  status: z.nativeEnum(JobOfferStatus).optional(),
+  cursor: z.string().max(256).optional(),
+  limit: z
+    .string()
+    .optional()
+    .default('20')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().min(1).max(50)),
+});
+export type ListJobOffersQueryDto = z.infer<typeof listJobOffersQuerySchema>;
+
+// ---------------- Realtime Socket Schemas (Phase 6) ----------------
+export const workerLocationSocketSchema = z.object({
+  jobId: objectIdSchema,
+  coordinates: z.tuple([
+    z.number().min(-180).max(180),
+    z.number().min(-90).max(90),
+  ]),
+});
+export type WorkerLocationSocketDto = z.infer<typeof workerLocationSocketSchema>;
 
 // ---------------- Authentication Schemas (Phase 2) ----------------
 export const requestOtpSchema = z.object({

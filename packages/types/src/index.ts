@@ -440,7 +440,16 @@ export type JobEventType =
   | 'PUBLISHED'
   | 'CANCELLED'
   | 'STATUS_CHANGED'
-  | 'WORKER_ASSIGNED';
+  | 'WORKER_ASSIGNED'
+  | 'OFFER_CREATED'
+  | 'OFFER_ACCEPTED'
+  | 'OFFER_REJECTED'
+  | 'OFFER_WITHDRAWN'
+  | 'MATCHING_STARTED'
+  | 'TRAVEL_STARTED'
+  | 'WORKER_ARRIVED'
+  | 'JOB_STARTED'
+  | 'JOB_COMPLETED';
 
 export interface JobImage {
   key: string; // storage key / object path (URL is generated at read time)
@@ -540,6 +549,95 @@ export interface ListJobsFilters {
   categoryId?: string | undefined;
   cursor?: string | undefined;
   limit?: number | undefined;
+}
+
+// ---------------- Geospatial Matching & Job Offers (Phase 5) ----------------
+
+export enum JobOfferStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED',
+  WITHDRAWN = 'WITHDRAWN',
+}
+
+export interface ScoreBreakdown {
+  skillScore: number;          // 0 - 100
+  distanceScore: number;       // 0 - 100
+  availabilityScore: number;   // 0 - 100
+  ratingScore: number;         // 0 - 100
+  completionRateScore: number; // 0 - 100
+  acceptanceRateScore: number; // 0 - 100
+  priceScore: number;          // 0 - 100
+}
+
+export interface IJobOfferEntity {
+  id: string;
+  jobId: string;
+  workerId: string;
+  distanceKm: number;
+  matchScore: number;          // 0 - 100
+  scoreBreakdown: ScoreBreakdown;
+  status: JobOfferStatus;
+  expiresAt: Date;
+  respondedAt?: Date | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateJobOfferInput {
+  jobId: string;
+  workerId: string;
+  distanceKm: number;
+  matchScore: number;
+  scoreBreakdown: ScoreBreakdown;
+  expiresAt: Date;
+  status?: JobOfferStatus | undefined;
+}
+
+export interface MatchingWeights {
+  skill: number;              // default 0.30 (30%)
+  distance: number;           // default 0.25 (25%)
+  availability: number;       // default 0.15 (15%)
+  rating: number;             // default 0.10 (10%)
+  completionRate: number;     // default 0.10 (10%)
+  acceptanceRate: number;     // default 0.05 (5%)
+  priceCompatibility: number; // default 0.05 (5%)
+}
+
+export interface MatchingConfig {
+  weights: MatchingWeights;
+  waveSize: number;             // default 3
+  offerExpiryMinutes: number;   // default 5
+  maxSearchRadiusKm: number;    // default 30
+}
+
+export interface ListJobOffersFilters {
+  workerId?: string | undefined;
+  jobId?: string | undefined;
+  status?: JobOfferStatus | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+// ---------------- Realtime Socket Events (Phase 6) ----------------
+
+export interface SocketUserPayload {
+  userId: string;
+  role: UserRole;
+  sessionId: string;
+}
+
+export interface WorkerLocationUpdatePayload {
+  jobId: string;
+  coordinates: [number, number]; // [lng, lat]
+}
+
+export interface JobStatusChangedPayload {
+  jobId: string;
+  previousStatus: JobStatus;
+  newStatus: JobStatus;
+  updatedAt: string;
 }
 
 // ---------------- Authentication & Session Entities (Phase 2) ----------------
