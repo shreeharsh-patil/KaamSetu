@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Hammer, Wifi, WifiOff, Sun, Moon } from "lucide-react";
+import { Hammer, Wifi, WifiOff, Sun, Moon, LogIn, LogOut, User as UserIcon } from "lucide-react";
 import { Container } from "./container";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { LanguageSelector } from "@/components/shared/language-selector";
 import { useNetwork } from "@/providers/network-provider";
 import { useTheme } from "@/providers/theme-provider";
+import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const pathname = usePathname();
   const { isOnline } = useNetwork();
   const { resolvedTheme, setTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const navLinks = [
     { href: "/customer", label: "Customer Portal", badge: "Hire" },
@@ -36,7 +40,7 @@ export function AppHeader() {
             <div className="flex flex-col">
               <span className="leading-tight">KaamSetu</span>
               <span className="text-[10px] font-medium tracking-normal text-muted-foreground uppercase">
-                Phase 0 Foundation
+                Hyperlocal Trades
               </span>
             </div>
           </Link>
@@ -69,8 +73,11 @@ export function AppHeader() {
           </nav>
         </div>
 
-        {/* Right side: Network indicator & Theme Toggle */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Right side: Network indicator, Language, Theme, Auth */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Language selector */}
+          <LanguageSelector className="hidden sm:inline-flex" />
+
           {/* Network connectivity badge */}
           <div
             className={cn(
@@ -84,7 +91,7 @@ export function AppHeader() {
             {isOnline ? (
               <>
                 <Wifi className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="hidden sm:inline">Online</span>
+                <span className="hidden lg:inline">Online</span>
               </>
             ) : (
               <>
@@ -98,7 +105,7 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
           >
             {resolvedTheme === "dark" ? (
@@ -107,6 +114,34 @@ export function AppHeader() {
               <Moon className="h-4 w-4 text-slate-700" />
             )}
           </button>
+
+          {/* Auth State Button */}
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-md text-xs">
+                <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-mono font-medium">{user.phoneNumber}</span>
+                <Badge variant="secondary" className="text-[10px] py-0 px-1 uppercase">
+                  {user.role}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => logout()}
+                leftIcon={<LogOut className="h-3.5 w-3.5" />}
+                title="Logout"
+              >
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </div>
+          ) : (
+            <Link href="/login">
+              <Button size="sm" leftIcon={<LogIn className="h-3.5 w-3.5" />}>
+                <span>Sign In</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </Container>
     </header>
