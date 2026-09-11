@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @kaamsetu/api dev",
+    "seed": "pnpm --filter @kaamsetu/api seed",
     "build": "pnpm --filter \"@kaamsetu/*\" build",
     "start": "pnpm --filter @kaamsetu/api start",
     "test": "pnpm --filter @kaamsetu/api test",
