@@ -154,6 +154,21 @@ export const createCustomerProfileSchema = z.object({
 
 export const updateCustomerProfileSchema = createCustomerProfileSchema.partial();
 
+// Auth Validation Schemas (Phase 2)
+export const requestOtpSchema = z.object({
+  phone: phoneSchema,
+});
+
+export const verifyOtpSchema = z.object({
+  phone: phoneSchema,
+  otp: z.string().regex(/^\d{6}$/, 'OTP must be a 6-digit numeric code'),
+  deviceName: z.string().max(100).optional(),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(10, 'Refresh token is required').optional(),
+});
+
 export function formatZodIssues(error: z.ZodError): ErrorDetails[] {
   return error.issues.map((issue) => ({
     field: issue.path.join('.'),

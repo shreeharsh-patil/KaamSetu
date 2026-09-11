@@ -11,11 +11,6 @@ const TEST_MONGODB_URI =
 describe('UserRepository (Phase 1)', () => {
   beforeAll(async () => {
     await connectMongoDB({ uri: TEST_MONGODB_URI });
-    try {
-      await UserModel.collection.dropIndex('email_1');
-    } catch {
-      // index might not exist
-    }
     await UserModel.syncIndexes();
   });
 

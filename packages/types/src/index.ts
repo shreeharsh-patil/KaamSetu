@@ -277,3 +277,63 @@ export interface IUpdateCustomerProfileInput {
   addresses?: ICustomerProfileEntity['addresses'] | undefined;
   deletedAt?: Date | null | undefined;
 }
+
+// ---------------- Authentication & Session Entities (Phase 2) ----------------
+
+export interface ISessionEntity {
+  id: string;
+  userId: string;
+  familyId: string;
+  deviceName?: string | null | undefined;
+  ipAddress?: string | null | undefined;
+  userAgent?: string | null | undefined;
+  lastUsedAt: Date;
+  expiresAt: Date;
+  revokedAt?: Date | null | undefined;
+  isCurrent?: boolean | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateSessionInput {
+  userId: string;
+  refreshTokenHash: string;
+  familyId?: string | undefined;
+  deviceName?: string | null | undefined;
+  ipAddress?: string | null | undefined;
+  userAgent?: string | null | undefined;
+  expiresAt: Date;
+}
+
+export interface IUpdateSessionInput {
+  refreshTokenHash?: string | undefined;
+  lastUsedAt?: Date | undefined;
+  expiresAt?: Date | undefined;
+  revokedAt?: Date | null | undefined;
+}
+
+export interface TokenPayload {
+  userId: string;
+  role: UserRole;
+  sessionId: string;
+  familyId: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RequestOtpResponse {
+  message: string;
+  cooldownSeconds: number;
+}
+
+export interface VerifyOtpResponse {
+  user: IUserEntity;
+  accessToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+}

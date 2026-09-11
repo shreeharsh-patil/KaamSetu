@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { healthRoutes } from '../modules/health/health.routes.js';
+import { authRoutes } from '../modules/auth/auth.routes.js';
 import { env } from '../config/index.js';
 
 export function createApiRouter(): Router {
@@ -10,11 +11,14 @@ export function createApiRouter(): Router {
 
   // API version namespace (/api/v1)
   const apiV1Router = Router();
-  // Health also accessible under /api/v1/health
+
+  // Health check under /api/v1/health
   apiV1Router.use('/', healthRoutes);
 
-  // Future business modules will be mounted here (e.g. /api/v1/workers, /api/v1/jobs)
+  // Auth endpoints under /api/v1/auth
+  apiV1Router.use('/auth', authRoutes);
 
+  // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);
 
   return router;
