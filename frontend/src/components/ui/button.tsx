@@ -61,9 +61,20 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button";
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref}
+          className={cn(buttonVariants({ variant, size, className }))}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
+      <button
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(buttonVariants({ variant, size, className }))}
@@ -73,7 +84,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {!isLoading && leftIcon && <span className="shrink-0">{leftIcon}</span>}
         {children}
         {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
-      </Comp>
+      </button>
     );
   }
 );
