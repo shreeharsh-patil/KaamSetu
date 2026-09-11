@@ -449,7 +449,9 @@ export type JobEventType =
   | 'TRAVEL_STARTED'
   | 'WORKER_ARRIVED'
   | 'JOB_STARTED'
-  | 'JOB_COMPLETED';
+  | 'JOB_COMPLETED'
+  | 'DISPUTE_RAISED'
+  | 'DISPUTE_RESOLVED';
 
 export interface JobImage {
   key: string; // storage key / object path (URL is generated at read time)
@@ -973,5 +975,242 @@ export interface IEarningsJobItem {
   expenses: number; // Integer paise
   netEarnings: number; // Integer paise
   durationHours: number;
+}
+
+// ---------------- Phase 9: Reviews, Verification, Reports & Disputes ----------------
+
+// Reviews
+export interface IReviewEntity {
+  id: string;
+  jobId: string;
+  reviewerId: string;
+  revieweeId: string;
+  rating: number; // 1 to 5
+  quality?: number | undefined; // 1 to 5
+  punctuality?: number | undefined; // 1 to 5
+  communication?: number | undefined; // 1 to 5
+  comment?: string | null | undefined;
+  createdAt: Date;
+}
+
+export interface ICreateReviewInput {
+  jobId: string;
+  reviewerId: string;
+  rating: number;
+  quality?: number | undefined;
+  punctuality?: number | undefined;
+  communication?: number | undefined;
+  comment?: string | undefined;
+}
+
+export interface ListReviewsFilters {
+  revieweeId?: string | undefined;
+  reviewerId?: string | undefined;
+  jobId?: string | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+// Verification Requests
+export enum VerificationType {
+  GOVERNMENT_ID = 'GOVERNMENT_ID',
+  POLICE_CLEARANCE = 'POLICE_CLEARANCE',
+  TRADE_CERTIFICATE = 'TRADE_CERTIFICATE',
+  ADDRESS_PROOF = 'ADDRESS_PROOF',
+  OTHER = 'OTHER',
+}
+
+export enum VerificationRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  REQUIRES_MORE_INFO = 'REQUIRES_MORE_INFO',
+}
+
+export interface IVerificationDocument {
+  key?: string | undefined;
+  url: string;
+  mimeType?: string | undefined;
+  documentType?: string | undefined;
+  uploadedAt?: Date | undefined;
+}
+
+export interface IVerificationRequestEntity {
+  id: string;
+  workerId: string;
+  type: VerificationType;
+  documents: IVerificationDocument[];
+  status: VerificationRequestStatus;
+  reviewerId?: string | null | undefined;
+  reason?: string | null | undefined;
+  reviewedAt?: Date | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateVerificationRequestInput {
+  workerId: string;
+  type: VerificationType;
+  documents: IVerificationDocument[];
+}
+
+export interface IReviewVerificationRequestInput {
+  reviewerId: string;
+  status: VerificationRequestStatus;
+  reason?: string | undefined;
+}
+
+export interface ListVerificationRequestsFilters {
+  workerId?: string | undefined;
+  status?: VerificationRequestStatus | undefined;
+  type?: VerificationType | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+// Reports
+export enum ReportTargetType {
+  USER = 'USER',
+  JOB = 'JOB',
+  MESSAGE = 'MESSAGE',
+  REVIEW = 'REVIEW',
+}
+
+export enum ReportReason {
+  INAPPROPRIATE_BEHAVIOR = 'INAPPROPRIATE_BEHAVIOR',
+  FRAUD = 'FRAUD',
+  SPAM = 'SPAM',
+  HARASSMENT = 'HARASSMENT',
+  SAFETY_CONCERN = 'SAFETY_CONCERN',
+  POOR_SERVICE = 'POOR_SERVICE',
+  OTHER = 'OTHER',
+}
+
+export enum ReportStatus {
+  PENDING = 'PENDING',
+  INVESTIGATING = 'INVESTIGATING',
+  RESOLVED = 'RESOLVED',
+  DISMISSED = 'DISMISSED',
+}
+
+export interface IReportEntity {
+  id: string;
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  description: string;
+  evidence?: string[] | undefined;
+  status: ReportStatus;
+  resolutionNotes?: string | null | undefined;
+  resolvedBy?: string | null | undefined;
+  resolvedAt?: Date | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateReportInput {
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  description: string;
+  evidence?: string[] | undefined;
+}
+
+export interface IUpdateReportInput {
+  status: ReportStatus;
+  resolutionNotes?: string | undefined;
+  resolvedBy: string;
+}
+
+export interface ListReportsFilters {
+  reporterId?: string | undefined;
+  targetType?: ReportTargetType | undefined;
+  status?: ReportStatus | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+// Disputes
+export enum DisputeReason {
+  PAYMENT_ISSUE = 'PAYMENT_ISSUE',
+  POOR_QUALITY = 'POOR_QUALITY',
+  NO_SHOW = 'NO_SHOW',
+  PROPERTY_DAMAGE = 'PROPERTY_DAMAGE',
+  UNPROFESSIONAL_BEHAVIOUR = 'UNPROFESSIONAL_BEHAVIOUR',
+  OTHER = 'OTHER',
+}
+
+export enum DisputeStatus {
+  OPEN = 'OPEN',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  RESOLVED = 'RESOLVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface IDisputeResolution {
+  summary: string;
+  refundPaise?: number | undefined;
+  actionTaken?: string | undefined;
+}
+
+export interface IDisputeEntity {
+  id: string;
+  jobId: string;
+  initiatorId: string;
+  respondentId: string;
+  reason: DisputeReason;
+  description: string;
+  evidence?: string[] | undefined;
+  status: DisputeStatus;
+  resolution?: IDisputeResolution | null | undefined;
+  resolvedBy?: string | null | undefined;
+  resolvedAt?: Date | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateDisputeInput {
+  jobId: string;
+  initiatorId: string;
+  reason: DisputeReason;
+  description: string;
+  evidence?: string[] | undefined;
+}
+
+export interface IResolveDisputeInput {
+  resolvedBy: string;
+  status: DisputeStatus.RESOLVED | DisputeStatus.REJECTED;
+  resolution: IDisputeResolution;
+}
+
+export interface ListDisputesFilters {
+  jobId?: string | undefined;
+  userId?: string | undefined;
+  status?: DisputeStatus | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+// Audit Logs
+export interface IAuditLogEntity {
+  id: string;
+  actorId: string;
+  actorRole: UserRole;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details?: Record<string, unknown> | undefined;
+  createdAt: Date;
+}
+
+export interface ICreateAuditLogInput {
+  actorId: string;
+  actorRole: UserRole;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details?: Record<string, unknown> | undefined;
 }
 

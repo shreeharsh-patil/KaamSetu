@@ -1,6 +1,24 @@
 import { z, ZodSchema } from 'zod';
 import type { ErrorDetails } from '@kaamsetu/types';
-import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel, JobUrgency, JobStatus, JobOfferStatus, ExpenseCategory, TransactionType } from '@kaamsetu/types';
+import {
+  UserRole,
+  UserStatus,
+  WorkerAvailability,
+  WorkerVerificationStatus,
+  SkillLevel,
+  JobUrgency,
+  JobStatus,
+  JobOfferStatus,
+  ExpenseCategory,
+  TransactionType,
+  VerificationType,
+  VerificationRequestStatus,
+  ReportTargetType,
+  ReportReason,
+  ReportStatus,
+  DisputeReason,
+  DisputeStatus,
+} from '@kaamsetu/types';
 
 export const objectIdSchema = z
   .string()
@@ -477,6 +495,108 @@ export const createAdjustmentSchema = z.object({
   referenceId: z.string().max(100).optional(),
 });
 export type CreateAdjustmentInputDto = z.infer<typeof createAdjustmentSchema>;
+
+// ---------------- Reviews, Verification, Reports & Disputes (Phase 9) ----------------
+
+// Reviews
+export const createReviewSchema = z.object({
+  jobId: objectIdSchema,
+  rating: z.coerce.number().int().min(1, 'Rating must be between 1 and 5').max(5, 'Rating must be between 1 and 5'),
+  quality: z.coerce.number().int().min(1).max(5).optional(),
+  punctuality: z.coerce.number().int().min(1).max(5).optional(),
+  communication: z.coerce.number().int().min(1).max(5).optional(),
+  comment: z.string().max(1000).optional(),
+});
+export type CreateReviewInputDto = z.infer<typeof createReviewSchema>;
+
+export const listReviewsQuerySchema = z.object({
+  revieweeId: objectIdSchema.optional(),
+  reviewerId: objectIdSchema.optional(),
+  jobId: objectIdSchema.optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListReviewsQueryDto = z.infer<typeof listReviewsQuerySchema>;
+
+// Verification Requests
+export const verificationDocumentSchema = z.object({
+  key: z.string().max(500).optional(),
+  url: z.string().url().max(1000),
+  mimeType: z.string().max(100).optional(),
+  documentType: z.string().max(100).optional(),
+});
+export type VerificationDocumentDto = z.infer<typeof verificationDocumentSchema>;
+
+export const createVerificationRequestSchema = z.object({
+  type: z.nativeEnum(VerificationType),
+  documents: z.array(verificationDocumentSchema).min(1, 'At least one document is required'),
+});
+export type CreateVerificationRequestInputDto = z.infer<typeof createVerificationRequestSchema>;
+
+export const reviewVerificationRequestSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED', 'REQUIRES_MORE_INFO']),
+  reason: z.string().max(500).optional(),
+});
+export type ReviewVerificationRequestInputDto = z.infer<typeof reviewVerificationRequestSchema>;
+
+export const listVerificationRequestsQuerySchema = z.object({
+  workerId: objectIdSchema.optional(),
+  status: z.nativeEnum(VerificationRequestStatus).optional(),
+  type: z.nativeEnum(VerificationType).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListVerificationRequestsQueryDto = z.infer<typeof listVerificationRequestsQuerySchema>;
+
+// Reports
+export const createReportSchema = z.object({
+  targetType: z.nativeEnum(ReportTargetType),
+  targetId: objectIdSchema,
+  reason: z.nativeEnum(ReportReason),
+  description: z.string().min(5, 'Description must be at least 5 characters').max(2000),
+  evidence: z.array(z.string().url().max(1000)).optional(),
+});
+export type CreateReportInputDto = z.infer<typeof createReportSchema>;
+
+export const updateReportSchema = z.object({
+  status: z.enum(['INVESTIGATING', 'RESOLVED', 'DISMISSED']),
+  resolutionNotes: z.string().max(1000).optional(),
+});
+export type UpdateReportInputDto = z.infer<typeof updateReportSchema>;
+
+export const listReportsQuerySchema = z.object({
+  targetType: z.nativeEnum(ReportTargetType).optional(),
+  status: z.nativeEnum(ReportStatus).optional(),
+  reporterId: objectIdSchema.optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListReportsQueryDto = z.infer<typeof listReportsQuerySchema>;
+
+// Disputes
+export const createDisputeSchema = z.object({
+  jobId: objectIdSchema,
+  reason: z.nativeEnum(DisputeReason),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
+  evidence: z.array(z.string().url().max(1000)).optional(),
+});
+export type CreateDisputeInputDto = z.infer<typeof createDisputeSchema>;
+
+export const resolveDisputeSchema = z.object({
+  status: z.enum(['RESOLVED', 'REJECTED']),
+  summary: z.string().min(5, 'Resolution summary must be at least 5 characters').max(1000),
+  refundPaise: z.number().int().min(0).optional(),
+  actionTaken: z.string().max(500).optional(),
+});
+export type ResolveDisputeInputDto = z.infer<typeof resolveDisputeSchema>;
+
+export const listDisputesQuerySchema = z.object({
+  jobId: objectIdSchema.optional(),
+  status: z.nativeEnum(DisputeStatus).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListDisputesQueryDto = z.infer<typeof listDisputesQuerySchema>;
 
 // ---------------- Authentication Schemas (Phase 2) ----------------
 export const requestOtpSchema = z.object({

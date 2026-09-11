@@ -12,6 +12,11 @@ import { MessageModel } from '../modules/messages/message.model.js';
 import { NotificationModel } from '../modules/notifications/notification.model.js';
 import { ExpenseModel } from '../modules/expenses/expense.model.js';
 import { TransactionModel } from '../modules/transactions/transaction.model.js';
+import { ReviewModel } from '../modules/reviews/review.model.js';
+import { VerificationRequestModel } from '../modules/verification/verification-request.model.js';
+import { ReportModel } from '../modules/reports/report.model.js';
+import { DisputeModel } from '../modules/disputes/dispute.model.js';
+import { AuditLogModel } from '../modules/audit-logs/audit-log.model.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -36,6 +41,11 @@ export async function ensureIndexes(): Promise<void> {
       NotificationModel.syncIndexes(),
       ExpenseModel.syncIndexes(),
       TransactionModel.syncIndexes(),
+      ReviewModel.syncIndexes(),
+      VerificationRequestModel.syncIndexes(),
+      ReportModel.syncIndexes(),
+      DisputeModel.syncIndexes(),
+      AuditLogModel.syncIndexes(),
     ]);
 
     logger.info('All database indexes synchronized successfully');

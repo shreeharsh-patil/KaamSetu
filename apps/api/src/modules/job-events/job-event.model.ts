@@ -51,6 +51,8 @@ const jobEventSchema = new Schema(
         'WORKER_ARRIVED',
         'JOB_STARTED',
         'JOB_COMPLETED',
+        'DISPUTE_RAISED',
+        'DISPUTE_RESOLVED',
       ],
     },
     previousState: {

@@ -12,6 +12,10 @@ import { notificationRoutes } from '../modules/notifications/notification.routes
 import { expenseRoutes } from '../modules/expenses/expense.routes.js';
 import { earningsRoutes } from '../modules/earnings/earnings.routes.js';
 import { transactionRoutes } from '../modules/transactions/transaction.routes.js';
+import { reviewRoutes } from '../modules/reviews/review.routes.js';
+import { verificationRoutes } from '../modules/verification/verification.routes.js';
+import { reportRoutes } from '../modules/reports/report.routes.js';
+import { disputeRoutes } from '../modules/disputes/dispute.routes.js';
 import { authenticate, requireRole } from '../middlewares/auth.middleware.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
@@ -69,6 +73,18 @@ export function createApiRouter(): Router {
 
   // Financial ledger transaction endpoints under /api/v1/transactions (Phase 8)
   apiV1Router.use('/transactions', transactionRoutes);
+
+  // Reviews endpoints under /api/v1/reviews (Phase 9)
+  apiV1Router.use('/reviews', reviewRoutes);
+
+  // Worker verification endpoints under /api/v1/verification (Phase 9)
+  apiV1Router.use('/verification', verificationRoutes);
+
+  // Trust & safety report endpoints under /api/v1/reports (Phase 9)
+  apiV1Router.use('/reports', reportRoutes);
+
+  // Job disputes endpoints under /api/v1/disputes (Phase 9)
+  apiV1Router.use('/disputes', disputeRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);
