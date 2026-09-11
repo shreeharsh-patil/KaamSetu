@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
+import { ApiError } from "@/lib/api/errors";
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -10,8 +11,27 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
-            retry: 1,
+            gcTime: 5 * 60 * 1000,
             refetchOnWindowFocus: false,
+            retry: (failureCount, error) => {
+              // Never retry client-side validation errors, 401s, 403s, or 404s
+              if (error instanceof ApiError) {
+                if (
+                  error.isUnauthorized() ||
+                  error.isForbidden() ||
+                  error.isNotFound() ||
+                  error.isValidationError()
+                ) {
+                  return false;
+                }
+              }
+              // Allow at most 2 retries for transient network/server glitches
+              return failureCount < 2;
+            },
+          },
+          mutations: {
+            // Never retry mutations blindly (avoid duplicate job creations or payment attempts)
+            retry: false,
           },
         },
       })
