@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import type { SupportedLocale } from "@/lib/i18n/types";
+
 export interface LanguageOption {
   code: string;
   name: string;
@@ -20,6 +23,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: "en", name: "English", nativeName: "English" },
   { code: "hi", name: "Hindi", nativeName: "हिन्दी" },
   { code: "mr", name: "Marathi", nativeName: "मराठी" },
+  { code: "kok", name: "Konkani", nativeName: "कोंकणी" },
   { code: "ta", name: "Tamil", nativeName: "தமிழ்" },
   { code: "te", name: "Telugu", nativeName: "తెలుగు" },
   { code: "gu", name: "Gujarati", nativeName: "ગુજરાતી" },
@@ -33,19 +37,24 @@ export interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({
-  currentLocale = "en",
+  currentLocale,
   onSelectLocale,
   className,
 }: LanguageSelectorProps) {
+  const { locale, setLocale } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(currentLocale);
+
+  const selected = currentLocale || locale;
 
   const activeLang =
     SUPPORTED_LANGUAGES.find((l) => l.code === selected) || SUPPORTED_LANGUAGES[0]!;
 
   const handleSelect = (code: string) => {
-    setSelected(code);
-    onSelectLocale?.(code);
+    if (onSelectLocale) {
+      onSelectLocale(code);
+    } else {
+      setLocale(code as SupportedLocale);
+    }
     setIsOpen(false);
   };
 
