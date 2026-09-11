@@ -851,3 +851,127 @@ export interface MessageReadSocketPayload {
   readerId: string;
   readAt: string;
 }
+
+// ---------------- Earnings, Expenses & Financial Ledger (Phase 8) ----------------
+
+export enum ExpenseCategory {
+  FUEL = 'FUEL',
+  MATERIAL = 'MATERIAL',
+  PARKING = 'PARKING',
+  TOOL = 'TOOL',
+  PLATFORM_FEE = 'PLATFORM_FEE',
+  OTHER = 'OTHER',
+}
+
+export enum TransactionType {
+  JOB_REVENUE = 'JOB_REVENUE',
+  EXPENSE = 'EXPENSE',
+  PLATFORM_FEE = 'PLATFORM_FEE',
+  REFUND = 'REFUND',
+  ADJUSTMENT = 'ADJUSTMENT',
+}
+
+export interface IExpenseReceipt {
+  key?: string | undefined;
+  url?: string | undefined;
+  mimeType?: string | undefined;
+  sizeBytes?: number | undefined;
+}
+
+export interface IExpenseEntity {
+  id: string;
+  workerId: string;
+  jobId?: string | null | undefined;
+  category: ExpenseCategory;
+  amount: number; // Integer paise (₹1 = 100 paise)
+  currency: string; // Default 'INR'
+  note?: string | null | undefined;
+  receipt?: IExpenseReceipt | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null | undefined;
+}
+
+export interface ICreateExpenseInput {
+  workerId: string;
+  jobId?: string | null | undefined;
+  category: ExpenseCategory;
+  amount: number; // Integer paise > 0
+  currency?: string | undefined;
+  note?: string | null | undefined;
+  receipt?: IExpenseReceipt | null | undefined;
+}
+
+export interface IUpdateExpenseInput {
+  jobId?: string | null | undefined;
+  category?: ExpenseCategory | undefined;
+  amount?: number | undefined; // Integer paise > 0
+  currency?: string | undefined;
+  note?: string | null | undefined;
+  receipt?: IExpenseReceipt | null | undefined;
+}
+
+export interface ListExpensesFilters {
+  workerId: string;
+  jobId?: string | undefined;
+  category?: ExpenseCategory | undefined;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface ITransactionEntity {
+  id: string;
+  workerId: string;
+  jobId?: string | null | undefined;
+  type: TransactionType;
+  amount: number; // Integer paise
+  currency: string; // Default 'INR'
+  referenceId: string; // Idempotency reference or entity link
+  metadata?: Record<string, unknown> | undefined;
+  createdAt: Date;
+}
+
+export interface ICreateTransactionInput {
+  workerId: string;
+  jobId?: string | null | undefined;
+  type: TransactionType;
+  amount: number; // Integer paise
+  currency?: string | undefined;
+  referenceId: string;
+  metadata?: Record<string, unknown> | undefined;
+}
+
+export interface ListTransactionsFilters {
+  workerId?: string | undefined;
+  type?: TransactionType | undefined;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface IEarningsSummary {
+  timeRange: 'today' | 'week' | 'month' | 'custom';
+  startDate: string;
+  endDate: string;
+  grossRevenue: number; // Integer paise
+  totalExpenses: number; // Integer paise
+  netEarnings: number; // Integer paise
+  totalJobs: number;
+  hoursWorked: number; // Float rounded to 2 decimal places
+  earningsPerHour: number; // Integer paise per hour
+  currency: string;
+}
+
+export interface IEarningsJobItem {
+  jobId: string;
+  title: string;
+  completedAt: Date;
+  revenue: number; // Integer paise
+  expenses: number; // Integer paise
+  netEarnings: number; // Integer paise
+  durationHours: number;
+}
+

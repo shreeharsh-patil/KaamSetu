@@ -1,6 +1,7 @@
 import {
   UserRole,
   JobStatus,
+  TransactionType,
   type IJobEntity,
   type IJobEventEntity,
   type CursorPage,
@@ -23,6 +24,10 @@ import {
   ISkillRepository,
   skillRepository,
 } from '../skills/skill.repository.js';
+import {
+  ITransactionRepository,
+  transactionRepository,
+} from '../transactions/transaction.repository.js';
 import { JobStateMachine } from './job-state-machine.js';
 import {
   NotFoundError,
@@ -38,7 +43,8 @@ export class JobService {
     private readonly jobEventRepo: IJobEventRepository = jobEventRepository,
     private readonly categoryRepo: IServiceCategoryRepository = serviceCategoryRepository,
     private readonly skillRepo: ISkillRepository = skillRepository,
-    private readonly realtime: RealtimeGateway = realtimeGateway
+    private readonly realtime: RealtimeGateway = realtimeGateway,
+    private readonly transactionRepo: ITransactionRepository = transactionRepository
   ) {}
 
   /**
@@ -495,6 +501,27 @@ export class JobService {
     };
     this.realtime.emitToJob(job.id, 'job.completed', completedPayload);
     this.realtime.emitToUser(job.customerId, 'job.completed', completedPayload);
+
+    // Record immutable ledger entry for job revenue if price is set
+    if (job.estimatedPrice && job.estimatedPrice > 0) {
+      try {
+        const revenuePaise = Math.round(job.estimatedPrice * 100);
+        await this.transactionRepo.create({
+          workerId,
+          jobId: job.id,
+          type: TransactionType.JOB_REVENUE,
+          amount: revenuePaise,
+          currency: 'INR',
+          referenceId: `job:${job.id}:revenue`,
+          metadata: {
+            jobTitle: job.title,
+            completedAt,
+          },
+        });
+      } catch {
+        // Idempotency: Ignore duplicate if already recorded
+      }
+    }
 
     return updated;
   }

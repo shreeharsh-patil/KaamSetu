@@ -9,6 +9,9 @@ import { getWorkerOffers } from '../modules/job-offers/job-offer.controller.js';
 import { conversationRoutes } from '../modules/conversations/conversation.routes.js';
 import { messageRoutes } from '../modules/messages/message.routes.js';
 import { notificationRoutes } from '../modules/notifications/notification.routes.js';
+import { expenseRoutes } from '../modules/expenses/expense.routes.js';
+import { earningsRoutes } from '../modules/earnings/earnings.routes.js';
+import { transactionRoutes } from '../modules/transactions/transaction.routes.js';
 import { authenticate, requireRole } from '../middlewares/auth.middleware.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
@@ -57,6 +60,15 @@ export function createApiRouter(): Router {
 
   // Notification endpoints under /api/v1/notifications (Phase 7)
   apiV1Router.use('/notifications', notificationRoutes);
+
+  // Expense endpoints under /api/v1/expenses (Phase 8)
+  apiV1Router.use('/expenses', expenseRoutes);
+
+  // Earnings endpoints under /api/v1/earnings (Phase 8)
+  apiV1Router.use('/earnings', earningsRoutes);
+
+  // Financial ledger transaction endpoints under /api/v1/transactions (Phase 8)
+  apiV1Router.use('/transactions', transactionRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);

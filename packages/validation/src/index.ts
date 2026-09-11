@@ -1,6 +1,6 @@
 import { z, ZodSchema } from 'zod';
 import type { ErrorDetails } from '@kaamsetu/types';
-import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel, JobUrgency, JobStatus, JobOfferStatus } from '@kaamsetu/types';
+import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel, JobUrgency, JobStatus, JobOfferStatus, ExpenseCategory, TransactionType } from '@kaamsetu/types';
 
 export const objectIdSchema = z
   .string()
@@ -404,6 +404,79 @@ export const createNotificationSchema = z.object({
   data: z.record(z.unknown()).optional(),
 });
 export type CreateNotificationInputDto = z.infer<typeof createNotificationSchema>;
+
+// ---------------- Earnings, Expenses & Ledger Schemas (Phase 8) ----------------
+export const expenseReceiptSchema = z.object({
+  key: z.string().max(500).optional(),
+  url: z.string().url().max(1000).optional(),
+  mimeType: z.string().max(100).optional(),
+  sizeBytes: z.number().int().positive().optional(),
+});
+export type ExpenseReceiptDto = z.infer<typeof expenseReceiptSchema>;
+
+export const createExpenseSchema = z.object({
+  jobId: objectIdSchema.optional(),
+  category: z.nativeEnum(ExpenseCategory),
+  amount: z
+    .number({ required_error: 'Amount is required' })
+    .int('Amount must be an integer in paise (smallest currency unit, never float)')
+    .positive('Amount must be greater than 0 paise'),
+  currency: z.string().default('INR'),
+  note: z.string().max(500).optional(),
+  receipt: expenseReceiptSchema.optional(),
+});
+export type CreateExpenseInputDto = z.infer<typeof createExpenseSchema>;
+
+export const updateExpenseSchema = z.object({
+  jobId: objectIdSchema.optional().nullable(),
+  category: z.nativeEnum(ExpenseCategory).optional(),
+  amount: z
+    .number()
+    .int('Amount must be an integer in paise')
+    .positive('Amount must be greater than 0 paise')
+    .optional(),
+  currency: z.string().optional(),
+  note: z.string().max(500).optional().nullable(),
+  receipt: expenseReceiptSchema.optional().nullable(),
+});
+export type UpdateExpenseInputDto = z.infer<typeof updateExpenseSchema>;
+
+export const listExpensesQuerySchema = z.object({
+  jobId: objectIdSchema.optional(),
+  category: z.nativeEnum(ExpenseCategory).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListExpensesQueryDto = z.infer<typeof listExpensesQuerySchema>;
+
+export const listTransactionsQuerySchema = z.object({
+  type: z.nativeEnum(TransactionType).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListTransactionsQueryDto = z.infer<typeof listTransactionsQuerySchema>;
+
+export const earningsSummaryQuerySchema = z.object({
+  timeRange: z.enum(['today', 'week', 'month', 'custom']).default('month'),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+});
+export type EarningsSummaryQueryDto = z.infer<typeof earningsSummaryQuerySchema>;
+
+export const createAdjustmentSchema = z.object({
+  workerId: objectIdSchema,
+  jobId: objectIdSchema.optional(),
+  amount: z
+    .number({ required_error: 'Amount is required' })
+    .int('Amount must be an integer in paise (positive for credit, negative for debit)'),
+  reason: z.string().min(3, 'Reason must be at least 3 characters').max(500),
+  referenceId: z.string().max(100).optional(),
+});
+export type CreateAdjustmentInputDto = z.infer<typeof createAdjustmentSchema>;
 
 // ---------------- Authentication Schemas (Phase 2) ----------------
 export const requestOtpSchema = z.object({

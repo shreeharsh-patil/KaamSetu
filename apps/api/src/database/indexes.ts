@@ -10,6 +10,8 @@ import { JobOfferModel } from '../modules/job-offers/job-offer.model.js';
 import { ConversationModel } from '../modules/conversations/conversation.model.js';
 import { MessageModel } from '../modules/messages/message.model.js';
 import { NotificationModel } from '../modules/notifications/notification.model.js';
+import { ExpenseModel } from '../modules/expenses/expense.model.js';
+import { TransactionModel } from '../modules/transactions/transaction.model.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -32,6 +34,8 @@ export async function ensureIndexes(): Promise<void> {
       ConversationModel.syncIndexes(),
       MessageModel.syncIndexes(),
       NotificationModel.syncIndexes(),
+      ExpenseModel.syncIndexes(),
+      TransactionModel.syncIndexes(),
     ]);
 
     logger.info('All database indexes synchronized successfully');
