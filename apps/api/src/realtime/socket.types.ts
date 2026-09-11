@@ -6,6 +6,9 @@ import type {
   JobOfferCreatedPayload,
   JobAcceptedPayload,
   JobCompletedPayload,
+  NewMessageSocketPayload,
+  MessageReadSocketPayload,
+  INotificationEntity,
 } from '@kaamsetu/types';
 
 export interface ClientToServerEvents {
@@ -15,6 +18,14 @@ export interface ClientToServerEvents {
   ) => void;
   'leave:job': (
     data: { jobId: string },
+    callback?: (response: { success: boolean }) => void
+  ) => void;
+  'join:conversation': (
+    data: { conversationId: string },
+    callback?: (response: { success: boolean; error?: string }) => void
+  ) => void;
+  'leave:conversation': (
+    data: { conversationId: string },
     callback?: (response: { success: boolean }) => void
   ) => void;
   'worker.location.update': (
@@ -29,6 +40,9 @@ export interface ServerToClientEvents {
   'job.status.changed': (data: JobStatusChangedPayload) => void;
   'worker.location.updated': (data: WorkerLocationUpdatedPayload) => void;
   'job.completed': (data: JobCompletedPayload) => void;
+  'message.created': (data: NewMessageSocketPayload) => void;
+  'message.read': (data: MessageReadSocketPayload) => void;
+  'notification.created': (data: INotificationEntity) => void;
 }
 
 export interface InterServerEvents {

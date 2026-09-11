@@ -24,9 +24,13 @@ export function setupGracefulShutdown(server: Server): void {
     forceExitTimeout.unref();
 
     try {
-      // 1. Close Realtime Socket.IO gateway
+      // 1. Close Realtime Socket.IO gateway and notification queues
       const { realtimeGateway } = await import('../realtime/index.js');
       await realtimeGateway.close();
+
+      const { notificationQueue, notificationWorker } = await import('../modules/notifications/index.js');
+      await notificationQueue.close();
+      await notificationWorker.close();
 
       // 2. Stop receiving new HTTP connections
       await new Promise<void>((resolve, reject) => {

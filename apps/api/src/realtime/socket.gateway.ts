@@ -112,6 +112,46 @@ export class RealtimeGateway {
         callback?.({ success: true });
       });
 
+      // Room membership handlers for conversations
+      socket.on('join:conversation', async (data, callback) => {
+        try {
+          const { conversationId } = data;
+          if (!conversationId) {
+            callback?.({ success: false, error: 'conversationId is required' });
+            return;
+          }
+
+          const { conversationRepository } = await import('../modules/conversations/conversation.repository.js');
+          const conv = await conversationRepository.findById(conversationId);
+          if (!conv) {
+            callback?.({ success: false, error: 'Conversation not found' });
+            return;
+          }
+
+          const isParticipant = conv.participants.includes(user.userId);
+          const isAdmin = user.role === UserRole.ADMIN;
+
+          if (!isParticipant && !isAdmin) {
+            callback?.({ success: false, error: 'Unauthorized to join this conversation' });
+            return;
+          }
+
+          const room = `conversation:${conversationId}`;
+          socket.join(room);
+          callback?.({ success: true });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to join conversation';
+          callback?.({ success: false, error: msg });
+        }
+      });
+
+      socket.on('leave:conversation', (data, callback) => {
+        if (data?.conversationId) {
+          socket.leave(`conversation:${data.conversationId}`);
+        }
+        callback?.({ success: true });
+      });
+
       // 3. Worker realtime location streaming during travel / job execution
       socket.on('worker.location.update', async (data, callback) => {
         try {

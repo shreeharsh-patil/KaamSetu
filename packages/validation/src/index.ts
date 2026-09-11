@@ -340,6 +340,71 @@ export const workerLocationSocketSchema = z.object({
 });
 export type WorkerLocationSocketDto = z.infer<typeof workerLocationSocketSchema>;
 
+// ---------------- Messaging & Notifications Schemas (Phase 7) ----------------
+export const messageAttachmentSchema = z.object({
+  key: z.string().max(500).optional(),
+  url: z.string().url().max(1000).optional(),
+  mimeType: z.string().max(100).optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  sizeBytes: z.number().int().positive().optional(),
+  coordinates: z
+    .tuple([
+      z.number().min(-180).max(180),
+      z.number().min(-90).max(90),
+    ])
+    .optional(),
+  address: z.string().max(500).optional(),
+});
+export type MessageAttachmentDto = z.infer<typeof messageAttachmentSchema>;
+
+export const createMessageSchema = z
+  .object({
+    type: z.enum(['TEXT', 'IMAGE', 'LOCATION']), // Note: SYSTEM messages are blocked from client submission
+    content: z.string().max(2000).default(''),
+    attachment: messageAttachmentSchema.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === 'TEXT' && (!data.content || data.content.trim().length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Content is required for TEXT messages',
+        path: ['content'],
+      });
+    }
+    if (data.type === 'IMAGE' && (!data.attachment || (!data.attachment.key && !data.attachment.url))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Attachment with key or url is required for IMAGE messages',
+        path: ['attachment'],
+      });
+    }
+    if (data.type === 'LOCATION' && (!data.attachment || !data.attachment.coordinates)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Attachment with coordinates is required for LOCATION messages',
+        path: ['attachment', 'coordinates'],
+      });
+    }
+  });
+export type CreateMessageInputDto = z.infer<typeof createMessageSchema>;
+
+export const listMessagesQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type ListMessagesQueryDto = z.infer<typeof listMessagesQuerySchema>;
+
+export const createNotificationSchema = z.object({
+  userId: objectIdSchema,
+  type: z.string().min(1).max(100),
+  channel: z.enum(['IN_APP', 'PUSH', 'SMS', 'EMAIL']),
+  title: z.string().min(1).max(200),
+  body: z.string().min(1).max(1000),
+  data: z.record(z.unknown()).optional(),
+});
+export type CreateNotificationInputDto = z.infer<typeof createNotificationSchema>;
+
 // ---------------- Authentication Schemas (Phase 2) ----------------
 export const requestOtpSchema = z.object({
   phone: phoneSchema,

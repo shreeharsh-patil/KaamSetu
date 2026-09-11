@@ -32,7 +32,7 @@ describe('Worker and Customer Profiles (Phase 1)', () => {
 
     // Clean up any stale data from previous aborted runs
     await UserModel.deleteMany({ phoneNumber: /^\+9199998/ });
-    await ServiceCategoryModel.deleteMany({ slug: 'test-home-appliance' });
+    await ServiceCategoryModel.deleteMany({ slug: 'wcp-home-appliance' });
 
     // Setup base user & category
     workerUser = await userRepository.create({
@@ -47,7 +47,7 @@ describe('Worker and Customer Profiles (Phase 1)', () => {
 
     category = await serviceCategoryRepository.create({
       name: 'Home Appliance',
-      slug: 'test-home-appliance',
+      slug: 'wcp-home-appliance',
     });
   });
 
@@ -59,7 +59,7 @@ describe('Worker and Customer Profiles (Phase 1)', () => {
       await CustomerProfileModel.deleteMany({ userId: customerUser.id });
     }
     await UserModel.deleteMany({ phoneNumber: /^\+9199998/ });
-    await ServiceCategoryModel.deleteMany({ slug: 'test-home-appliance' });
+    await ServiceCategoryModel.deleteMany({ slug: 'wcp-home-appliance' });
     await disconnectMongoDB();
   });
 

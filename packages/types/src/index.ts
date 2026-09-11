@@ -727,3 +727,127 @@ export interface VerifyOtpResponse {
 export interface RefreshTokenResponse {
   accessToken: string;
 }
+
+// ---------------- Messaging & Conversations (Phase 7) ----------------
+
+export enum MessageType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  SYSTEM = 'SYSTEM',
+  LOCATION = 'LOCATION',
+}
+
+export interface IMessageAttachment {
+  key?: string | undefined;
+  url?: string | undefined;
+  mimeType?: string | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  sizeBytes?: number | undefined;
+  coordinates?: [number, number] | undefined; // [lng, lat]
+  address?: string | undefined;
+}
+
+export interface IConversationEntity {
+  id: string;
+  jobId: string;
+  participants: string[];
+  lastMessageAt?: Date | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateConversationInput {
+  jobId: string;
+  participants: string[];
+}
+
+export interface IMessageEntity {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  type: MessageType;
+  content: string;
+  attachment?: IMessageAttachment | null | undefined;
+  readAt?: Date | null | undefined;
+  createdAt: Date;
+}
+
+export interface ICreateMessageInput {
+  conversationId: string;
+  senderId: string;
+  type: MessageType;
+  content: string;
+  attachment?: IMessageAttachment | null | undefined;
+}
+
+export interface ListMessagesFilters {
+  conversationId: string;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+// ---------------- Notifications (Phase 7) ----------------
+
+export enum NotificationChannel {
+  IN_APP = 'IN_APP',
+  PUSH = 'PUSH',
+  SMS = 'SMS',
+  EMAIL = 'EMAIL',
+}
+
+export enum NotificationType {
+  JOB_OFFER = 'JOB_OFFER',
+  JOB_STATUS = 'JOB_STATUS',
+  JOB_ACCEPTED = 'JOB_ACCEPTED',
+  JOB_COMPLETED = 'JOB_COMPLETED',
+  NEW_MESSAGE = 'NEW_MESSAGE',
+  SYSTEM = 'SYSTEM',
+}
+
+export interface INotificationEntity {
+  id: string;
+  userId: string;
+  type: NotificationType | string;
+  channel: NotificationChannel;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | undefined;
+  readAt?: Date | null | undefined;
+  deliveredAt?: Date | null | undefined;
+  failedAt?: Date | null | undefined;
+  failureReason?: string | null | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateNotificationInput {
+  userId: string;
+  type: NotificationType | string;
+  channel: NotificationChannel;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | undefined;
+}
+
+export interface NotificationJobData {
+  notificationId: string;
+  userId: string;
+  channel: NotificationChannel;
+  type: string;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | undefined;
+}
+
+export interface NewMessageSocketPayload {
+  conversationId: string;
+  jobId: string;
+  message: IMessageEntity;
+}
+
+export interface MessageReadSocketPayload {
+  conversationId: string;
+  readerId: string;
+  readAt: string;
+}

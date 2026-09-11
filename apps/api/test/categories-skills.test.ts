@@ -18,8 +18,8 @@ describe('Service Categories and Skills (Phase 1)', () => {
   });
 
   afterAll(async () => {
-    await SkillModel.deleteMany({ slug: /^test-/ });
-    await ServiceCategoryModel.deleteMany({ slug: /^test-/ });
+    await SkillModel.deleteMany({ slug: /^test-(gardening|lawn|hedge)/ });
+    await ServiceCategoryModel.deleteMany({ slug: /^test-(gardening|lawn|hedge)/ });
     await disconnectMongoDB();
   });
 

@@ -6,6 +6,9 @@ import { customerRoutes } from '../modules/customer-profiles/customer-profile.ro
 import { jobRoutes } from '../modules/jobs/job.routes.js';
 import { offerRoutes } from '../modules/job-offers/job-offer.routes.js';
 import { getWorkerOffers } from '../modules/job-offers/job-offer.controller.js';
+import { conversationRoutes } from '../modules/conversations/conversation.routes.js';
+import { messageRoutes } from '../modules/messages/message.routes.js';
+import { notificationRoutes } from '../modules/notifications/notification.routes.js';
 import { authenticate, requireRole } from '../middlewares/auth.middleware.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
@@ -45,6 +48,15 @@ export function createApiRouter(): Router {
 
   // Job offer endpoints under /api/v1/offers (Phase 5)
   apiV1Router.use('/offers', offerRoutes);
+
+  // Conversation endpoints under /api/v1 (e.g. /jobs/:jobId/conversation) (Phase 7)
+  apiV1Router.use('/', conversationRoutes);
+
+  // Message endpoints under /api/v1/conversations (Phase 7)
+  apiV1Router.use('/conversations', messageRoutes);
+
+  // Notification endpoints under /api/v1/notifications (Phase 7)
+  apiV1Router.use('/notifications', notificationRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);

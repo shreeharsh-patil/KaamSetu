@@ -7,6 +7,9 @@ import { SessionModel } from '../modules/sessions/session.model.js';
 import { JobModel } from '../modules/jobs/job.model.js';
 import { JobEventModel } from '../modules/job-events/job-event.model.js';
 import { JobOfferModel } from '../modules/job-offers/job-offer.model.js';
+import { ConversationModel } from '../modules/conversations/conversation.model.js';
+import { MessageModel } from '../modules/messages/message.model.js';
+import { NotificationModel } from '../modules/notifications/notification.model.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -26,6 +29,9 @@ export async function ensureIndexes(): Promise<void> {
       JobModel.syncIndexes(),
       JobEventModel.syncIndexes(),
       JobOfferModel.syncIndexes(),
+      ConversationModel.syncIndexes(),
+      MessageModel.syncIndexes(),
+      NotificationModel.syncIndexes(),
     ]);
 
     logger.info('All database indexes synchronized successfully');
