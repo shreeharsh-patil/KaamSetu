@@ -98,8 +98,22 @@ export class JobOfferService {
     }
 
     // Use transaction with atomic conditional updates
-    const result = await withTransaction<AcceptOfferResult>(async (session: ClientSession | null) => {
+    const result = await withTransaction<AcceptOfferResult & { previousJobStatus: JobStatus }>(
+      async (session: ClientSession | null) => {
       const sess = session ?? undefined;
+
+      // 0. Read the job inside the transaction to capture its true pre-transition
+      //    status for the audit event (snapshot-consistent with the update below).
+      const preUpdateJob = await JobModel.findOne({
+        _id: new Types.ObjectId(offer.jobId),
+        deletedAt: null,
+      }).session(sess ?? null).exec();
+
+      if (!preUpdateJob) {
+        throw new NotFoundError('Job not found');
+      }
+
+      const previousJobStatus = preUpdateJob.status as JobStatus;
 
       // 1. Atomic job acquisition: Only succeed if status is OFFERED/MATCHING/OPEN and unassigned
       const assignedJobDoc = await JobModel.findOneAndUpdate(
@@ -131,21 +145,22 @@ export class JobOfferService {
       }
 
       // 3. Withdraw all remaining pending offers for this job
-      await this.jobOfferRepo.withdrawOtherOffersForJob(offer.jobId, offerId, sess);
+      const withdrawnCount = await this.jobOfferRepo.withdrawOtherOffersForJob(offer.jobId, offerId, sess);
 
-      // 4. Log state change event
+      // 4. Log state change event with the real previous state
       await this.jobEventRepo.create(
         {
           jobId: offer.jobId,
           actorId: workerId,
           actorRole: UserRole.WORKER,
           eventType: 'OFFER_ACCEPTED',
-          previousState: JobStatus.OFFERED,
+          previousState: previousJobStatus,
           newState: JobStatus.ACCEPTED,
           metadata: {
             offerId,
             matchScore: offer.matchScore,
             distanceKm: offer.distanceKm,
+            ...(withdrawnCount > 0 && { withdrawnOffersCount: withdrawnCount }),
           },
         },
         sess
@@ -154,6 +169,7 @@ export class JobOfferService {
       return {
         offer: acceptedOffer,
         job: toJobEntity(assignedJobDoc),
+        previousJobStatus,
       };
     });
 
@@ -171,13 +187,13 @@ export class JobOfferService {
     });
     this.realtime.emitToJob(offer.jobId, 'job.status.changed', {
       jobId: offer.jobId,
-      previousStatus: JobStatus.OFFERED,
+      previousStatus: result.previousJobStatus,
       newStatus: JobStatus.ACCEPTED,
       updatedAt: acceptedAt,
     });
     this.realtime.emitToUser(result.job.customerId, 'job.status.changed', {
       jobId: offer.jobId,
-      previousStatus: JobStatus.OFFERED,
+      previousStatus: result.previousJobStatus,
       newStatus: JobStatus.ACCEPTED,
       updatedAt: acceptedAt,
     });

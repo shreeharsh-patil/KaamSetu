@@ -154,9 +154,13 @@ export class TransactionRepository implements ITransactionRepository {
   ): Promise<number> {
     if (!Types.ObjectId.isValid(workerId)) return 0;
 
+    // Sums signed EXPENSE ledger entries (createExpense writes positive,
+    // update/delete write offsetting deltas) so the total matches the sum of
+    // active expense documents. PLATFORM_FEE is intentionally excluded here —
+    // platform fees are platform revenue, not worker out-of-pocket expenses.
     const match: FilterQuery<ITransactionDocument> = {
       workerId: new Types.ObjectId(workerId),
-      type: { $in: [TransactionType.EXPENSE, TransactionType.PLATFORM_FEE] },
+      type: TransactionType.EXPENSE,
     };
 
     if (startDate || endDate) {

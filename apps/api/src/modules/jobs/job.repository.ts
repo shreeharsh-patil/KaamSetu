@@ -176,8 +176,14 @@ export class MongoJobRepository implements IJobRepository {
       query.customerId = new Types.ObjectId(filters.customerId);
     }
 
-    if (filters.status) {
+    // 'ASSIGNED' is a request-level sentinel that services must rewrite into an
+    // assignedWorkerId filter; defensively ignore it rather than querying it raw.
+    if (filters.status && filters.status !== 'ASSIGNED') {
       query.status = filters.status;
+    }
+
+    if (filters.assignedWorkerId) {
+      query.assignedWorkerId = new Types.ObjectId(filters.assignedWorkerId);
     }
 
     if (filters.categoryId) {

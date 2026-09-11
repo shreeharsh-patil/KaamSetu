@@ -545,10 +545,18 @@ export interface CursorPage<T> {
   hasMore: boolean;
 }
 
+/**
+ * Status filter for job listings. The pseudo-value 'ASSIGNED' is a request-level
+ * sentinel (never persisted) meaning "jobs assigned to the requesting worker";
+ * services must rewrite it into an assignedWorkerId filter before querying.
+ */
+export type JobsListStatusFilter = JobStatus | 'ASSIGNED';
+
 export interface ListJobsFilters {
   customerId?: string | undefined;
-  status?: JobStatus | undefined;
+  status?: JobsListStatusFilter | undefined;
   categoryId?: string | undefined;
+  assignedWorkerId?: string | undefined;
   cursor?: string | undefined;
   limit?: number | undefined;
 }
@@ -1193,14 +1201,20 @@ export interface ListDisputesFilters {
   limit?: number | undefined;
 }
 
-// Audit Logs
+// Audit Logs (Phase 9 & Phase 12)
 export interface IAuditLogEntity {
   id: string;
   actorId: string;
   actorRole: UserRole;
   action: string;
-  targetType: string;
-  targetId: string;
+  resourceType: string;
+  resourceId: string;
+  targetType?: string | undefined; // backward compatibility
+  targetId?: string | undefined;   // backward compatibility
+  before?: Record<string, unknown> | null | undefined;
+  after?: Record<string, unknown> | null | undefined;
+  ipAddress?: string | null | undefined;
+  requestId?: string | null | undefined;
   details?: Record<string, unknown> | undefined;
   createdAt: Date;
 }
@@ -1209,9 +1223,125 @@ export interface ICreateAuditLogInput {
   actorId: string;
   actorRole: UserRole;
   action: string;
-  targetType: string;
-  targetId: string;
+  resourceType?: string | undefined;
+  resourceId?: string | undefined;
+  targetType?: string | undefined; // backward compatibility
+  targetId?: string | undefined;   // backward compatibility
+  before?: Record<string, unknown> | null | undefined;
+  after?: Record<string, unknown> | null | undefined;
+  ipAddress?: string | null | undefined;
+  requestId?: string | null | undefined;
   details?: Record<string, unknown> | undefined;
+}
+
+// ---------------- Phase 12: Admin Backend & Audit System ----------------
+
+export interface IAdminActionContext {
+  actorId: string;
+  actorRole: UserRole;
+  ipAddress?: string | null | undefined;
+  requestId?: string | null | undefined;
+}
+
+export interface IAdminUserListQuery {
+  role?: UserRole | undefined;
+  status?: UserStatus | undefined;
+  search?: string | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface IAdminWorkerListQuery {
+  verificationStatus?: WorkerVerificationStatus | undefined;
+  availabilityStatus?: WorkerAvailability | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface IAdminJobListQuery {
+  status?: JobStatus | undefined;
+  customerId?: string | undefined;
+  workerId?: string | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface IAdminReportListQuery {
+  status?: ReportStatus | undefined;
+  targetType?: ReportTargetType | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface IAdminDisputeListQuery {
+  status?: DisputeStatus | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface IAdminAuditLogListQuery {
+  actorId?: string | undefined;
+  action?: string | undefined;
+  resourceType?: string | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
+export interface ISuspendUserInput {
+  reason: string;
+}
+
+export interface IRestoreUserInput {
+  reason?: string | undefined;
+}
+
+export interface IRoleChangeInput {
+  newRole: UserRole;
+}
+
+export interface IFinancialAdjustmentInput {
+  workerId: string;
+  amountPaise: number;
+  reason: string;
+  referenceId?: string | undefined;
+  jobId?: string | undefined;
+  type?: 'CREDIT' | 'DEBIT' | undefined;
+}
+
+export interface ICreateCategoryAdminInput {
+  name: string;
+  description?: string | undefined;
+  icon?: string | undefined;
+  basePricePaise?: number | undefined;
+}
+
+export interface IUpdateCategoryAdminInput {
+  name?: string | undefined;
+  description?: string | undefined;
+  icon?: string | undefined;
+  basePricePaise?: number | undefined;
+  active?: boolean | undefined;
+}
+
+export interface ICreateSkillAdminInput {
+  categoryId: string;
+  name: string;
+  description?: string | undefined;
+  aliases?: string[] | undefined;
+}
+
+export interface IUpdateSkillAdminInput {
+  name?: string | undefined;
+  description?: string | undefined;
+  aliases?: string[] | undefined;
+  active?: boolean | undefined;
+}
+
+export interface IPaginatedResult<T> {
+  items: T[];
+  nextCursor?: string | null | undefined;
+  hasMore: boolean;
+  total?: number | undefined;
 }
 
 // ---------------- Phase 11: AI & Speech Provider Layer ----------------

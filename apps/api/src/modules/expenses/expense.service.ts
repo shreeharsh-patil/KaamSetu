@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Types } from 'mongoose';
 import {
   TransactionType,
@@ -138,12 +139,39 @@ export class ExpenseService {
       throw new ForbiddenError('You can only update your own expenses');
     }
 
-    const updated = await this.expenseRepo.update(expenseId, workerId, input);
-    if (!updated) {
-      throw new NotFoundError('Expense not found');
-    }
+    // Keep the immutable ledger consistent with the expense document. The ledger
+    // forbids in-place modification, so apply the delta as an ADJUSTMENT entry.
+    return withTransaction(async (session) => {
+      const updated = await this.expenseRepo.update(expenseId, workerId, input, session ?? undefined);
+      if (!updated) {
+        throw new NotFoundError('Expense not found');
+      }
 
-    return updated;
+      if (input.amount !== undefined && input.amount !== existing.amount) {
+        // Append a signed EXPENSE delta so sum(EXPENSE entries) always equals
+        // the expense's current amount (the ledger itself is append-only).
+        const delta = input.amount - existing.amount;
+        await this.transactionRepo.create(
+          {
+            workerId,
+            jobId: updated.jobId,
+            type: TransactionType.EXPENSE,
+            amount: delta, // positive = increased expense, negative = decreased expense
+            currency: updated.currency,
+            referenceId: `expense:${expenseId}:adjust:${randomUUID()}`,
+            metadata: {
+              expenseId,
+              reason: 'EXPENSE_AMOUNT_CORRECTION',
+              previousAmount: existing.amount,
+              newAmount: input.amount,
+            },
+          },
+          session ?? undefined
+        );
+      }
+
+      return updated;
+    });
   }
 
   /**
@@ -163,7 +191,33 @@ export class ExpenseService {
       throw new ForbiddenError('You can only delete your own expenses');
     }
 
-    return this.expenseRepo.softDelete(expenseId, workerId);
+    // Ledger entries are immutable; void the original EXPENSE entry with an
+    // offsetting negative ADJUSTMENT so earnings reflect the deletion.
+    return withTransaction(async (session) => {
+      const deleted = await this.expenseRepo.softDelete(expenseId, workerId, session ?? undefined);
+      if (!deleted) {
+        throw new NotFoundError('Expense not found');
+      }
+
+      await this.transactionRepo.create(
+        {
+          workerId,
+          jobId: existing.jobId,
+          type: TransactionType.EXPENSE,
+          amount: -existing.amount,
+          currency: existing.currency,
+          referenceId: `expense:${expenseId}:void:${randomUUID()}`,
+          metadata: {
+            expenseId,
+            reason: 'EXPENSE_DELETED',
+            voidedAmount: existing.amount,
+          },
+        },
+        session ?? undefined
+      );
+
+      return true;
+    });
   }
 }
 

@@ -318,8 +318,13 @@ export const cancelJobSchema = z.object({
 
 export type CancelJobInputDto = z.infer<typeof cancelJobSchema>;
 
+/**
+ * Status filter accepts all persisted job statuses plus the request-level
+ * sentinel 'ASSIGNED' ("jobs assigned to the requesting worker"). Services must
+ * rewrite 'ASSIGNED' into an assignedWorkerId filter before querying the store.
+ */
 export const listJobsQuerySchema = z.object({
-  status: z.nativeEnum(JobStatus).optional(),
+  status: z.union([z.nativeEnum(JobStatus), z.literal('ASSIGNED')]).optional(),
   categoryId: objectIdSchema.optional(),
   cursor: z.string().max(256).optional(),
   limit: z
@@ -329,6 +334,8 @@ export const listJobsQuerySchema = z.object({
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().min(1).max(50)),
 });
+
+export type ListJobsQueryDto = z.infer<typeof listJobsQuerySchema>;
 
 // ---------------- Job Offers Validation (Phase 5) ----------------
 export const rejectOfferSchema = z.object({
@@ -707,6 +714,121 @@ export const verifyOtpSchema = z.object({
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(10, 'Refresh token is required').optional(),
 });
+
+// ---------------- Admin & Immutable Audit Schemas (Phase 12) ----------------
+
+export const suspendUserSchema = z.object({
+  reason: z.string().min(3, 'Reason must be at least 3 characters').max(500),
+});
+export type SuspendUserInputDto = z.infer<typeof suspendUserSchema>;
+
+export const restoreUserSchema = z.object({
+  reason: z.string().max(500).optional(),
+});
+export type RestoreUserInputDto = z.infer<typeof restoreUserSchema>;
+
+export const changeUserRoleSchema = z.object({
+  newRole: z.enum(['CUSTOMER', 'WORKER', 'SUPPORT', 'ADMIN']),
+});
+export type ChangeUserRoleInputDto = z.infer<typeof changeUserRoleSchema>;
+
+export const rejectVerificationAdminSchema = z.object({
+  rejectionReason: z.string().min(3, 'Rejection reason must be at least 3 characters').max(500),
+});
+export type RejectVerificationAdminInputDto = z.infer<typeof rejectVerificationAdminSchema>;
+
+export const financialAdjustmentSchema = z.object({
+  workerId: objectIdSchema,
+  amountPaise: z.number().int().min(1, 'Amount must be positive integer in paise'),
+  reason: z.string().min(3, 'Reason must be at least 3 characters').max(500),
+  referenceId: z.string().max(100).optional(),
+  jobId: objectIdSchema.optional(),
+  type: z.enum(['CREDIT', 'DEBIT']).optional().default('CREDIT'),
+});
+export type FinancialAdjustmentInputDto = z.infer<typeof financialAdjustmentSchema>;
+
+export const createCategoryAdminSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  description: z.string().max(1000).optional(),
+  icon: z.string().max(200).optional(),
+  basePricePaise: z.number().int().min(0).optional(),
+});
+export type CreateCategoryAdminInputDto = z.infer<typeof createCategoryAdminSchema>;
+
+export const updateCategoryAdminSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  description: z.string().max(1000).optional(),
+  icon: z.string().max(200).optional(),
+  basePricePaise: z.number().int().min(0).optional(),
+  active: z.boolean().optional(),
+});
+export type UpdateCategoryAdminInputDto = z.infer<typeof updateCategoryAdminSchema>;
+
+export const createSkillAdminSchema = z.object({
+  categoryId: objectIdSchema,
+  name: z.string().min(2).max(100),
+  description: z.string().max(1000).optional(),
+  aliases: z.array(z.string().max(100)).optional(),
+});
+export type CreateSkillAdminInputDto = z.infer<typeof createSkillAdminSchema>;
+
+export const updateSkillAdminSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  description: z.string().max(1000).optional(),
+  aliases: z.array(z.string().max(100)).optional(),
+  active: z.boolean().optional(),
+});
+export type UpdateSkillAdminInputDto = z.infer<typeof updateSkillAdminSchema>;
+
+export const adminUserListQuerySchema = z.object({
+  role: z.nativeEnum(UserRole).optional(),
+  status: z.nativeEnum(UserStatus).optional(),
+  search: z.string().max(100).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AdminUserListQueryDto = z.infer<typeof adminUserListQuerySchema>;
+
+export const adminWorkerListQuerySchema = z.object({
+  verificationStatus: z.nativeEnum(WorkerVerificationStatus).optional(),
+  availabilityStatus: z.nativeEnum(WorkerAvailability).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AdminWorkerListQueryDto = z.infer<typeof adminWorkerListQuerySchema>;
+
+export const adminJobListQuerySchema = z.object({
+  status: z.nativeEnum(JobStatus).optional(),
+  customerId: objectIdSchema.optional(),
+  workerId: objectIdSchema.optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AdminJobListQueryDto = z.infer<typeof adminJobListQuerySchema>;
+
+export const adminReportListQuerySchema = z.object({
+  status: z.nativeEnum(ReportStatus).optional(),
+  targetType: z.nativeEnum(ReportTargetType).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AdminReportListQueryDto = z.infer<typeof adminReportListQuerySchema>;
+
+export const adminDisputeListQuerySchema = z.object({
+  status: z.nativeEnum(DisputeStatus).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AdminDisputeListQueryDto = z.infer<typeof adminDisputeListQuerySchema>;
+
+export const adminAuditLogListQuerySchema = z.object({
+  actorId: objectIdSchema.optional(),
+  action: z.string().max(100).optional(),
+  resourceType: z.string().max(100).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AdminAuditLogListQueryDto = z.infer<typeof adminAuditLogListQuerySchema>;
 
 export function formatZodIssues(error: z.ZodError): ErrorDetails[] {
   return error.issues.map((issue) => ({

@@ -35,6 +35,7 @@ import {
   BadRequestError,
   ConflictError,
 } from '../../errors/index.js';
+import { logger } from '../../config/index.js';
 import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
 
 export class JobService {
@@ -182,8 +183,13 @@ export class JobService {
       // Customers can only see their own jobs
       effectiveFilters.customerId = user.id;
     } else if (user.role === UserRole.WORKER) {
-      // Workers by default see OPEN jobs unless filtering their assigned jobs
-      if (!effectiveFilters.status) {
+      // Workers may only ever see OPEN jobs or jobs assigned to them. They can
+      // never list other workers' assignments or other customers' private jobs.
+      if (effectiveFilters.status === 'ASSIGNED') {
+        // Rewrite the request-level sentinel into an assignment filter.
+        effectiveFilters.status = undefined;
+        effectiveFilters.assignedWorkerId = user.id;
+      } else if (!effectiveFilters.status) {
         effectiveFilters.status = JobStatus.OPEN;
       }
     }
@@ -504,22 +510,44 @@ export class JobService {
 
     // Record immutable ledger entry for job revenue if price is set
     if (job.estimatedPrice && job.estimatedPrice > 0) {
-      try {
-        const revenuePaise = Math.round(job.estimatedPrice * 100);
-        await this.transactionRepo.create({
-          workerId,
-          jobId: job.id,
-          type: TransactionType.JOB_REVENUE,
-          amount: revenuePaise,
-          currency: 'INR',
-          referenceId: `job:${job.id}:revenue`,
-          metadata: {
-            jobTitle: job.title,
-            completedAt,
-          },
-        });
-      } catch {
-        // Idempotency: Ignore duplicate if already recorded
+      const referenceId = `job:${job.id}:revenue`;
+      const existingRevenue = await this.transactionRepo.findByReferenceId(referenceId);
+      if (existingRevenue) {
+        logger.debug({ jobId: job.id, referenceId }, 'JOB_REVENUE ledger entry already recorded; skipping');
+      } else {
+        try {
+          await this.transactionRepo.create({
+            workerId,
+            jobId: job.id,
+            type: TransactionType.JOB_REVENUE,
+            amount: Math.round(job.estimatedPrice * 100),
+            currency: 'INR',
+            referenceId,
+            metadata: {
+              jobTitle: job.title,
+              completedAt,
+            },
+          });
+        } catch (err) {
+          // E11000 duplicate key = concurrent completion raced past the check above; safe to ignore.
+          if ((err as { code?: number }).code === 11000) {
+            logger.warn(
+              { jobId: job.id, referenceId },
+              'JOB_REVENUE duplicate key on concurrent completion; ledger already has entry'
+            );
+          } else {
+            logger.error(
+              {
+                err: err instanceof Error ? err.message : String(err),
+                jobId: job.id,
+                workerId,
+                referenceId,
+                amountPaise: Math.round(job.estimatedPrice * 100),
+              },
+              'FAILED to record JOB_REVENUE ledger entry on job completion'
+            );
+          }
+        }
       }
     }
 
