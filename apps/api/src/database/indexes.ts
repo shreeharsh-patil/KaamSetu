@@ -4,6 +4,8 @@ import { SkillModel } from '../modules/skills/skill.model.js';
 import { WorkerProfileModel } from '../modules/worker-profiles/worker-profile.model.js';
 import { CustomerProfileModel } from '../modules/customer-profiles/customer-profile.model.js';
 import { SessionModel } from '../modules/sessions/session.model.js';
+import { JobModel } from '../modules/jobs/job.model.js';
+import { JobEventModel } from '../modules/job-events/job-event.model.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -20,6 +22,8 @@ export async function ensureIndexes(): Promise<void> {
       WorkerProfileModel.syncIndexes(),
       CustomerProfileModel.syncIndexes(),
       SessionModel.syncIndexes(),
+      JobModel.syncIndexes(),
+      JobEventModel.syncIndexes(),
     ]);
 
     logger.info('All database indexes synchronized successfully');

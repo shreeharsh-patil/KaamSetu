@@ -408,6 +408,140 @@ export interface IUpdateCustomerProfileInput {
   deletedAt?: Date | null | undefined;
 }
 
+// ---------------- Job Lifecycle (Phase 4) ----------------
+
+export enum JobStatus {
+  DRAFT = 'DRAFT',
+  OPEN = 'OPEN',
+  MATCHING = 'MATCHING',
+  OFFERED = 'OFFERED',
+  ACCEPTED = 'ACCEPTED',
+  EN_ROUTE = 'EN_ROUTE',
+  ARRIVED = 'ARRIVED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  DISPUTED = 'DISPUTED',
+  EXPIRED = 'EXPIRED',
+}
+
+export enum JobUrgency {
+  FLEXIBLE = 'FLEXIBLE',
+  TODAY = 'TODAY',
+  EMERGENCY = 'EMERGENCY',
+}
+
+/** How the job was input: structured form or AI/voice assisted */
+export type JobSource = 'APP' | 'VOICE' | 'SUPPORT';
+
+export type JobEventType =
+  | 'CREATED'
+  | 'UPDATED'
+  | 'PUBLISHED'
+  | 'CANCELLED'
+  | 'STATUS_CHANGED'
+  | 'WORKER_ASSIGNED';
+
+export interface JobImage {
+  key: string; // storage key / object path (URL is generated at read time)
+  width?: number | undefined;
+  height?: number | undefined;
+  mimeType?: string | undefined;
+}
+
+export interface IJobEntity {
+  id: string;
+  customerId: string;
+  categoryId: string;
+  requiredSkills: string[];
+  title: string;
+  description?: string | null | undefined;
+  source: JobSource;
+  location: { type: 'Point'; coordinates: [number, number] }; // GeoJSON [lng, lat]
+  address: {
+    line: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  preferredTime: Date;
+  urgency: JobUrgency;
+  estimatedPrice?: number | null | undefined;
+  status: JobStatus;
+  assignedWorkerId?: string | null | undefined;
+  images: JobImage[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICreateJobInput {
+  customerId: string;
+  categoryId: string;
+  requiredSkills?: string[] | undefined;
+  title: string;
+  description?: string | null | undefined;
+  source?: JobSource | undefined;
+  location: { type?: 'Point' | undefined; coordinates: [number, number] };
+  address: IJobEntity['address'];
+  preferredTime: Date;
+  urgency: JobUrgency;
+  estimatedPrice?: number | null | undefined;
+  images?: JobImage[] | undefined;
+  publishImmediately?: boolean | undefined;
+}
+
+export interface IUpdateJobInput {
+  title?: string | undefined;
+  description?: string | null | undefined;
+  categoryId?: string | undefined;
+  requiredSkills?: string[] | undefined;
+  preferredTime?: Date | undefined;
+  urgency?: JobUrgency | undefined;
+  estimatedPrice?: number | null | undefined;
+  location?: IJobEntity['location'] | undefined;
+  address?: IJobEntity['address'] | undefined;
+  images?: JobImage[] | undefined;
+}
+
+export interface IJobEventEntity {
+  id: string;
+  jobId: string;
+  actorId: string;
+  actorRole?: string | undefined;
+  eventType: JobEventType;
+  previousState: JobStatus | null;
+  newState: JobStatus | null;
+  reason?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
+  createdAt: Date;
+}
+
+export interface ICreateJobEventInput {
+  jobId: string;
+  actorId: string;
+  actorRole?: string | undefined;
+  eventType: JobEventType;
+  previousState?: JobStatus | null | undefined;
+  newState?: JobStatus | null | undefined;
+  reason?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
+}
+
+/** Cursor-based pagination envelope (opaque base64url cursor) */
+export interface CursorPage<T> {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface ListJobsFilters {
+  customerId?: string | undefined;
+  status?: JobStatus | undefined;
+  categoryId?: string | undefined;
+  cursor?: string | undefined;
+  limit?: number | undefined;
+}
+
 // ---------------- Authentication & Session Entities (Phase 2) ----------------
 
 export interface ISessionEntity {

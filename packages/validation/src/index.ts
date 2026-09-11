@@ -1,6 +1,6 @@
 import { z, ZodSchema } from 'zod';
 import type { ErrorDetails } from '@kaamsetu/types';
-import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel } from '@kaamsetu/types';
+import { UserRole, UserStatus, WorkerAvailability, WorkerVerificationStatus, SkillLevel, JobUrgency, JobStatus } from '@kaamsetu/types';
 
 export const objectIdSchema = z
   .string()
@@ -223,7 +223,96 @@ export const createCustomerProfileSchema = z.object({
 
 export const updateCustomerProfileSchema = createCustomerProfileSchema.partial();
 
-// Auth Validation Schemas (Phase 2)
+// ---------------- Job Lifecycle Validation (Phase 4) ----------------
+
+export const geoPointSchema = z.object({
+  type: z.literal('Point').optional().default('Point'),
+  coordinates: z
+    .tuple([
+      z.number().min(-180).max(180), // Longitude
+      z.number().min(-90).max(90), // Latitude
+    ])
+    .refine(([lng, lat]) => !(lng === 0 && lat === 0), {
+      message: 'Null island (0, 0) is not a valid job location',
+    }),
+});
+
+export const jobImageSchema = z.object({
+  key: z.string().min(1).max(512),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  mimeType: z.string().max(100).optional(),
+});
+
+export const createJobSchema = z.object({
+  categoryId: objectIdSchema,
+  requiredSkills: z.array(objectIdSchema).max(10).optional().default([]),
+  title: z.string().min(5, 'Title must be at least 5 characters').max(120),
+  description: z.string().max(2000).nullable().optional(),
+  source: z.enum(['APP', 'VOICE', 'SUPPORT']).optional().default('APP'),
+  location: geoPointSchema,
+  address: z.object({
+    line: z.string().min(5, 'Address line must be at least 5 characters').max(255),
+    city: z.string().min(2).max(100),
+    state: z.string().min(2).max(100),
+    pincode: z.string().regex(/^\d{6}$/, 'Invalid Indian 6-digit pincode'),
+  }),
+  preferredTime: z.coerce
+    .date()
+    .refine((d) => d.getTime() > Date.now() - 60_000, {
+      message: 'Preferred time must be in the future',
+    })
+    .refine((d) => d.getTime() < Date.now() + 1000 * 60 * 60 * 24 * 90, {
+      message: 'Preferred time cannot be more than 90 days in the future',
+    }),
+  urgency: z.nativeEnum(JobUrgency),
+  estimatedPrice: z.number().positive().max(10_000_000).nullable().optional(),
+  images: z.array(jobImageSchema).max(5).optional().default([]),
+  publishImmediately: z.boolean().optional().default(false),
+});
+
+export type CreateJobInputDto = z.infer<typeof createJobSchema>;
+
+/** Only editable fields; status is deliberately absent — changes go through the state machine. */
+export const updateJobSchema = z
+  .object({
+    title: createJobSchema.shape.title.optional(),
+    description: createJobSchema.shape.description.optional(),
+    categoryId: objectIdSchema.optional(),
+    requiredSkills: createJobSchema.shape.requiredSkills.optional(),
+    preferredTime: createJobSchema.shape.preferredTime.optional(),
+    urgency: createJobSchema.shape.urgency.optional(),
+    estimatedPrice: createJobSchema.shape.estimatedPrice.optional(),
+    location: geoPointSchema.optional(),
+    address: createJobSchema.shape.address.optional(),
+    images: createJobSchema.shape.images.optional(),
+  })
+  .refine(
+    (data) => Object.values(data).some((v) => v !== undefined),
+    { message: 'At least one editable field must be provided' }
+  );
+
+export type UpdateJobInputDto = z.infer<typeof updateJobSchema>;
+
+export const cancelJobSchema = z.object({
+  reason: z.string().min(3, 'Cancellation reason must be at least 3 characters').max(500),
+});
+
+export type CancelJobInputDto = z.infer<typeof cancelJobSchema>;
+
+export const listJobsQuerySchema = z.object({
+  status: z.nativeEnum(JobStatus).optional(),
+  categoryId: objectIdSchema.optional(),
+  cursor: z.string().max(256).optional(),
+  limit: z
+    .string()
+    .optional()
+    .default('20')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().min(1).max(50)),
+});
+
+// ---------------- Authentication Schemas (Phase 2) ----------------
 export const requestOtpSchema = z.object({
   phone: phoneSchema,
 });

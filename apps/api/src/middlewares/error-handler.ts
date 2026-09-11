@@ -32,7 +32,7 @@ export function errorHandlerMiddleware(
     const zodErr = err as ZodError;
     statusCode = 422;
     code = 'VALIDATION_ERROR';
-    message = 'Validation failed';
+    message = zodErr.issues.map((i) => i.message).join('; ') || 'Validation failed';
     details = zodErr.issues.map((issue) => ({
       field: issue.path.join('.'),
       message: issue.message,

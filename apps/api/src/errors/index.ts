@@ -6,3 +6,4 @@ export * from './unauthorized-error.js';
 export * from './forbidden-error.js';
 export * from './conflict-error.js';
 export * from './internal-server-error.js';
+export * from './invalid-state-transition-error.js';

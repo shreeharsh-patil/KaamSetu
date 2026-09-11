@@ -3,6 +3,7 @@ import { healthRoutes } from '../modules/health/health.routes.js';
 import { authRoutes } from '../modules/auth/auth.routes.js';
 import { workerRoutes } from '../modules/worker-profiles/worker-profile.routes.js';
 import { customerRoutes } from '../modules/customer-profiles/customer-profile.routes.js';
+import { jobRoutes } from '../modules/jobs/job.routes.js';
 import { env } from '../config/index.js';
 
 export function createApiRouter(): Router {
@@ -25,6 +26,9 @@ export function createApiRouter(): Router {
 
   // Customer profile endpoints under /api/v1/customers
   apiV1Router.use('/customers', customerRoutes);
+
+  // Job lifecycle endpoints under /api/v1/jobs (Phase 4)
+  apiV1Router.use('/jobs', jobRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);
