@@ -7,6 +7,10 @@ import {
   publishJob,
   cancelJob,
   getJobEvents,
+  startTravel,
+  arrive,
+  startJob,
+  completeJob,
 } from './job.controller.js';
 import { authenticate, requireRole } from '../../middlewares/auth.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
@@ -68,6 +72,38 @@ router.get(
   authenticate(),
   requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.ADMIN),
   asyncHandler(getJobEvents)
+);
+
+// POST /api/v1/jobs/:id/start-travel - Assigned worker starts travel
+router.post(
+  '/:id/start-travel',
+  authenticate(),
+  requireRole(UserRole.WORKER, UserRole.ADMIN),
+  asyncHandler(startTravel)
+);
+
+// POST /api/v1/jobs/:id/arrive - Assigned worker arrives at customer site
+router.post(
+  '/:id/arrive',
+  authenticate(),
+  requireRole(UserRole.WORKER, UserRole.ADMIN),
+  asyncHandler(arrive)
+);
+
+// POST /api/v1/jobs/:id/start - Assigned worker starts work
+router.post(
+  '/:id/start',
+  authenticate(),
+  requireRole(UserRole.WORKER, UserRole.ADMIN),
+  asyncHandler(startJob)
+);
+
+// POST /api/v1/jobs/:id/complete - Assigned worker completes work
+router.post(
+  '/:id/complete',
+  authenticate(),
+  requireRole(UserRole.WORKER, UserRole.ADMIN),
+  asyncHandler(completeJob)
 );
 
 export const jobRoutes: Router = router;

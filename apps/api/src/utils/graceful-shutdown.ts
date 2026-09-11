@@ -24,7 +24,11 @@ export function setupGracefulShutdown(server: Server): void {
     forceExitTimeout.unref();
 
     try {
-      // 1. Stop receiving new HTTP connections
+      // 1. Close Realtime Socket.IO gateway
+      const { realtimeGateway } = await import('../realtime/index.js');
+      await realtimeGateway.close();
+
+      // 2. Stop receiving new HTTP connections
       await new Promise<void>((resolve, reject) => {
         server.close((err) => {
           if (err) {
@@ -36,7 +40,7 @@ export function setupGracefulShutdown(server: Server): void {
         });
       });
 
-      // 2. Disconnect from databases and queues
+      // 3. Disconnect from databases and queues
       await disconnectMongoDB();
       await disconnectRedis();
 

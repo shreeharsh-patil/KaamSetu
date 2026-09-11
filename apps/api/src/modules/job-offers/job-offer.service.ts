@@ -19,6 +19,7 @@ import {
   ConflictError,
   BadRequestError,
 } from '../../errors/index.js';
+import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
 
 export interface AcceptOfferResult {
   offer: IJobOfferEntity;
@@ -29,7 +30,8 @@ export class JobOfferService {
   constructor(
     private readonly jobOfferRepo: IJobOfferRepository = jobOfferRepository,
     private readonly jobRepo: IJobRepository = jobRepository,
-    private readonly jobEventRepo: IJobEventRepository = jobEventRepository
+    private readonly jobEventRepo: IJobEventRepository = jobEventRepository,
+    private readonly realtime: RealtimeGateway = realtimeGateway
   ) {}
 
   /**
@@ -153,6 +155,31 @@ export class JobOfferService {
         offer: acceptedOffer,
         job: toJobEntity(assignedJobDoc),
       };
+    });
+
+    // Emit realtime notifications to job room and customer
+    const acceptedAt = new Date().toISOString();
+    this.realtime.emitToJob(offer.jobId, 'job.accepted', {
+      jobId: offer.jobId,
+      workerId,
+      acceptedAt,
+    });
+    this.realtime.emitToUser(result.job.customerId, 'job.accepted', {
+      jobId: offer.jobId,
+      workerId,
+      acceptedAt,
+    });
+    this.realtime.emitToJob(offer.jobId, 'job.status.changed', {
+      jobId: offer.jobId,
+      previousStatus: JobStatus.OFFERED,
+      newStatus: JobStatus.ACCEPTED,
+      updatedAt: acceptedAt,
+    });
+    this.realtime.emitToUser(result.job.customerId, 'job.status.changed', {
+      jobId: offer.jobId,
+      previousStatus: JobStatus.OFFERED,
+      newStatus: JobStatus.ACCEPTED,
+      updatedAt: acceptedAt,
     });
 
     return result;

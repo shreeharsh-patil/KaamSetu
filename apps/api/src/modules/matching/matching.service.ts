@@ -16,6 +16,7 @@ import { jobEventRepository, IJobEventRepository } from '../job-events/job-event
 import { ScoringService, scoringService, calculateHaversineDistanceKm, CalculatedMatch } from './scoring.service.js';
 import { DEFAULT_MATCHING_CONFIG } from './matching.config.js';
 import { NotFoundError, BadRequestError, ConflictError } from '../../errors/index.js';
+import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
 
 export interface RankedWorkerCandidate {
   worker: IWorkerProfileEntity;
@@ -30,7 +31,8 @@ export class MatchingService {
     private readonly offerRepo: IJobOfferRepository = jobOfferRepository,
     private readonly eventRepo: IJobEventRepository = jobEventRepository,
     private readonly scorer: ScoringService = scoringService,
-    private readonly config: MatchingConfig = DEFAULT_MATCHING_CONFIG
+    private readonly config: MatchingConfig = DEFAULT_MATCHING_CONFIG,
+    private readonly realtime: RealtimeGateway = realtimeGateway
   ) {}
 
   /**
@@ -146,8 +148,14 @@ export class MatchingService {
       });
     }
 
-    // 5. Rank by match score descending
-    eligibleCandidates.sort((a, b) => b.matchScore - a.matchScore);
+    // 5. Rank by match score descending; break ties deterministically by
+    // shorter distance, then by userId so the ordering is stable across runs.
+    eligibleCandidates.sort(
+      (a, b) =>
+        b.matchScore - a.matchScore ||
+        a.distanceKm - b.distanceKm ||
+        a.worker.userId.localeCompare(b.worker.userId)
+    );
 
     return eligibleCandidates;
   }
@@ -228,7 +236,7 @@ export class MatchingService {
       });
     }
 
-    // Log offer created events
+    // Log offer created events and emit realtime notifications to workers
     for (const offer of createdOffers) {
       await this.eventRepo.create({
         jobId,
@@ -242,6 +250,14 @@ export class MatchingService {
           workerId: offer.workerId,
           matchScore: offer.matchScore,
         },
+      });
+
+      this.realtime.emitToUser(offer.workerId, 'job.offer.created', {
+        offerId: offer.id,
+        jobId: offer.jobId,
+        workerId: offer.workerId,
+        matchScore: offer.matchScore,
+        expiresAt: offer.expiresAt.toISOString(),
       });
     }
 

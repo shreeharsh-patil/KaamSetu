@@ -1,7 +1,9 @@
+import http from 'http';
 import { app } from './app.js';
 import { env, logger, APP_CONFIG } from './config/index.js';
 import { connectMongoDB } from './database/mongodb.js';
 import { connectRedis } from './database/redis.js';
+import { realtimeGateway } from './realtime/index.js';
 import { setupGracefulShutdown } from './utils/graceful-shutdown.js';
 
 async function bootstrap(): Promise<void> {
@@ -42,8 +44,11 @@ async function bootstrap(): Promise<void> {
     }
   }
 
-  // 3. Start HTTP Server
-  const server = app.listen(env.PORT, () => {
+  // 3. Create HTTP Server & Initialize Socket.IO Realtime Gateway
+  const httpServer = http.createServer(app);
+  realtimeGateway.initialize(httpServer, env.CORS_ORIGINS);
+
+  httpServer.listen(env.PORT, () => {
     logger.info(
       {
         url: `http://localhost:${env.PORT}`,
@@ -56,7 +61,7 @@ async function bootstrap(): Promise<void> {
   });
 
   // 4. Setup graceful shutdown handlers
-  setupGracefulShutdown(server);
+  setupGracefulShutdown(httpServer);
 }
 
 // Execute bootstrap

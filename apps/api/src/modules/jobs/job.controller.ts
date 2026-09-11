@@ -130,3 +130,55 @@ export async function getJobEvents(req: Request, res: Response): Promise<void> {
 
   res.status(200).json({ success: true, data: { events } });
 }
+
+/** POST /api/v1/jobs/:id/start-travel — assigned worker starts traveling */
+export async function startTravel(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+  const rawId = req.params['id'];
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('Invalid or missing job ID');
+  }
+
+  const job = await jobService.startTravel(id, actor.id);
+  res.status(200).json({ success: true, data: { job } });
+}
+
+/** POST /api/v1/jobs/:id/arrive — assigned worker arrives at job location */
+export async function arrive(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+  const rawId = req.params['id'];
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('Invalid or missing job ID');
+  }
+
+  const job = await jobService.arrive(id, actor.id);
+  res.status(200).json({ success: true, data: { job } });
+}
+
+/** POST /api/v1/jobs/:id/start — assigned worker starts work */
+export async function startJob(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+  const rawId = req.params['id'];
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('Invalid or missing job ID');
+  }
+
+  const job = await jobService.startJob(id, actor.id);
+  res.status(200).json({ success: true, data: { job } });
+}
+
+/** POST /api/v1/jobs/:id/complete — assigned worker completes work */
+export async function completeJob(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+  const rawId = req.params['id'];
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('Invalid or missing job ID');
+  }
+
+  const job = await jobService.completeJob(id, actor.id);
+  res.status(200).json({ success: true, data: { job } });
+}

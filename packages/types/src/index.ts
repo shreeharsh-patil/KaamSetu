@@ -633,11 +633,39 @@ export interface WorkerLocationUpdatePayload {
   coordinates: [number, number]; // [lng, lat]
 }
 
+export interface WorkerLocationUpdatedPayload {
+  jobId: string;
+  workerId: string;
+  coordinates: [number, number]; // [lng, lat]
+  updatedAt: string;
+}
+
 export interface JobStatusChangedPayload {
   jobId: string;
   previousStatus: JobStatus;
   newStatus: JobStatus;
   updatedAt: string;
+}
+
+export interface JobOfferCreatedPayload {
+  offerId: string;
+  jobId: string;
+  workerId: string;
+  matchScore: number;
+  expiresAt: string;
+}
+
+export interface JobAcceptedPayload {
+  jobId: string;
+  workerId: string;
+  acceptedAt: string;
+}
+
+export interface JobCompletedPayload {
+  jobId: string;
+  workerId: string;
+  customerId: string;
+  completedAt: string;
 }
 
 // ---------------- Authentication & Session Entities (Phase 2) ----------------

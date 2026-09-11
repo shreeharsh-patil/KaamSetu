@@ -121,7 +121,10 @@ export class ScoringService {
       priceScore: Math.round(priceScore * 100) / 100,
     };
 
-    // Calculate final weighted score
+    // Calculate final weighted score from the rounded sub-scores (so the
+    // breakdown always sums to the displayed match score), then quantize to
+    // 0.01 so near-identical candidates produce a deterministic tie-break
+    // order via distance instead of an arbitrary sort order.
     const totalScore =
       breakdown.skillScore * weights.skill +
       breakdown.distanceScore * weights.distance +

@@ -30,13 +30,15 @@ import {
   BadRequestError,
   ConflictError,
 } from '../../errors/index.js';
+import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
 
 export class JobService {
   constructor(
     private readonly jobRepo: IJobRepository = jobRepository,
     private readonly jobEventRepo: IJobEventRepository = jobEventRepository,
     private readonly categoryRepo: IServiceCategoryRepository = serviceCategoryRepository,
-    private readonly skillRepo: ISkillRepository = skillRepository
+    private readonly skillRepo: ISkillRepository = skillRepository,
+    private readonly realtime: RealtimeGateway = realtimeGateway
   ) {}
 
   /**
@@ -321,6 +323,180 @@ export class JobService {
   ): Promise<IJobEventEntity[]> {
     await this.getJobById(jobId, user);
     return this.jobEventRepo.findByJobId(jobId);
+  }
+
+  /**
+   * Worker starts travel to customer site: ACCEPTED -> EN_ROUTE.
+   */
+  async startTravel(jobId: string, workerId: string): Promise<IJobEntity> {
+    const job = await this.jobRepo.findById(jobId);
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    if (job.assignedWorkerId !== workerId) {
+      throw new ForbiddenError('Only the assigned worker can start travel for this job');
+    }
+
+    JobStateMachine.validateTransition(job.status, JobStatus.EN_ROUTE);
+
+    const updated = await this.jobRepo.updateStatus(jobId, JobStatus.EN_ROUTE);
+    if (!updated) {
+      throw new NotFoundError('Job not found');
+    }
+
+    await this.jobEventRepo.create({
+      jobId: job.id,
+      actorId: workerId,
+      actorRole: UserRole.WORKER,
+      eventType: 'TRAVEL_STARTED',
+      previousState: job.status,
+      newState: JobStatus.EN_ROUTE,
+    });
+
+    const payload = {
+      jobId: job.id,
+      previousStatus: job.status,
+      newStatus: JobStatus.EN_ROUTE,
+      updatedAt: new Date().toISOString(),
+    };
+    this.realtime.emitToJob(job.id, 'job.status.changed', payload);
+    this.realtime.emitToUser(job.customerId, 'job.status.changed', payload);
+
+    return updated;
+  }
+
+  /**
+   * Worker arrives at customer location: EN_ROUTE -> ARRIVED.
+   */
+  async arrive(jobId: string, workerId: string): Promise<IJobEntity> {
+    const job = await this.jobRepo.findById(jobId);
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    if (job.assignedWorkerId !== workerId) {
+      throw new ForbiddenError('Only the assigned worker can update arrival for this job');
+    }
+
+    JobStateMachine.validateTransition(job.status, JobStatus.ARRIVED);
+
+    const updated = await this.jobRepo.updateStatus(jobId, JobStatus.ARRIVED);
+    if (!updated) {
+      throw new NotFoundError('Job not found');
+    }
+
+    await this.jobEventRepo.create({
+      jobId: job.id,
+      actorId: workerId,
+      actorRole: UserRole.WORKER,
+      eventType: 'WORKER_ARRIVED',
+      previousState: job.status,
+      newState: JobStatus.ARRIVED,
+    });
+
+    const payload = {
+      jobId: job.id,
+      previousStatus: job.status,
+      newStatus: JobStatus.ARRIVED,
+      updatedAt: new Date().toISOString(),
+    };
+    this.realtime.emitToJob(job.id, 'job.status.changed', payload);
+    this.realtime.emitToUser(job.customerId, 'job.status.changed', payload);
+
+    return updated;
+  }
+
+  /**
+   * Worker begins service execution: ARRIVED -> IN_PROGRESS.
+   */
+  async startJob(jobId: string, workerId: string): Promise<IJobEntity> {
+    const job = await this.jobRepo.findById(jobId);
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    if (job.assignedWorkerId !== workerId) {
+      throw new ForbiddenError('Only the assigned worker can start work on this job');
+    }
+
+    JobStateMachine.validateTransition(job.status, JobStatus.IN_PROGRESS);
+
+    const updated = await this.jobRepo.updateStatus(jobId, JobStatus.IN_PROGRESS);
+    if (!updated) {
+      throw new NotFoundError('Job not found');
+    }
+
+    await this.jobEventRepo.create({
+      jobId: job.id,
+      actorId: workerId,
+      actorRole: UserRole.WORKER,
+      eventType: 'JOB_STARTED',
+      previousState: job.status,
+      newState: JobStatus.IN_PROGRESS,
+    });
+
+    const payload = {
+      jobId: job.id,
+      previousStatus: job.status,
+      newStatus: JobStatus.IN_PROGRESS,
+      updatedAt: new Date().toISOString(),
+    };
+    this.realtime.emitToJob(job.id, 'job.status.changed', payload);
+    this.realtime.emitToUser(job.customerId, 'job.status.changed', payload);
+
+    return updated;
+  }
+
+  /**
+   * Worker completes service execution: IN_PROGRESS -> COMPLETED.
+   */
+  async completeJob(jobId: string, workerId: string): Promise<IJobEntity> {
+    const job = await this.jobRepo.findById(jobId);
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    if (job.assignedWorkerId !== workerId) {
+      throw new ForbiddenError('Only the assigned worker can complete this job');
+    }
+
+    JobStateMachine.validateTransition(job.status, JobStatus.COMPLETED);
+
+    const updated = await this.jobRepo.updateStatus(jobId, JobStatus.COMPLETED);
+    if (!updated) {
+      throw new NotFoundError('Job not found');
+    }
+
+    await this.jobEventRepo.create({
+      jobId: job.id,
+      actorId: workerId,
+      actorRole: UserRole.WORKER,
+      eventType: 'JOB_COMPLETED',
+      previousState: job.status,
+      newState: JobStatus.COMPLETED,
+    });
+
+    const completedAt = new Date().toISOString();
+    const statusPayload = {
+      jobId: job.id,
+      previousStatus: job.status,
+      newStatus: JobStatus.COMPLETED,
+      updatedAt: completedAt,
+    };
+    this.realtime.emitToJob(job.id, 'job.status.changed', statusPayload);
+    this.realtime.emitToUser(job.customerId, 'job.status.changed', statusPayload);
+
+    const completedPayload = {
+      jobId: job.id,
+      workerId,
+      customerId: job.customerId,
+      completedAt,
+    };
+    this.realtime.emitToJob(job.id, 'job.completed', completedPayload);
+    this.realtime.emitToUser(job.customerId, 'job.completed', completedPayload);
+
+    return updated;
   }
 }
 
