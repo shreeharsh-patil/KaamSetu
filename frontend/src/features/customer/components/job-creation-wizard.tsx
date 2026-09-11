@@ -193,9 +193,9 @@ export function JobCreationWizard() {
                   key={cat.id}
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, category: cat.id }))}
-                  className={`flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all ${
+                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                     isSelected
-                      ? "border-primary bg-primary/10 text-primary shadow-xs"
+                      ? "border-primary bg-primary/10 text-primary shadow-xs font-bold"
                       : "border-border hover:bg-muted/40 text-foreground"
                   }`}
                 >
@@ -206,7 +206,7 @@ export function JobCreationWizard() {
             })}
           </CardContent>
           <CardFooter className="justify-end">
-            <Button onClick={() => setStep(2)}>
+            <Button onClick={() => setStep(2)} className="rounded-xl font-bold">
               Next: Describe Problem <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardFooter>
@@ -215,7 +215,7 @@ export function JobCreationWizard() {
 
       {/* Step 2: Title & Description & Urgency */}
       {step === 2 && (
-        <Card>
+        <Card className="rounded-3xl bazaar-card-shadow">
           <CardHeader>
             <CardTitle>Describe Your Requirement</CardTitle>
             <CardDescription>
@@ -229,6 +229,7 @@ export function JobCreationWizard() {
                 placeholder="e.g., Kitchen sink pipe leaking under cabinet"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                className="rounded-xl"
               />
             </div>
 
@@ -243,12 +244,13 @@ export function JobCreationWizard() {
                 placeholder="Describe what needs repair, materials available or required, floor number, or any specific instructions..."
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                className="rounded-xl"
               />
             </div>
 
             <div className="space-y-2 pt-2">
               <label className="text-sm font-medium text-foreground">Urgency Level</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2.5">
                 {(
                   [
                     { id: "STANDARD", label: "Standard", desc: "Regular service" },
@@ -260,14 +262,14 @@ export function JobCreationWizard() {
                     key={u.id}
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, urgency: u.id }))}
-                    className={`p-3 rounded-lg border text-left transition-all ${
+                    className={`p-3.5 rounded-2xl border text-left transition-all ${
                       formData.urgency === u.id
-                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
                         : "border-border text-foreground hover:bg-muted/40"
                     }`}
                   >
                     <div className="text-xs font-bold">{u.label}</div>
-                    <div className="text-[10px] text-muted-foreground">{u.desc}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{u.desc}</div>
                   </button>
                 ))}
               </div>
@@ -450,17 +452,17 @@ export function JobCreationWizard() {
                 key={t.id}
                 type="button"
                 onClick={() => setFormData((prev) => ({ ...prev, timingOption: t.id }))}
-                className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all ${
+                className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${
                   formData.timingOption === t.id
-                    ? "border-primary bg-primary/10 text-primary shadow-xs"
+                    ? "border-primary bg-primary/10 text-primary font-bold shadow-xs"
                     : "border-border text-foreground hover:bg-muted/40"
                 }`}
               >
                 <div>
-                  <h4 className="font-semibold text-sm">{t.title}</h4>
-                  <p className="text-xs text-muted-foreground">{t.desc}</p>
+                  <h4 className="font-bold text-sm">{t.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
                 </div>
-                {formData.timingOption === t.id && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                {formData.timingOption === t.id && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />}
               </button>
             ))}
 
@@ -471,15 +473,16 @@ export function JobCreationWizard() {
                   type="date"
                   value={formData.scheduledAt}
                   onChange={(e) => setFormData((prev) => ({ ...prev, scheduledAt: e.target.value }))}
+                  className="rounded-xl"
                 />
               </div>
             )}
           </CardContent>
           <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(4)}>
+            <Button variant="outline" onClick={() => setStep(4)} className="rounded-xl">
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button onClick={() => setStep(6)}>
+            <Button onClick={() => setStep(6)} className="rounded-xl font-bold">
               Next: Review & Publish <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardFooter>
@@ -488,7 +491,7 @@ export function JobCreationWizard() {
 
       {/* Step 6: Review & Publish */}
       {step === 6 && (
-        <Card>
+        <Card className="rounded-3xl bazaar-card-shadow">
           <CardHeader>
             <CardTitle>Review & Publish Request</CardTitle>
             <CardDescription>
@@ -496,7 +499,7 @@ export function JobCreationWizard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-xl bg-muted/40 border space-y-3">
+            <div className="p-5 rounded-2xl bg-secondary/80 border border-border/70 space-y-3">
               <div className="flex justify-between items-start">
                 <div>
                   <Badge variant="outline" className="uppercase text-[10px] tracking-wider mb-1">

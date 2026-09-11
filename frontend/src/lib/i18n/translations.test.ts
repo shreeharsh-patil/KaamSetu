@@ -3,9 +3,9 @@ import { translations } from "./translations";
 import { SUPPORTED_LOCALES } from "./types";
 
 describe("i18n translation dictionaries", () => {
-  it("contains all 4 supported locales", () => {
+  it("contains all 8 supported locales", () => {
     const localeCodes = SUPPORTED_LOCALES.map((l) => l.code);
-    expect(localeCodes).toEqual(["en", "hi", "mr", "kok"]);
+    expect(localeCodes).toEqual(["en", "hi", "mr", "kok", "ta", "te", "gu", "bn"]);
   });
 
   it("ensures critical keys exist across all languages", () => {
@@ -20,9 +20,12 @@ describe("i18n translation dictionaries", () => {
       "worker.available",
       "category.plumbing",
       "status.COMPLETED",
+      "home.heroTitle",
+      "home.roleHire",
+      "home.roleEarn",
     ];
 
-    for (const locale of ["en", "hi", "mr", "kok"] as const) {
+    for (const locale of ["en", "hi", "mr", "kok", "ta", "te", "gu", "bn"] as const) {
       const dict = translations[locale];
       expect(dict).toBeDefined();
       if (dict) {

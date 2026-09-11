@@ -88,77 +88,124 @@ function WorkerProfileContent({ workerId }: { workerId: string }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Back button */}
+    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+      {/* Back button & Title Bar */}
       <div className="flex items-center justify-between">
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" className="rounded-xl">
           <Link href="/customer">
             <ArrowLeft className="mr-1 h-4 w-4" /> Back
           </Link>
         </Button>
-        {reviewJobId && (
-          <Button size="sm" onClick={() => setReviewModalOpen(true)}>
-            <Star className="mr-1 h-4 w-4 fill-primary-foreground" /> Rate This Worker
+        <span className="font-bold text-sm text-foreground">Worker Profile</span>
+        {reviewJobId ? (
+          <Button size="sm" className="rounded-xl" onClick={() => setReviewModalOpen(true)}>
+            <Star className="mr-1 h-4 w-4 fill-primary-foreground" /> Rate Pro
           </Button>
+        ) : (
+          <div className="w-16" />
         )}
       </div>
 
-      {/* Profile Header Card */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <Avatar className="h-20 w-20 border-2 border-primary/20 shrink-0">
+      {/* Profile Avatar & Hero Information (Matching Figma Screen 4) */}
+      <Card className="rounded-3xl p-6 text-center space-y-4 bazaar-card-shadow">
+        <div className="flex flex-col items-center">
+          <div className="relative">
+            <Avatar className="h-24 w-24 border-4 border-primary/20 shrink-0 shadow-sm">
               <AvatarImage src={worker.avatarUrl} alt={worker.name} />
-              <AvatarFallback className="font-bold text-xl">
+              <AvatarFallback className="font-extrabold text-2xl bg-primary/10 text-primary">
                 {worker.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-
-            <div className="space-y-1 flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-foreground">{worker.name}</h1>
-                {worker.isVerified && (
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 flex items-center gap-1 text-[11px]">
-                    <ShieldCheck className="h-3 w-3" /> Verified Pro
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground font-medium">{worker.category}</p>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-                <span className="flex items-center gap-1 font-semibold text-foreground">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  {worker.averageRating.toFixed(1)} ({worker.totalReviews} reviews)
-                </span>
-                <span>•</span>
-                <span>{worker.completedJobsCount} jobs completed</span>
-              </div>
-            </div>
+            <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-background" />
           </div>
 
-          {worker.bio && (
-            <p className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
+          <div className="mt-3 space-y-1">
+            <div className="flex items-center justify-center gap-1.5">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-foreground">{worker.name}</h1>
+              {worker.isVerified && (
+                <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+              )}
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-muted-foreground">{worker.category}</p>
+            <p className="text-xs text-muted-foreground">📍 {worker.approximateLocality}, Mumbai</p>
+          </div>
+        </div>
+
+        {/* 3 Metric Stats Cards Side by Side (Matching Screen 4) */}
+        <div className="grid grid-cols-3 gap-3 pt-2">
+          <div className="p-3 rounded-2xl bg-secondary/80 border border-border/70 text-center">
+            <div className="flex items-center justify-center gap-1 text-sm font-extrabold text-foreground">
+              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+              <span>{worker.averageRating.toFixed(1)}</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground block mt-0.5 font-medium">
+              {worker.totalReviews} Reviews
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-secondary/80 border border-border/70 text-center">
+            <span className="text-sm font-extrabold text-foreground block">
+              {worker.completedJobsCount}+
+            </span>
+            <span className="text-[10px] text-muted-foreground block mt-0.5 font-medium">
+              Jobs Done
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-secondary/80 border border-border/70 text-center">
+            <span className="text-sm font-extrabold text-foreground block">
+              {worker.experienceYears}+ Yrs
+            </span>
+            <span className="text-[10px] text-muted-foreground block mt-0.5 font-medium">
+              Experience
+            </span>
+          </div>
+        </div>
+
+        {/* Bio */}
+        {worker.bio && (
+          <div className="text-left pt-2">
+            <span className="text-xs font-bold text-foreground block mb-1">About</span>
+            <p className="text-xs text-muted-foreground leading-relaxed bg-muted/40 p-3.5 rounded-2xl">
               {worker.bio}
             </p>
-          )}
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t text-xs">
-            <div>
-              <span className="text-muted-foreground block text-[11px]">Experience</span>
-              <span className="font-semibold text-foreground">{worker.experienceYears} Years</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block text-[11px]">Service Locality</span>
-              <span className="font-semibold text-foreground">{worker.approximateLocality}</span>
-            </div>
-            {worker.basePricing && (
-              <div>
-                <span className="text-muted-foreground block text-[11px]">Standard Visit Fee</span>
-                <PriceDisplay amount={worker.basePricing.visitCharge} className="font-semibold text-foreground" />
-              </div>
-            )}
           </div>
-        </CardContent>
+        )}
+
+        {/* Verified Badges Row */}
+        <div className="pt-2 border-t border-border/60">
+          <span className="text-[11px] font-bold text-foreground block mb-2 text-left">Verified Credentials</span>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Aadhaar KYC Verified</span>
+            </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-[11px] font-bold border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+              <span>Police Background Checked</span>
+            </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-50 text-purple-800 text-[11px] font-bold border border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
+              <Star className="h-3.5 w-3.5 text-purple-600" />
+              <span>Skills Certified</span>
+            </span>
+          </div>
+        </div>
       </Card>
+
+      {/* Floating Bottom Booking Bar (Matching Figma Screen 4) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t border-border/80 p-3 shadow-lg">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+          <div>
+            <span className="text-[10px] text-muted-foreground block">Estimated Rate</span>
+            <PriceDisplay amount={worker.basePricing?.visitCharge || 350} rateType="hourly" className="font-extrabold text-foreground" />
+          </div>
+          <Button asChild size="lg" className="rounded-xl px-6 font-bold shadow-xs">
+            <Link href={`/customer/jobs/new?workerId=${worker.id}`}>
+              Book {worker.name.split(" ")[0]} Now
+            </Link>
+          </Button>
+        </div>
+      </div>
 
       {/* Skills & Languages */}
       <Card>

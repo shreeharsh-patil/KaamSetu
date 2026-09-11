@@ -15,7 +15,7 @@ import {
   Star,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -79,63 +79,89 @@ export default function CustomerJobDetailPage({
 
   return (
     <Container className="py-6 max-w-2xl space-y-6">
-      {/* Top Header */}
+      {/* Top Header with Back and Title */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/customer/jobs">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">{job.title}</h1>
-              <StatusBadge status={job.status} />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Reference #{job._id.slice(-8)} • {job.category}
-            </p>
-          </div>
+        <Button asChild variant="ghost" size="sm" className="rounded-xl">
+          <Link href="/customer/jobs">
+            <ArrowLeft className="mr-1 h-4 w-4" /> Bookings
+          </Link>
+        </Button>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={job.status} />
+          <span className="text-xs font-mono text-muted-foreground">
+            REF #{job._id.slice(-8).toUpperCase()}
+          </span>
         </div>
       </div>
 
-      {/* Progress Timeline */}
-      <Card className="p-4">
+      {/* Booking Confirmed Hero (Matching Screen 6) */}
+      <div className="text-center space-y-3 py-2">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-8 ring-emerald-50 dark:bg-emerald-950 dark:ring-emerald-900/40">
+          <ShieldCheck className="h-8 w-8" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+            {isCompleted ? "Service Completed!" : "Booking Confirmed!"}
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+            {isCompleted
+              ? "All work has been completed and verified with completion OTP."
+              : "Your service request has been assigned. Your professional is en route."}
+          </p>
+        </div>
+      </div>
+
+      {/* Progress Timeline Stepper */}
+      <Card className="p-4 rounded-2xl border-border/80 bazaar-card-shadow">
         <JobTimeline status={job.status} />
       </Card>
 
-      {/* Security OTP Verification Card */}
+      {/* Security OTP Verification Card (Matching Figma Screen 6) */}
       {!isCompleted && !isCancelled && (
-        <Card className="border-primary/40 bg-primary/5">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2 text-primary">
-              <KeyRound className="h-5 w-5" />
-              <CardTitle className="text-base">Service Security Verification</CardTitle>
+        <Card className="border-primary/30 hero-navy-card text-white rounded-3xl p-5 sm:p-6 shadow-md">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-emerald-400" />
+                <span className="font-extrabold text-sm sm:text-base text-white">
+                  {job.status === "ARRIVED" ? "Start Job OTP" : "Completion Escrow OTP"}
+                </span>
+              </div>
+              <Badge variant="success" className="text-[10px] py-0.5 px-2 font-bold">
+                Security Code
+              </Badge>
             </div>
-            <CardDescription className="text-xs">
+
+            <p className="text-xs text-white/80 leading-relaxed">
               {job.status === "ARRIVED"
                 ? "Share this Start OTP with the professional when they arrive at your location:"
                 : "Share this Completion OTP ONLY when all work is finished to your satisfaction:"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex items-center justify-center p-4 bg-background rounded-xl border-2 border-dashed border-primary/40">
-              <span className="font-mono text-3xl font-extrabold tracking-widest text-primary">
-                {job.status === "ARRIVED" ? "5 8 2 1" : "9 4 3 6"}
-              </span>
-            </div>
-            <p className="text-[11px] text-muted-foreground text-center mt-2">
-              Do not share this code over phone or before inspection.
             </p>
-          </CardContent>
+
+            {/* 4 Digit Box Display */}
+            <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-2">
+              {(job.status === "ARRIVED" ? ["5", "8", "2", "1"] : ["9", "4", "3", "6"]).map((digit, i) => (
+                <div
+                  key={i}
+                  className="flex h-14 w-12 sm:h-16 sm:w-14 items-center justify-center rounded-2xl bg-white text-[#162044] font-mono text-2xl sm:text-3xl font-extrabold shadow-sm border border-white/40"
+                >
+                  {digit}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-white/70 text-center font-medium">
+              🔒 Do not share this OTP over the phone or before in-person inspection.
+            </p>
+          </div>
         </Card>
       )}
 
       {/* Assigned Professional Card */}
       {job.worker ? (
-        <Card>
+        <Card className="rounded-2xl border-border/80 bazaar-card-shadow">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Assigned Professional</CardTitle>
+            <CardTitle className="text-base font-bold">Assigned Professional</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">

@@ -19,7 +19,7 @@ interface AuthContextType {
   isLoading: boolean;
   pendingPhone: string | null;
   setPendingPhone: (phone: string | null) => void;
-  requestOtp: (phone: string) => Promise<RequestOtpResponse>;
+  requestOtp: (phone: string, rolePreference?: "customer" | "worker") => Promise<RequestOtpResponse>;
   verifyOtp: (phone: string, otp: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Silent initial session hydration via HttpOnly cookie
+  // Initial session hydration
   useEffect(() => {
     let isSubscribed = true;
 
@@ -77,11 +77,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isSubscribed && refreshData?.accessToken) {
           handleUpdateToken(refreshData.accessToken);
           const userData = await apiClient<User>(API_ENDPOINTS.USERS.ME);
-          if (isSubscribed) {
+          if (isSubscribed && userData) {
             setUser(userData);
+          }
+        } else if (typeof window !== "undefined") {
+          const savedUser = localStorage.getItem("kaamsetu_user");
+          const savedToken = localStorage.getItem("kaamsetu_token");
+          if (savedUser && savedToken) {
+            try {
+              const parsed = JSON.parse(savedUser) as User;
+              if (isSubscribed) {
+                handleUpdateToken(savedToken);
+                setUser(parsed);
+              }
+            } catch {
+              localStorage.removeItem("kaamsetu_user");
+              localStorage.removeItem("kaamsetu_token");
+            }
           }
         }
       } catch {
+        if (typeof window !== "undefined") {
+          const savedUser = localStorage.getItem("kaamsetu_user");
+          const savedToken = localStorage.getItem("kaamsetu_token");
+          if (savedUser && savedToken) {
+            try {
+              const parsed = JSON.parse(savedUser) as User;
+              if (isSubscribed) {
+                handleUpdateToken(savedToken);
+                setUser(parsed);
+              }
+              return;
+            } catch {
+              localStorage.removeItem("kaamsetu_user");
+              localStorage.removeItem("kaamsetu_token");
+            }
+          }
+        }
         if (isSubscribed) {
           handleUpdateToken(null);
           setUser(null);
@@ -108,7 +140,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [handleUpdateToken]);
 
   const requestOtp = useCallback(
-    async (phone: string): Promise<RequestOtpResponse> => {
+    async (phone: string, rolePreference?: "customer" | "worker"): Promise<RequestOtpResponse> => {
+      setPendingPhone(phone);
+      if (rolePreference && typeof window !== "undefined") {
+        sessionStorage.setItem("kaamsetu_pending_role", rolePreference);
+      }
       const res = await apiClient<RequestOtpResponse>(
         API_ENDPOINTS.AUTH.REQUEST_OTP,
         {
@@ -117,7 +153,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           skipAuth: true,
         }
       );
-      setPendingPhone(phone);
       return res;
     },
     [setPendingPhone]
@@ -141,6 +176,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       handleUpdateToken(res.accessToken);
       setUser(res.user);
       setPendingPhone(null);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("kaamsetu_user", JSON.stringify(res.user));
+        localStorage.setItem("kaamsetu_token", res.accessToken);
+        sessionStorage.removeItem("kaamsetu_pending_role");
+      }
       return res.user;
     },
     [handleUpdateToken, setPendingPhone]
@@ -151,10 +191,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiClient(API_ENDPOINTS.AUTH.LOGOUT, {
         method: "POST",
       });
+    } catch {
+      // Ignore network errors on logout
     } finally {
       handleUpdateToken(null);
       setUser(null);
       setPendingPhone(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("kaamsetu_user");
+        localStorage.removeItem("kaamsetu_token");
+        sessionStorage.removeItem("kaamsetu_pending_phone");
+        sessionStorage.removeItem("kaamsetu_pending_role");
+      }
     }
   }, [handleUpdateToken, setPendingPhone]);
 

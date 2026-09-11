@@ -20,11 +20,11 @@ import {
 import { Container } from "@/components/layout/container";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { jobsApi } from "@/features/jobs/api";
 import { QUERY_KEYS } from "@/lib/api/query-keys";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 const CATEGORIES = [
   { id: "plumbing", name: "Plumbing", icon: Wrench, color: "text-blue-600 bg-blue-50" },
@@ -37,6 +37,7 @@ const CATEGORIES = [
 ];
 
 export default function CustomerHomePage() {
+  const { t } = useTranslation();
   const { data: jobs, isLoading } = useQuery({
     queryKey: QUERY_KEYS.JOBS.LIST({ role: "customer" }),
     queryFn: () => jobsApi.getJobs({ role: "customer" }),
@@ -48,23 +49,23 @@ export default function CustomerHomePage() {
 
   return (
     <Container className="py-6 space-y-8">
-      {/* Top Banner & Quick Action */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-xl">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-            Fast Local Services
-          </Badge>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-            Find skilled local workers in minutes
+      {/* Top Banner & Quick Action (KaamBazaar Deep Royal Navy Banner) */}
+      <div className="rounded-3xl hero-navy-card p-6 sm:p-8 shadow-lg border border-primary/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-2.5 max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-xs font-semibold backdrop-blur-sm">
+            <span>⚡ Fast Local Services</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-snug">
+            {t("customer.bannerTitle", "Reliable Workers, Right Now.")}
           </h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Post your task, get matched with nearby verified pros, and pay safely with completion OTP.
+          <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
+            {t("customer.bannerSub", "Connect with verified plumbers, electricians, carpenters, and painters near you. Transparent fares and safe completion OTP.")}
           </p>
         </div>
-        <Button asChild size="lg" className="w-full md:w-auto shadow-md">
+        <Button asChild size="lg" className="w-full md:w-auto bg-white text-[#162044] hover:bg-white/90 font-bold rounded-xl shadow-xs">
           <Link href="/customer/jobs/new">
             <PlusCircle className="mr-2 h-5 w-5" />
-            Book a Service Now
+            {t("customer.bookNow", "Book a Service Now")}
           </Link>
         </Button>
       </div>
@@ -72,13 +73,13 @@ export default function CustomerHomePage() {
       {/* Active Job Alert Card if exists */}
       {activeJobs.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            Ongoing Job Status
+            Active Service Request
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {activeJobs.slice(0, 2).map((job) => (
-              <Card key={job._id} className="border-primary/30 shadow-sm">
+              <Card key={job._id} className="border-primary/40 shadow-xs rounded-2xl overflow-hidden">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <StatusBadge status={job.status} />
@@ -86,27 +87,27 @@ export default function CustomerHomePage() {
                       {new Date(job.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <CardTitle className="text-base mt-2 line-clamp-1">{job.title}</CardTitle>
-                  <CardDescription className="line-clamp-1">
+                  <CardTitle className="text-base mt-2 line-clamp-1 font-bold">{job.title}</CardTitle>
+                  <CardDescription className="line-clamp-1 text-xs">
                     {job.location.locality}, {job.location.city}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-3 text-sm">
                   {job.worker ? (
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      <span className="font-medium text-foreground">{job.worker.name}</span>
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span className="font-semibold text-foreground text-xs sm:text-sm">{job.worker.name}</span>
                       <span className="text-xs text-muted-foreground">assigned</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-amber-600">
-                      <AlertCircle className="h-4 w-4" />
+                    <div className="flex items-center gap-2 text-amber-600 text-xs sm:text-sm font-medium">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
                       <span>Matching with nearby workers...</span>
                     </div>
                   )}
                 </CardContent>
                 <div className="px-6 pb-4 pt-0">
-                  <Button asChild variant="outline" size="sm" className="w-full">
+                  <Button asChild variant="outline" size="sm" className="w-full rounded-xl font-semibold">
                     <Link
                       href={
                         job.status === "SEARCHING" || job.status === "WORKERS_FOUND"
@@ -129,11 +130,11 @@ export default function CustomerHomePage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-foreground">Need help with something?</h2>
-            <p className="text-sm text-muted-foreground">Choose a service to get started</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Choose a service to get started</p>
           </div>
           <Link
             href="/customer/jobs/new"
-            className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+            className="text-xs sm:text-sm font-semibold text-primary hover:underline flex items-center gap-1"
           >
             All Services <ArrowRight className="h-4 w-4" />
           </Link>
@@ -146,13 +147,16 @@ export default function CustomerHomePage() {
               <Link
                 key={cat.id}
                 href={`/customer/jobs/new?category=${cat.id}`}
-                className="group flex flex-col items-center justify-center p-4 rounded-xl border bg-card hover:bg-muted/40 hover:border-primary/40 transition-all text-center shadow-xs"
+                className="group flex flex-col items-center justify-center p-4 rounded-2xl border border-border/70 bg-card hover:bg-muted/40 hover:border-primary/40 transition-all text-center shadow-2xs"
               >
-                <div className={`p-3 rounded-full mb-3 ${cat.color} group-hover:scale-110 transition-transform`}>
+                <div className={`p-3.5 rounded-2xl mb-2.5 ${cat.color} group-hover:scale-110 transition-transform`}>
                   <Icon className="h-6 w-6" />
                 </div>
-                <span className="text-sm font-medium text-foreground group-hover:text-primary">
-                  {cat.name}
+                <span className="text-sm font-bold text-foreground group-hover:text-primary">
+                  {t(`category.${cat.id}`, cat.name)}
+                </span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">
+                  Instant Match
                 </span>
               </Link>
             );
@@ -165,7 +169,7 @@ export default function CustomerHomePage() {
         <div className="flex items-start gap-3 p-4 rounded-xl border bg-card">
           <ShieldCheck className="h-8 w-8 text-primary shrink-0" />
           <div className="space-y-1">
-            <h3 className="font-semibold text-sm">Verified Professionals</h3>
+            <h3 className="font-semibold text-sm">{t("home.trustBg", "Verified Professionals")}</h3>
             <p className="text-xs text-muted-foreground">
               Government ID verified & skill-tested local professionals.
             </p>
@@ -174,7 +178,7 @@ export default function CustomerHomePage() {
         <div className="flex items-start gap-3 p-4 rounded-xl border bg-card">
           <Clock className="h-8 w-8 text-primary shrink-0" />
           <div className="space-y-1">
-            <h3 className="font-semibold text-sm">Fast Dispatch</h3>
+            <h3 className="font-semibold text-sm">{t("home.statDispatch", "Fast Dispatch")}</h3>
             <p className="text-xs text-muted-foreground">
               Nearby workers respond within 15 minutes of posting.
             </p>
@@ -183,7 +187,7 @@ export default function CustomerHomePage() {
         <div className="flex items-start gap-3 p-4 rounded-xl border bg-card">
           <CheckCircle2 className="h-8 w-8 text-primary shrink-0" />
           <div className="space-y-1">
-            <h3 className="font-semibold text-sm">Safe OTP Completion</h3>
+            <h3 className="font-semibold text-sm">{t("home.trustOtp", "Safe OTP Completion")}</h3>
             <p className="text-xs text-muted-foreground">
               Job is completed only when you share the completion OTP.
             </p>
@@ -194,9 +198,9 @@ export default function CustomerHomePage() {
       {/* Recent Jobs History Preview */}
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Recent Bookings</h2>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">{t("customer.myBookings", "Recent Bookings")}</h2>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/customer/jobs">View all</Link>
+            <Link href="/customer/jobs">{t("home.allTrades", "View all")}</Link>
           </Button>
         </div>
 

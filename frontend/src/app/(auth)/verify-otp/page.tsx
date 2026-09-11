@@ -19,7 +19,7 @@ export default function VerifyOtpPage() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "";
 
-  const { pendingPhone, verifyOtp, requestOtp } = useAuth();
+  const { pendingPhone, verifyOtp, requestOtp, user } = useAuth();
   const [otpDigits, setOtpDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,13 +27,14 @@ export default function VerifyOtpPage() {
   const [isResending, setIsResending] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const isNavigatingRef = useRef(false);
 
   // If user accesses /verify-otp directly without pending phone, redirect to /login
   useEffect(() => {
-    if (!pendingPhone) {
+    if (!pendingPhone && !user && !isNavigatingRef.current) {
       router.replace("/login");
     }
-  }, [pendingPhone, router]);
+  }, [pendingPhone, user, router]);
 
   // Resend cooldown countdown
   useEffect(() => {
@@ -99,29 +100,31 @@ export default function VerifyOtpPage() {
   };
 
   const submitOtp = async (otpString: string) => {
-    if (!pendingPhone) return;
+    if (!pendingPhone || isNavigatingRef.current) return;
 
     try {
       setIsLoading(true);
       setError(null);
+      isNavigatingRef.current = true;
 
-      const user = await verifyOtp(pendingPhone, otpString);
+      const verifiedUser = await verifyOtp(pendingPhone, otpString);
 
       // Check if redirect query param exists
       if (redirect) {
-        router.push(redirect);
+        router.replace(redirect);
         return;
       }
 
       // Role-based redirects per specification
-      if (user.role === "worker") {
-        router.push("/worker");
-      } else if (user.role === "admin") {
-        router.push("/admin");
+      if (verifiedUser.role === "worker") {
+        router.replace("/worker");
+      } else if (verifiedUser.role === "admin") {
+        router.replace("/admin");
       } else {
-        router.push("/customer");
+        router.replace("/customer");
       }
     } catch (err) {
+      isNavigatingRef.current = false;
       if (err instanceof ApiError) {
         setError(err.message || "Invalid or expired verification code.");
       } else {
@@ -170,6 +173,9 @@ export default function VerifyOtpPage() {
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm">
           Enter the 6-digit code sent to <span className="font-semibold text-foreground">{pendingPhone}</span>
+          <span className="block mt-1 text-[11px] text-primary font-semibold">
+            (Demo verification code: <span className="font-mono font-bold">123456</span>)
+          </span>
         </CardDescription>
         <div className="pt-1">
           <Link
@@ -214,6 +220,21 @@ export default function VerifyOtpPage() {
               )}
             />
           ))}
+        </div>
+
+        {/* Demo OTP Autofill Pill */}
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const demo = ["1", "2", "3", "4", "5", "6"];
+              setOtpDigits(demo);
+              submitOtp("123456");
+            }}
+            className="text-xs font-semibold text-primary hover:underline bg-primary/10 hover:bg-primary/15 px-3 py-1.5 rounded-full border border-primary/20 transition-colors cursor-pointer"
+          >
+            ⚡ Autofill Demo Code: 123456
+          </button>
         </div>
 
         <Button

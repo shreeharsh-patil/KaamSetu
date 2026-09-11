@@ -11,24 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { useTranslation } from "@/lib/i18n/i18n-context";
-import type { SupportedLocale } from "@/lib/i18n/types";
-
-export interface LanguageOption {
-  code: string;
-  name: string;
-  nativeName: string;
-}
-
-const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: "en", name: "English", nativeName: "English" },
-  { code: "hi", name: "Hindi", nativeName: "हिन्दी" },
-  { code: "mr", name: "Marathi", nativeName: "मराठी" },
-  { code: "kok", name: "Konkani", nativeName: "कोंकणी" },
-  { code: "ta", name: "Tamil", nativeName: "தமிழ்" },
-  { code: "te", name: "Telugu", nativeName: "తెలుగు" },
-  { code: "gu", name: "Gujarati", nativeName: "ગુજરાતી" },
-  { code: "bn", name: "Bengali", nativeName: "বাংলা" },
-];
+import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/i18n/types";
 
 export interface LanguageSelectorProps {
   currentLocale?: string;
@@ -41,19 +24,19 @@ export function LanguageSelector({
   onSelectLocale,
   className,
 }: LanguageSelectorProps) {
-  const { locale, setLocale } = useTranslation();
+  const { locale, setLocale, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  const selected = currentLocale || locale;
+  const selected = (currentLocale || locale) as SupportedLocale;
 
   const activeLang =
-    SUPPORTED_LANGUAGES.find((l) => l.code === selected) || SUPPORTED_LANGUAGES[0]!;
+    SUPPORTED_LOCALES.find((l) => l.code === selected) || SUPPORTED_LOCALES[0]!;
 
-  const handleSelect = (code: string) => {
+  const handleSelect = (code: SupportedLocale) => {
     if (onSelectLocale) {
       onSelectLocale(code);
     } else {
-      setLocale(code as SupportedLocale);
+      setLocale(code);
     }
     setIsOpen(false);
   };
@@ -64,13 +47,13 @@ export function LanguageSelector({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors min-h-touch",
+          "inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors min-h-touch shadow-2xs",
           className
         )}
         aria-label={`Language selector. Current language: ${activeLang.nativeName}`}
       >
-        <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-        <span>{activeLang.nativeName}</span>
+        <Languages className="h-3.5 w-3.5 text-primary shrink-0" />
+        <span className="font-semibold text-xs">{activeLang.nativeName}</span>
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -78,12 +61,15 @@ export function LanguageSelector({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Languages className="h-5 w-5 text-primary" />
-              <span>Select Preferred Language</span>
+              <span>{t("language.selectTitle", "Select Preferred Language")}</span>
             </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              {t("language.selectSub", "Choose your preferred language for all screens and voice workflows")}
+            </p>
           </DialogHeader>
 
-          <div className="grid gap-2 py-3">
-            {SUPPORTED_LANGUAGES.map((lang) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 py-3">
+            {SUPPORTED_LOCALES.map((lang) => {
               const isCurrent = lang.code === selected;
               return (
                 <button
@@ -91,17 +77,17 @@ export function LanguageSelector({
                   type="button"
                   onClick={() => handleSelect(lang.code)}
                   className={cn(
-                    "flex items-center justify-between rounded-lg border p-3 text-left transition-colors min-h-touch",
+                    "flex items-center justify-between rounded-xl border p-3 text-left transition-all min-h-touch",
                     isCurrent
-                      ? "border-primary bg-primary/5 font-semibold text-primary"
-                      : "hover:bg-muted text-foreground"
+                      ? "border-primary bg-primary/10 font-semibold text-primary shadow-xs ring-1 ring-primary/30"
+                      : "hover:bg-muted/80 text-foreground border-border/60"
                   )}
                 >
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">{lang.nativeName}</span>
+                    <span className="text-sm font-bold text-foreground">{lang.nativeName}</span>
                     <span className="text-xs text-muted-foreground">{lang.name}</span>
                   </div>
-                  {isCurrent && <Check className="h-4 w-4 text-primary" />}
+                  {isCurrent && <Check className="h-4 w-4 text-primary shrink-0 ml-2" />}
                 </button>
               );
             })}

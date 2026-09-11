@@ -26,8 +26,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LOCALE_KEY) as SupportedLocale;
-      if (saved && (saved === "en" || saved === "hi" || saved === "mr" || saved === "kok")) {
+      if (saved && saved in translations) {
         setLocaleState(saved);
+        if (typeof document !== "undefined") {
+          document.documentElement.lang = saved;
+        }
       }
     } catch {
       // Ignore localStorage errors
@@ -39,6 +42,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(LOCALE_KEY, newLocale);
       document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
+      if (typeof document !== "undefined") {
+        document.documentElement.lang = newLocale;
+      }
     } catch {
       // Ignore storage errors
     }

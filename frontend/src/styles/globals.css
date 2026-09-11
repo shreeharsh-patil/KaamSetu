@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    /* Base surfaces */
-    --background: 210 40% 98%;
+    /* Base surfaces - KaamBazaar Clean Slate */
+    --background: 215 28% 97%;
     --foreground: 222 47% 11%;
 
     /* Card & Popovers */
@@ -14,20 +14,20 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Deep Workmanship Navy */
-    --primary: 222 47% 20%;
+    /* Primary: KaamBazaar Deep Royal Navy & Action Indigo */
+    --primary: 226 68% 34%;
     --primary-foreground: 210 40% 98%;
-    --primary-hover: 222 47% 15%;
+    --primary-hover: 226 72% 26%;
 
-    /* Secondary: Soft Slate */
-    --secondary: 210 28% 93%;
+    /* Secondary: Soft Slate-Blue Pill Surface */
+    --secondary: 214 32% 94%;
     --secondary-foreground: 222 47% 18%;
 
     /* Muted: Subtle Dividers & Labels */
     --muted: 210 25% 94%;
     --muted-foreground: 215 16% 47%;
 
-    /* Accent: Warm Amber (Service/Craftsmanship) */
+    /* Accent: Warm Amber (Service/Ratings) */
     --accent: 38 92% 50%;
     --accent-foreground: 0 0% 100%;
 
@@ -45,12 +45,12 @@
     --info-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 222 47% 20%;
+    --border: 214 24% 90%;
+    --input: 214 24% 90%;
+    --ring: 226 68% 34%;
 
-    /* Border Radius tokens */
-    --radius: 0.5rem;
+    /* Border Radius tokens - smooth rounded cards and pills */
+    --radius: 0.875rem;
   }
 
   .dark {
@@ -132,3 +132,27 @@
   white-space: nowrap;
   border-width: 0;
 }
+
+/* KaamBazaar Specific Design Utilities */
+.hero-navy-card {
+  background: linear-gradient(135deg, #162044 0%, #1e2e6b 60%, #172454 100%);
+  color: #ffffff;
+}
+
+.hero-navy-card-hover {
+  transition: all 0.2s ease-in-out;
+}
+.hero-navy-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(22, 32, 68, 0.25);
+}
+
+.bazaar-card-shadow {
+  box-shadow: 0 2px 14px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+}
+
+.bazaar-pill-tab {
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+}
+

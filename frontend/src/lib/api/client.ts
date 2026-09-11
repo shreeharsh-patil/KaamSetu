@@ -1,6 +1,7 @@
 import { env } from "@/config/env";
 import { ApiError, type ApiErrorPayload } from "./errors";
 import { API_ENDPOINTS } from "./endpoints";
+import { handleOfflineMockResponse } from "./mock-fallback";
 
 export interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -160,6 +161,12 @@ export async function apiClient<T>(
       throw new ApiError("Request timed out", 408, "REQUEST_TIMEOUT");
     }
 
+    // If backend is offline / unreachable, gracefully check for mock fallback
+    const mockResponse = handleOfflineMockResponse<T>(endpoint, fetchOptions.method || "GET", body);
+    if (mockResponse !== null) {
+      return mockResponse;
+    }
+
     throw new ApiError(
       err instanceof Error ? err.message : "Network error occurred",
       0,
@@ -203,6 +210,11 @@ async function handleSilentTokenRefresh(): Promise<string | null> {
       setAccessToken(null);
       return null;
     } catch {
+      const mock = handleOfflineMockResponse<{ accessToken: string }>(API_ENDPOINTS.AUTH.REFRESH);
+      if (mock?.accessToken) {
+        setAccessToken(mock.accessToken);
+        return mock.accessToken;
+      }
       setAccessToken(null);
       return null;
     } finally {

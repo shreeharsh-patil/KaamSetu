@@ -10,12 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/use-auth";
 import { ApiError } from "@/lib/api/errors";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "";
 
+  const { t } = useTranslation();
   const { requestOtp } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function LoginPage() {
 
       // Backend requires full E.164 format: +91XXXXXXXXXX
       const formattedPhone = `+91${phoneNumber}`;
-      await requestOtp(formattedPhone);
+      await requestOtp(formattedPhone, role);
 
       const targetUrl = `/verify-otp${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
       router.push(targetUrl);
@@ -63,88 +65,169 @@ export default function LoginPage() {
           setError(err.message || "Failed to send verification code. Please try again.");
         }
       } else {
-        setError("Network error. Please check your internet connection.");
+        setError("Failed to request verification code. Please try again.");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const [role, setRole] = useState<"customer" | "worker">("customer");
+
   return (
-    <Card className="max-w-md mx-auto shadow-md border-border">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Phone className="h-6 w-6" />
+    <div className="max-w-md mx-auto space-y-6">
+      {/* Role Switcher Pill */}
+      <div className="flex justify-center">
+        <div className="inline-flex p-1 rounded-full bg-secondary border border-border/70 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setRole("customer")}
+            className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
+              role === "customer"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t("header.hire", "Customer")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole("worker")}
+            className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
+              role === "worker"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t("header.earn", "Worker")}
+          </button>
         </div>
-        <CardTitle className="text-2xl font-bold tracking-tight">
-          Welcome to KaamSetu
-        </CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          Enter your 10-digit mobile number to sign in or create an account.
-        </CardDescription>
-      </CardHeader>
+      </div>
 
-      <CardContent className="pt-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive" className="text-xs">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+      <Card className="shadow-sm border-border/80 rounded-3xl p-2 sm:p-4">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Phone className="h-6 w-6" />
+          </div>
+          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+            {t("nav.login", "Sign In")}
+          </CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            Enter your 10-digit mobile number to get started.
+          </CardDescription>
+        </CardHeader>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="phone-input"
-              className="text-xs font-semibold text-foreground"
-            >
-              Mobile Number
-            </label>
-            <div className="flex gap-2">
-              <div className="flex h-11 items-center justify-center rounded-md border border-input bg-muted px-3 text-sm font-semibold text-foreground select-none">
-                +91
+        <CardContent className="pt-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive" className="text-xs rounded-xl">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="phone-input"
+                className="text-xs font-semibold text-foreground"
+              >
+                Phone Number
+              </label>
+              <div className="flex gap-2">
+                <div className="flex h-11 items-center justify-center rounded-xl border border-input bg-muted px-3.5 text-sm font-bold text-foreground select-none">
+                  +91
+                </div>
+                <Input
+                  id="phone-input"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  placeholder="98765 43210"
+                  value={phoneNumber}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  autoFocus
+                  disabled={isLoading}
+                  className="text-base tracking-wide rounded-xl font-medium"
+                />
               </div>
-              <Input
-                id="phone-input"
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={10}
-                placeholder="98765 43210"
-                value={phoneNumber}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                autoFocus
-                disabled={isLoading}
-                className="text-base tracking-wide"
-              />
+              <p className="text-[11px] text-muted-foreground">
+                We will send an OTP verification code via SMS.
+              </p>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              We will send a 6-digit one-time password (OTP) via SMS.
-            </p>
+
+            <Button
+              type="submit"
+              className="w-full h-11 text-sm font-bold mt-2 rounded-xl"
+              isLoading={isLoading}
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+            >
+              {t("action.continue", "Get OTP")}
+            </Button>
+          </form>
+
+          {/* Social login divider */}
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/80" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 text-muted-foreground">or continue with</span>
+            </div>
           </div>
 
           <Button
-            type="submit"
-            className="w-full h-11 text-sm font-semibold mt-2"
-            isLoading={isLoading}
-            rightIcon={<ArrowRight className="h-4 w-4" />}
+            type="button"
+            variant="outline"
+            className="w-full h-11 rounded-xl text-xs font-semibold gap-2 border-border/80"
+            onClick={() => {
+              setPhoneNumber("9820011223");
+            }}
           >
-            Get OTP
+            <span className="font-bold text-base">G</span>
+            <span>Google One Tap (Demo Autofill)</span>
           </Button>
-        </form>
 
-        <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="h-4 w-4 text-emerald-600" />
-          <span>Verified security • No password required</span>
+          <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span>Verified security • No password required</span>
+          </div>
+        </CardContent>
+
+        <CardFooter className="border-t border-border/60 pt-3 flex justify-between">
+          <Link href="/" className="w-full">
+            <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground rounded-xl" leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}>
+              {t("action.back", "Back to Home")}
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
+
+      {/* 3 Trust Cards Underneath (Matching Screen 1) */}
+      <div className="grid grid-cols-3 gap-2.5 pt-2">
+        <div className="p-3 rounded-2xl border border-border/70 bg-card text-center space-y-1 shadow-2xs">
+          <div className="flex justify-center text-primary">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <p className="text-[11px] font-bold text-foreground leading-tight">Verified Workers</p>
+          <p className="text-[9px] text-muted-foreground leading-tight hidden sm:block">Background checked</p>
         </div>
-      </CardContent>
 
-      <CardFooter className="border-t bg-muted/10 pt-4 flex justify-between">
-        <Link href="/" className="w-full">
-          <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}>
-            Back to Home
-          </Button>
-        </Link>
-      </CardFooter>
-    </Card>
+        <div className="p-3 rounded-2xl border border-border/70 bg-card text-center space-y-1 shadow-2xs">
+          <div className="flex justify-center text-amber-600">
+            <Phone className="h-5 w-5" />
+          </div>
+          <p className="text-[11px] font-bold text-foreground leading-tight">Fast Matching</p>
+          <p className="text-[9px] text-muted-foreground leading-tight hidden sm:block">Connect in minutes</p>
+        </div>
+
+        <div className="p-3 rounded-2xl border border-border/70 bg-card text-center space-y-1 shadow-2xs">
+          <div className="flex justify-center text-emerald-600">
+            <ArrowRight className="h-5 w-5" />
+          </div>
+          <p className="text-[11px] font-bold text-foreground leading-tight">Transparent Rates</p>
+          <p className="text-[9px] text-muted-foreground leading-tight hidden sm:block">No hidden fees</p>
+        </div>
+      </div>
+    </div>
   );
 }
