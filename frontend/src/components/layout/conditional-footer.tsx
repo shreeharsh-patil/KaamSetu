@@ -1,10 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/features/auth/use-auth";
 import { AppFooter } from "./app-footer";
 
-const DASHBOARD_ROOTS = ["/customer", "/worker", "/admin"];
+const DASHBOARD_ROOTS = ["/customer", "/worker", "/admin", "/messages"];
 
 /**
  * Renders AppFooter only on public/guest pages.
@@ -12,13 +11,10 @@ const DASHBOARD_ROOTS = ["/customer", "/worker", "/admin"];
  */
 export function ConditionalFooter() {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth();
 
-  const isDashboard =
-    isAuthenticated &&
-    DASHBOARD_ROOTS.some(
-      (root) => pathname === root || pathname.startsWith(`${root}/`)
-    );
+  const isDashboard = DASHBOARD_ROOTS.some(
+    (root) => pathname === root || pathname.startsWith(`${root}/`)
+  );
 
   if (isDashboard) return null;
 

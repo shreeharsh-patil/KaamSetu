@@ -27,16 +27,12 @@ import { useTranslation } from "@/lib/i18n/i18n-context";
  * hides itself to avoid duplicate navigation.
  */
 
-const DASHBOARD_ROOTS = ["/customer", "/worker", "/admin"];
+const DASHBOARD_ROOTS = ["/customer", "/worker", "/admin", "/messages"];
 
 function useIsAuthenticatedDashboard(): boolean {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth();
-  return (
-    isAuthenticated &&
-    DASHBOARD_ROOTS.some(
-      (root) => pathname === root || pathname.startsWith(`${root}/`)
-    )
+  return DASHBOARD_ROOTS.some(
+    (root) => pathname === root || pathname.startsWith(`${root}/`)
   );
 }
 
