@@ -43,7 +43,8 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
   // Let the page paint under notches/home bars so safe-area utilities can pad it.
   viewportFit: "cover",
 };
