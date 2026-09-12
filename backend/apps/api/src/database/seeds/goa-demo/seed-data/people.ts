@@ -92,6 +92,20 @@ export const SEED_WORKERS: SeedWorkerDef[] = [
   // ---- Canacona (2) ----
   { n: 30, displayName: 'Sachin Pagi', town: 'CANACONA', category: 'plumbing', skills: ['drain-blockage', 'pipe-leak-repair', 'tap-repair'], experienceYears: 6, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 25, hourlyRate: 200, bio: 'Plumber serving Canacona taluka. Wide service radius.' },
   { n: 31, displayName: 'Ganpat Velip', town: 'CANACONA', category: 'general-handyman', skills: ['minor-fixes', 'furniture-shifting', 'curtain-rod-fitting'], experienceYears: 2, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'UNVERIFIED', serviceRadiusKm: 20, hourlyRate: 160, bio: 'Handyman based in Canacona.' },
+
+  // ---- Expanded coverage batch (9) ----
+  // NOTE: no new plumbers in Canacona (radius-expansion demo) and no
+  // deep-cleaning worker within reach of Vasco ('no-cleaning-workers-near-vasco'
+  // matching scenario) — see GOA_DEMO_DATA.md before adding either.
+  { n: 32, displayName: 'Sunita Naik', town: 'CALANGUTE', category: 'home-cleaning', skills: ['deep-cleaning', 'bathroom-cleaning', 'kitchen-cleaning'], experienceYears: 5, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 12, hourlyRate: 200, bio: 'Home cleaning for houses and guesthouses in the Calangute–Baga belt.' },
+  { n: 33, displayName: 'Prasad Sardessai', town: 'MARGAO', category: 'home-cleaning', skills: ['kitchen-cleaning', 'bathroom-cleaning'], experienceYears: 3, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'PENDING', serviceRadiusKm: 12, hourlyRate: 180, bio: 'Kitchen and bathroom cleaning in Margao.' },
+  { n: 34, displayName: 'Cajetan Rodrigues', town: 'VASCO', category: 'welding', skills: ['gate-welding', 'metal-fabrication', 'grill-repair'], experienceYears: 12, languages: EN_HI_KOK, availability: 'BUSY', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 290, bio: 'Structural welding and fabrication near the port area.' },
+  { n: 35, displayName: 'Kiran Hegde', town: 'MARGAO', category: 'electrician', skills: ['wiring', 'switch-repair', 'light-installation'], experienceYears: 7, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 18, hourlyRate: 270, bio: 'House wiring and light fittings across Salcete.' },
+  { n: 36, displayName: 'Chandrakant Raikar', town: 'CUNCOLIM', category: 'carpentry', skills: ['furniture-repair', 'door-repair', 'lock-fitting'], experienceYears: 10, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 280, bio: 'Furniture and door repairs for Cuncolim and Quepem side.' },
+  { n: 37, displayName: 'Pramod Sequeira', town: 'COLVA', category: 'ac-repair', skills: ['ac-servicing', 'gas-refill', 'cooling-issue'], experienceYears: 6, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 18, hourlyRate: 380, bio: 'AC servicing across the Colva–Benaulim belt.' },
+  { n: 38, displayName: 'Rajesh Chodankar', town: 'BICHOLIM', category: 'motorbike-repair', skills: ['bike-servicing', 'puncture-repair', 'battery-replacement'], experienceYears: 6, languages: EN_HI_MR, availability: 'AVAILABLE', verification: 'PENDING', serviceRadiusKm: 12, hourlyRate: 150, bio: 'Two-wheeler servicing in Bicholim town.' },
+  { n: 39, displayName: 'Imran Shaikh', town: 'PANAJI', category: 'appliance-repair', skills: ['refrigerator-repair', 'mixer-repair', 'water-purifier-repair'], experienceYears: 8, languages: EN_HI, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 300, bio: 'Appliance repairs around Panaji and Ribandar.' },
+  { n: 40, displayName: 'Gopal Paryekar', town: 'VASCO', category: 'electrician', skills: ['socket-repair', 'mcb-repair', 'wiring'], experienceYears: 9, languages: EN_HI_KOK, availability: 'OFFLINE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 250, bio: 'Electrical repairs in Vasco and Chicalim.' },
 ];
 
 export interface SeedCustomerDef {

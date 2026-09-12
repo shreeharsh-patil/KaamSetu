@@ -44,7 +44,8 @@ describe('Goa demo seed', () => {
     const summary = await seedGoaDemo();
 
     expect(summary.customers).toBe(12);
-    expect(summary.workers).toBe(31);
+    expect(summary.workers).toBe(SEED_WORKERS.length);
+    expect(summary.workers).toBe(40);
     expect(summary.jobs).toBe(SEED_JOBS.length);
     expect(summary.categories).toBeGreaterThanOrEqual(10);
     expect(summary.skills).toBeGreaterThanOrEqual(40);

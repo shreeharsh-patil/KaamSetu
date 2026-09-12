@@ -44,7 +44,7 @@ completed history with reviews, earnings transactions and expenses.
 | Categories | 10 | Shared slugs with the base seed; upserted, never duplicated |
 | Skills | 46 | Under their categories, deterministic slugs |
 | Customers | 12 | Across Panaji, Porvorim, Mapusa, Calangute, Ponda, Margao, Vasco, Colva, Verna, Candolim, Canacona |
-| Workers | 31 | Mix of AVAILABLE/BUSY/OFFLINE and VERIFIED/PENDING/UNVERIFIED |
+| Workers | 40 | Mix of AVAILABLE/BUSY/OFFLINE and VERIFIED/PENDING/UNVERIFIED |
 | Jobs | 50 | Full lifecycle: 3 DRAFT, 4 OPEN, 4 MATCHING, 4 OFFERED, 4 ACCEPTED, 2 EN_ROUTE, 2 ARRIVED, 3 IN_PROGRESS, 16 COMPLETED, 3 CANCELLED, 2 EXPIRED, 1 DISPUTED (completed + dispute) |
 | Job offers | ~30 | One ACCEPTED per assigned job, rivals REJECTED/WITHDRAWN/EXPIRED |
 | Job events | ~180 | Chronological, coherent per-state histories |
@@ -53,7 +53,7 @@ completed history with reviews, earnings transactions and expenses.
 | Expenses | 9 | Canonical categories (FUEL/MATERIAL/PARKING/TOOL), integer paise |
 | Ledger rows | ~25 | JOB_REVENUE + EXPENSE mirrors, `goa-demo:` reference prefix |
 | Notifications | 13 | Mix of read/unread, linked to real entities |
-| Verification requests | 3 | PENDING workers, placeholder documents (never real IDs) |
+| Verification requests | 5 | PENDING workers, placeholder documents (never real IDs) |
 | Disputes | 1 | OPEN, appliance job, valid parties |
 | Reports | 1 | PENDING |
 | Audit logs | 1 | VERIFICATION_APPROVED by demo admin |
@@ -70,7 +70,9 @@ The dataset deliberately exercises the real matching engine:
    Canacona itself within a small radius; Sachin Pagi is available with a
    25 km radius, letting you verify wave/radius expansion behaviour.
 3. **No cleaning workers near Vasco** — a MATCHING job where no eligible
-   worker exists nearby (Home Cleaning has only one worker, in Colva).
+   worker exists nearby (deep-cleaning workers sit in far-south Goa — Colva
+   and Margao — with small radii; one of them deliberately lacks the
+   `deep-cleaning` skill).
 4. **Offline-but-offered** — worker 18 (Tukaram Gaude, OFFLINE) holds a
    PENDING offer, useful for offer-timeout UI tests.
 5. **Expired jobs** — Canacona AC servicing and Colva fan repair that expired
