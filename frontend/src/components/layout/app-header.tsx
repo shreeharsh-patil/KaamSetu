@@ -89,20 +89,20 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <Container className="flex h-16 items-center justify-between">
+      <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
         {/* Brand Logo & Location */}
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-6 shrink-0">
           <Link
             href="/"
-            className="flex items-center gap-2.5 font-bold text-lg text-primary tracking-tight transition-opacity hover:opacity-90 min-h-touch"
+            className="flex flex-row items-center gap-2.5 font-bold text-lg text-primary tracking-tight transition-opacity hover:opacity-90 shrink-0 whitespace-nowrap min-w-max"
             aria-label="KaamSetu Home"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-              <Hammer className="h-5 w-5" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+              <Hammer className="h-5 w-5 shrink-0" />
             </div>
-            <div className="flex flex-col">
-              <span className="leading-tight font-extrabold text-foreground text-base sm:text-lg">KaamSetu</span>
-              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase">
+            <div className="flex flex-col shrink-0 text-left">
+              <span className="leading-tight font-extrabold text-foreground text-base sm:text-lg whitespace-nowrap">KaamSetu</span>
+              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase whitespace-nowrap">
                 {t("header.sub", "Hyperlocal Bazaar")}
               </span>
             </div>
@@ -144,7 +144,7 @@ export function AppHeader() {
         </div>
 
         {/* Right side: Network indicator, Language, Theme, Auth */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Language selector - always accessible */}
           <LanguageSelector className="inline-flex" />
 
