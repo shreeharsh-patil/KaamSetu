@@ -101,7 +101,7 @@ export function AppHeader() {
               <Hammer className="h-5 w-5 shrink-0" />
             </div>
             <div className="flex flex-col shrink-0 text-left">
-              <span className="leading-tight font-extrabold text-foreground text-base sm:text-lg whitespace-nowrap">KaamSetu</span>
+              <span className="font-display leading-tight font-extrabold text-foreground text-base sm:text-lg whitespace-nowrap">KaamSetu</span>
               <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase whitespace-nowrap">
                 {t("header.sub", "Hyperlocal Bazaar")}
               </span>
@@ -171,11 +171,11 @@ export function AppHeader() {
             )}
           </div>
 
-          {/* Theme switcher */}
+          {/* Theme switcher (hidden on <sm: saves space for logo + language + menu; dark mode still reachable via system preference) */}
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border/80 bg-card text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full border border-border/80 bg-card text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
           >
             {resolvedTheme === "dark" ? (
@@ -210,7 +210,7 @@ export function AppHeader() {
               </Button>
             </div>
           ) : (
-            <Link href="/login">
+            <Link href="/login" className="hidden sm:inline-flex">
               <Button size="sm" className="rounded-full px-3.5 sm:px-4" leftIcon={<LogIn className="h-3.5 w-3.5" />}>
                 <span>{t("nav.login", "Sign In")}</span>
               </Button>

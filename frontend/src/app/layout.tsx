@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Bricolage_Grotesque } from "next/font/google";
 import "@/styles/globals.css";
 import { siteConfig } from "@/config/site";
 import { RootProviders } from "@/providers/root-providers";
@@ -11,6 +11,12 @@ import { VoiceAssistantFAB } from "@/components/voice/voice-assistant-fab";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -52,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${bricolage.variable}`}>
       <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
         {/* Accessible Skip Link */}
         <a

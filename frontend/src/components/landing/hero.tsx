@@ -25,9 +25,27 @@ const QUICK_TRADES = [
   { id: "appliances", label: "AC Repair", icon: Sparkles, count: "29 online" },
 ];
 
+/** One word of the headline, revealed on load. */
+function RevealWord({
+  word,
+  delay,
+  className = "",
+}: {
+  word: string;
+  delay: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`hero-word ${className}`}
+      style={{ animationDelay: `${delay}s`, marginRight: "0.24em" }}
+    >
+      {word}
+    </span>
+  );
+}
+
 export function Hero({ onSearch }: HeroProps) {
-  const titleText = "Connecting skilled hands with homes that need them";
-  const words = titleText.split(" ");
   const [searchQuery, setSearchQuery] = useState("");
   const [opacity, setOpacity] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -64,14 +82,14 @@ export function Hero({ onSearch }: HeroProps) {
 
   return (
     <section className="min-h-[90vh] flex flex-col justify-center pt-8 md:pt-14 relative overflow-hidden">
-      {/* 3D Rotating Glowing Orb Asset from portfolio */}
-      <div className="absolute -right-32 md:-right-48 top-12 md:top-20 w-[460px] h-[460px] md:w-[740px] md:h-[740px] pointer-events-none animate-orb-rotate -z-10 scale-110 opacity-90">
+      {/* 3D orb asset, tinted into the brand's navy/indigo family */}
+      <div className="absolute -right-32 md:-right-48 top-12 md:top-20 w-[460px] h-[460px] md:w-[740px] md:h-[740px] pointer-events-none animate-orb-rotate -z-10 scale-110 opacity-80">
         <Image
           src="/images/orb.png"
           alt=""
           width={740}
           height={740}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain orb-brand"
           priority
         />
       </div>
@@ -82,53 +100,33 @@ export function Hero({ onSearch }: HeroProps) {
 
       <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-12 md:py-20 w-full">
         <div className="max-w-4xl">
-          {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/80 border border-border/80 text-xs sm:text-sm font-medium mb-6 backdrop-blur-sm">
-            <span className="relative flex h-2 w-2">
+          {/* Single quiet proof line — what the platform actually is */}
+          <p className="flex items-center gap-2 text-sm sm:text-base font-medium text-muted-foreground mb-6">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            <span className="text-muted-foreground">Hyperlocal Skilled Trades</span>
-            <span className="text-border">•</span>
-            <span className="text-foreground font-semibold flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 inline" />
-              100% Escrow Protected
-            </span>
-          </div>
+            Verified local electricians, plumbers &amp; carpenters
+          </p>
 
-          {/* Main Title with word-by-word reveal */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-[82px] font-semibold tracking-tight leading-[1.08] text-balance">
-            {words.map((word, index) => {
-              const isAccent = word.toLowerCase().includes("skilled") || word.toLowerCase().includes("hands");
-              return (
-                <span
-                  key={index}
-                  className={`hero-word my-0 py-1 ${isAccent ? "ai-gradient-word font-bold" : ""}`}
-                  style={{
-                    animationDelay: `${index * 0.08}s`,
-                    marginRight: index < words.length - 1 ? "0.26em" : "0",
-                    ...(isAccent
-                      ? {
-                          background:
-                            "linear-gradient(135deg, #ff006e 0%, #8b5cf6 35%, #203eec 70%, #00d4ff 100%)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                          filter:
-                            "drop-shadow(0 0 16px rgba(139, 92, 246, 0.25)) drop-shadow(0 0 32px rgba(32, 62, 236, 0.2))",
-                        }
-                      : {}),
-                  }}
-                >
-                  {word}
-                </span>
-              );
-            })}
+          {/* Headline — one promise, one stroke. The amber marker line draws
+              once beneath "Skilled hands", the way tradespeople mark work. */}
+          <h1 className="font-display text-[2.6rem] leading-[1.04] sm:text-6xl lg:text-7xl xl:text-[84px] font-semibold tracking-tight text-foreground">
+            <span className="marker-stroke">
+              <RevealWord word="Skilled" delay={0} />
+              <RevealWord word="hands" delay={0.06} />
+            </span>
+            <RevealWord word="at" delay={0.12} />
+            <RevealWord word="your" delay={0.18} />
+            <RevealWord word="doorstep" delay={0.24} />
+            <RevealWord word="in" delay={0.3} />
+            <RevealWord word="15" delay={0.36} className="numeric" />
+            <RevealWord word="minutes." delay={0.42} />
           </h1>
 
-          <p className="mt-7 max-w-2xl leading-relaxed text-base sm:text-lg text-muted-foreground">
-            KaamSetu bridges home emergencies with verified local tradespeople in 15 minutes.
-            Zero middleman markups, fair wage guarantee, and automated escrow payouts upon work completion.
+          <p className="mt-7 max-w-xl leading-relaxed text-base sm:text-lg text-muted-foreground">
+            Post the job, get matched to the nearest verified pro in about 15
+            minutes, and pay through escrow only when the work is done.
           </p>
 
           {/* Interactive Search Bar */}
@@ -150,8 +148,8 @@ export function Hero({ onSearch }: HeroProps) {
               href={searchQuery ? `/customer/jobs/new?query=${encodeURIComponent(searchQuery)}` : "/customer/jobs/new"}
               className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-semibold text-white shrink-0 text-center transition-all duration-200"
               style={{
-                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                boxShadow: "0 4px 18px rgba(32, 62, 236, 0.35)",
+                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
+                boxShadow: "0 4px 18px rgba(32, 62, 236, 0.3)",
               }}
             >
               Find Pro
@@ -171,7 +169,7 @@ export function Hero({ onSearch }: HeroProps) {
                 >
                   <Icon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span className="font-medium">{trade.label}</span>
-                  <span className="text-[10px] text-muted-foreground ml-0.5">({trade.count})</span>
+                  <span className="text-[10px] text-muted-foreground ml-0.5 numeric">({trade.count})</span>
                 </Link>
               );
             })}
@@ -183,15 +181,15 @@ export function Hero({ onSearch }: HeroProps) {
               href="/customer/jobs/new"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all relative overflow-hidden group"
               style={{
-                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                boxShadow: "0 4px 20px rgba(32, 62, 236, 0.35)",
+                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
+                boxShadow: "0 4px 20px rgba(32, 62, 236, 0.3)",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow =
-                  "0 8px 30px rgba(32, 62, 236, 0.55), 0 0 35px rgba(0, 212, 255, 0.35)";
+                  "0 8px 28px rgba(32, 62, 236, 0.45)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(32, 62, 236, 0.35)";
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(32, 62, 236, 0.3)";
               }}
             >
               Post a Job in 60s
@@ -202,7 +200,7 @@ export function Hero({ onSearch }: HeroProps) {
               href="/worker"
               className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
             >
-              Join as Worker & Earn
+              Join as Worker &amp; Earn
             </Link>
           </div>
         </div>
@@ -224,15 +222,14 @@ export function Hero({ onSearch }: HeroProps) {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
               </span>
-              <span className="font-semibold text-xs sm:text-sm">Live Hyperlocal Marketplace Pulse</span>
+              <span className="font-display font-semibold text-xs sm:text-sm">Live marketplace pulse</span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                Active in Mumbai • Bengaluru • Delhi NCR
+                Mumbai, Bengaluru &amp; Delhi NCR
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
-              <span>Avg Match Time: 82s</span>
-              <span>•</span>
-              <span>100% Escrow Protected</span>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground numeric">
+              <span>Avg match time 82s</span>
+              <span>Escrow on every job</span>
             </div>
           </div>
 
@@ -244,7 +241,7 @@ export function Hero({ onSearch }: HeroProps) {
                 <Zap className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">15 Mins</div>
+                <div className="font-display text-2xl font-bold numeric">15 Mins</div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
                   Geospatial Dispatch Wave
                 </div>
@@ -260,9 +257,9 @@ export function Hero({ onSearch }: HeroProps) {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">Zero Fraud</div>
+                <div className="font-display text-2xl font-bold">Zero Fraud</div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Aadhaar & Police Verified
+                  Aadhaar &amp; Police Verified
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   Every technician undergoes biometric Aadhaar verification and skill benchmarking.
@@ -276,7 +273,7 @@ export function Hero({ onSearch }: HeroProps) {
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">100% Escrow</div>
+                <div className="font-display text-2xl font-bold numeric">100% Escrow</div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
                   Direct Bank UPI Payouts
                 </div>

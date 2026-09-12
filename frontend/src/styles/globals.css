@@ -133,6 +133,59 @@
   border-width: 0;
 }
 
+/* KaamSetu display type — used for hero + section titles */
+.font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  font-optical-sizing: auto;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Amber marker-stroke — tradespeople mark their completed work.
+   Draws once on load via scaleX; hands off to a static stroke. */
+@keyframes marker-draw {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.marker-stroke {
+  position: relative;
+  white-space: nowrap;
+  /* Contain the negative-z stroke within this span's stacking context,
+     otherwise it paints behind body's opaque background and vanishes. */
+  isolation: isolate;
+}
+
+.marker-stroke::after {
+  content: "";
+  position: absolute;
+  left: -0.08em;
+  right: -0.08em;
+  bottom: -0.08em;
+  height: 0.16em;
+  border-radius: 9999px;
+  background: hsl(38 92% 50%);
+  transform-origin: left center;
+  animation: marker-draw 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.9s backwards;
+  z-index: -1;
+}
+
+/* Brand-tinted orb: pulls the multicolor portfolio asset into the
+   navy/indigo family so the hero stays on-palette. */
+.orb-brand {
+  filter: saturate(0.85) hue-rotate(38deg) brightness(1.02);
+}
+
 /* KaamBazaar Specific Design Utilities */
 .hero-navy-card {
   background: linear-gradient(135deg, #162044 0%, #1e2e6b 60%, #172454 100%);
@@ -246,7 +299,8 @@
 
 .hero-word {
   display: inline-block;
-  animation: word-reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* `both` keeps words at keyframe-0 (invisible) during their reveal delay */
+  animation: word-reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity, filter;
 }
 
@@ -299,11 +353,10 @@
   height: 2px;
   background: linear-gradient(
     90deg,
-    rgba(236, 72, 153, 0.8) 0%,
-    rgba(139, 92, 246, 0.8) 25%,
-    rgba(59, 130, 246, 0.8) 50%,
-    rgba(6, 182, 212, 0.8) 75%,
-    rgba(236, 72, 153, 0.8) 100%
+    hsl(226 68% 34%) 0%,
+    hsl(217 91% 60%) 35%,
+    hsl(38 92% 50%) 70%,
+    hsl(226 68% 34%) 100%
   );
   background-size: 200% 100%;
   filter: blur(2px);
@@ -331,10 +384,15 @@
   .animate-orb-rotate,
   .hero-word,
   .section-title-animate,
-  .bottom-gradient-bar {
+  .marker-stroke::after {
     animation: none !important;
     transform: none !important;
     filter: none !important;
+    opacity: 1 !important;
+  }
+
+  .marker-stroke::after {
+    transform: scaleX(1) !important;
     opacity: 1 !important;
   }
 }
