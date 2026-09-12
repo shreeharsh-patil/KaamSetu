@@ -7,10 +7,10 @@
  */
 import type { GoaLocationKey } from './goa-locations.js';
 
-/** Reserved, deterministic, obviously synthetic phone plan. */
+/** Reserved, deterministic, obviously synthetic phone plan (10 digits after +91). */
 export const DEMO_PHONES = {
-  customer: (n: number) => `+919900001${String(n).padStart(2, '0')}`,
-  worker: (n: number) => `+919900002${String(n).padStart(2, '0')}`,
+  customer: (n: number) => `+919900001${String(n).padStart(3, '0')}`,
+  worker: (n: number) => `+919900002${String(n).padStart(3, '0')}`,
   admin: '+919900009001',
 } as const;
 
