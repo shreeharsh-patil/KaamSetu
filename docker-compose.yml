@@ -1,0 +1,132 @@
+name: kaamsetu
+
+services:
+  # ----------------------------------------------------------------------------
+  # MongoDB Database Service
+  # ----------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: kaamsetu-mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: kaamsetu
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD-SHELL', 'mongosh --quiet --eval "db.adminCommand({ping: 1}).ok" || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kaamsetu-network
+
+  # ----------------------------------------------------------------------------
+  # Redis Cache & Queue Broker Service
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: kaamsetu-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes --save 60 1
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - kaamsetu-network
+
+  # ----------------------------------------------------------------------------
+  # Express API Service
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: kaamsetu-api
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      APP_VERSION: 1.0.0
+      API_PREFIX: /api/v1
+      MONGODB_URI: mongodb://mongodb:27017/kaamsetu
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: docker_local_jwt_access_secret_key_minimum_32_chars
+      JWT_REFRESH_SECRET: docker_local_jwt_refresh_secret_key_minimum_32_chars
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5000
+      LOG_LEVEL: info
+      STORAGE_PROVIDER: mock
+      METRICS_ENABLED: 'true'
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX_REQUESTS: 300
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:5000/health']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - kaamsetu-network
+
+  # ----------------------------------------------------------------------------
+  # BullMQ Dedicated Background Worker Service
+  # Note: Dedicated worker container completely decoupled from HTTP API process
+  # ----------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: kaamsetu-worker
+    restart: unless-stopped
+    ports:
+      - '5001:5001'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      WORKER_HEALTH_PORT: 5001
+      MONGODB_URI: mongodb://mongodb:27017/kaamsetu
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: docker_local_jwt_access_secret_key_minimum_32_chars
+      JWT_REFRESH_SECRET: docker_local_jwt_refresh_secret_key_minimum_32_chars
+      LOG_LEVEL: info
+      STORAGE_PROVIDER: mock
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:5001/health']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - kaamsetu-network
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  kaamsetu-network:
+    driver: bridge

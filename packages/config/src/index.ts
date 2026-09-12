@@ -83,6 +83,7 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().default(process.env['NODE_ENV'] || 'development'),
   METRICS_ENABLED: z.coerce.boolean().default(true),
+  WORKER_HEALTH_PORT: z.coerce.number().default(5001),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

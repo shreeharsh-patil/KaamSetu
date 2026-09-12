@@ -1,0 +1,130 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # Continuous Integration Quality Gate
+  # ============================================================================
+  ci:
+    name: Lint, Typecheck, Test & Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      API_PREFIX: /api/v1
+      APP_VERSION: 1.0.0
+      MONGODB_URI: mongodb://localhost:27017/kaamsetu_test
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: test_jwt_access_secret_key_minimum_32_characters_long
+      JWT_REFRESH_SECRET: test_jwt_refresh_secret_key_minimum_32_characters_long
+      CORS_ORIGINS: http://localhost:3000
+      LOG_LEVEL: fatal
+      STORAGE_PROVIDER: mock
+      METRICS_ENABLED: true
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚡ Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+          run_install: false
+
+      - name: 🟢 Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: 📦 1. Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 2. Run linter
+        run: pnpm lint
+
+      - name: 🛡️ 3. Typecheck codebase
+        run: pnpm typecheck
+
+      - name: 🧪 4. Run automated test suite (Unit & Integration)
+        run: pnpm test
+
+      - name: 🏗️ 5. Build all workspace packages and applications
+        run: pnpm build
+
+      - name: 🔒 6. Dependency security audit
+        run: |
+          pnpm audit --prod
+          pnpm audit --audit-level=high
+
+  # ============================================================================
+  # Docker Container Build Verification
+  # ============================================================================
+  docker-build:
+    name: Verify Docker Multi-Stage Builds
+    runs-on: ubuntu-latest
+    needs: [ci]
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build API Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: api
+          push: false
+          tags: kaamsetu-api:latest
+
+      - name: 🏗️ Build Worker Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: worker
+          push: false
+          tags: kaamsetu-worker:latest
