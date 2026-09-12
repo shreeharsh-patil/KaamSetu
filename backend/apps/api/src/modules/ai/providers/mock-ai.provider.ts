@@ -56,18 +56,18 @@ export class MockAIProvider implements IAIProvider {
     }
 
     const lower = text.toLowerCase();
-    let categorySlug = 'general-maintenance';
-    let suggestedCategoryName = 'General Maintenance';
+    let categorySlug: string | undefined;
+    let suggestedCategoryName: string | undefined;
     const suggestedSkills: string[] = [];
     let urgency = JobUrgency.FLEXIBLE;
     let estimatedPrice = 500;
 
-    if (lower.includes('pipe') || lower.includes('tap') || lower.includes('leak') || lower.includes('plumb')) {
+    if (lower.includes('pipe') || lower.includes('tap') || lower.includes('leak') || lower.includes('plumb') || lower.includes('नल') || lower.includes('लीक') || lower.includes('plumber')) {
       categorySlug = 'plumbing';
       suggestedCategoryName = 'Plumbing Services';
       suggestedSkills.push('Pipe Repair', 'Tap Installation', 'Leak Detection');
       estimatedPrice = 600;
-    } else if (lower.includes('wire') || lower.includes('switch') || lower.includes('light') || lower.includes('fan') || lower.includes('electric')) {
+    } else if (lower.includes('wire') || lower.includes('switch') || lower.includes('light') || lower.includes('fan') || lower.includes('electric') || lower.includes('बिजली') || lower.includes('पंखा')) {
       categorySlug = 'electrical';
       suggestedCategoryName = 'Electrical Services';
       suggestedSkills.push('Wiring', 'Switchboard Repair', 'Appliance Installation');
@@ -84,9 +84,16 @@ export class MockAIProvider implements IAIProvider {
       estimatedPrice = 2500;
     }
 
-    if (lower.includes('urgent') || lower.includes('immediate') || lower.includes('burst') || lower.includes('emergency')) {
+    if (lower.includes('urgent') || lower.includes('immediate') || lower.includes('burst') || lower.includes('emergency') || lower.includes('तुरंत')) {
       urgency = JobUrgency.EMERGENCY;
+    } else if (lower.includes('today') || lower.includes('आज') || lower.includes('aaj')) {
+      urgency = JobUrgency.TODAY;
     }
+
+    const timingIntent = lower.includes('tomorrow') || lower.includes('कल') ? 'TOMORROW'
+      : lower.includes('today') || lower.includes('आज') || lower.includes('aaj') ? 'TODAY'
+      : lower.includes('asap') || lower.includes('immediate') || lower.includes('jaldi') ? 'ASAP' : undefined;
+    const firstSentence = text.split(/[.?!।]/)[0]?.trim();
 
     return {
       categorySlug,
@@ -94,7 +101,11 @@ export class MockAIProvider implements IAIProvider {
       suggestedSkills,
       urgency,
       estimatedPrice,
-      confidence: 0.88,
+      timingIntent,
+      title: categorySlug && firstSentence ? firstSentence.slice(0, 160) : undefined,
+      description: text.trim(),
+      problemSummary: firstSentence,
+      confidence: categorySlug ? 0.88 : 0.2,
     };
   }
 

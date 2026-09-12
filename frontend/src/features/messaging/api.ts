@@ -1,12 +1,16 @@
 import { apiClient } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import type { ChatMessage, ConversationSummary } from "./types";
+import type {
+  ApiMessage,
+  ConversationSummary,
+  MessagesPageResponse,
+  MessageType,
+  MessageAttachment,
+} from "./types";
 
 export const messagingApi = {
   /**
    * Resolve (or create) the conversation for a job and return its id.
-   * Chat links carry the jobId (the id everyone has before a conversation
-   * exists); the messages API needs the conversation id.
    */
   resolveConversationForJob: async (jobId: string): Promise<string> => {
     const res = await apiClient.get<{ conversation: { id: string } }>(
@@ -15,31 +19,77 @@ export const messagingApi = {
     return res.conversation.id;
   },
 
-  getMessages: async (conversationId: string): Promise<ChatMessage[]> => {
-    const res = await apiClient.get<{ messages: ChatMessage[] } | ChatMessage[]>(
-      API_ENDPOINTS.MESSAGES.LIST(conversationId)
+  /**
+   * Fetch conversation summary by conversation ID.
+   */
+  getConversation: async (conversationId: string): Promise<ConversationSummary> => {
+    const res = await apiClient.get<{ conversation: ConversationSummary }>(
+      API_ENDPOINTS.CONVERSATIONS.DETAIL(conversationId)
     );
-    if (Array.isArray(res)) return res;
-    return res.messages ?? [];
+    return res.conversation;
   },
 
+  /**
+   * List messages for a conversation with cursor pagination.
+   */
+  getMessages: async (
+    conversationId: string,
+    cursor?: string,
+    limit: number = 20
+  ): Promise<MessagesPageResponse> => {
+    const res = await apiClient.get<{
+      messages: ApiMessage[];
+      nextCursor: string | null;
+      hasMore: boolean;
+    }>(API_ENDPOINTS.MESSAGES.LIST(conversationId), {
+      params: {
+        ...(cursor ? { cursor } : {}),
+        limit,
+      },
+    });
+    return {
+      messages: res.messages ?? [],
+      nextCursor: res.nextCursor ?? null,
+      hasMore: Boolean(res.hasMore),
+    };
+  },
+
+  /**
+   * Send a message to a conversation.
+   */
   sendMessage: async (
     conversationId: string,
-    payload: { content: string; type?: string; mediaUrl?: string }
-  ): Promise<ChatMessage> => {
-    const response = await apiClient.post<{ message: ChatMessage }>(API_ENDPOINTS.MESSAGES.SEND(conversationId), payload);
-    return response.message;
-  },
-
-  getConversations: async (): Promise<ConversationSummary[]> => {
-    const res = await apiClient.get<{ conversations: ConversationSummary[] } | ConversationSummary[]>(
-      "/conversations"
+    payload: {
+      content: string;
+      type: MessageType;
+      attachment?: MessageAttachment;
+    }
+  ): Promise<ApiMessage> => {
+    const res = await apiClient.post<{ message: ApiMessage }>(
+      API_ENDPOINTS.MESSAGES.SEND(conversationId),
+      payload
     );
-    if (Array.isArray(res)) return res;      return res.conversations ?? [];
+    return res.message;
   },
 
-  /** Mark all incoming messages in a conversation as read. */
-  markAsRead: async (conversationId: string): Promise<void> => {
-    await apiClient.post(`/conversations/${conversationId}/read`, {});
+  /**
+   * List conversations for the authenticated user.
+   */
+  getConversations: async (): Promise<ConversationSummary[]> => {
+    const res = await apiClient.get<{ conversations: ConversationSummary[] }>(
+      API_ENDPOINTS.CONVERSATIONS.LIST
+    );
+    return res.conversations ?? [];
+  },
+
+  /**
+   * Mark all incoming messages in a conversation as read.
+   */
+  markAsRead: async (conversationId: string): Promise<{ modifiedCount: number }> => {
+    const res = await apiClient.post<{ modifiedCount: number }>(
+      API_ENDPOINTS.CONVERSATIONS.MARK_READ(conversationId),
+      {}
+    );
+    return res;
   },
 };

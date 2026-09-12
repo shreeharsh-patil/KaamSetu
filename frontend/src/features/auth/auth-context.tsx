@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { apiClient, setAccessToken, setOnAuthFailure } from "@/lib/api/client";
+import { syncSocketAuth, disconnectSocket } from "@/lib/socket/socket-client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import type { User, RequestOtpResponse, VerifyOtpResponse } from "./types";
 
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleUpdateToken = useCallback((token: string | null) => {
     setTokenState(token);
     setAccessToken(token);
+    syncSocketAuth(token);
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -107,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOnAuthFailure(() => {
       if (isSubscribed) {
         handleUpdateToken(null);
+        disconnectSocket();
         setUser(null);
       }
     });
@@ -172,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ignore network errors on logout
     } finally {
       handleUpdateToken(null);
+      disconnectSocket();
       setUser(null);
       setPendingPhone(null);
       if (typeof window !== "undefined") {

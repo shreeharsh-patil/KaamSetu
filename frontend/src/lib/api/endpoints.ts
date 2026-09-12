@@ -38,6 +38,9 @@ export const API_ENDPOINTS = {
     ENROLL: "/workers/enroll",
     ME: "/workers/me",
   },
+  CUSTOMERS: {
+    ME: "/customers/me",
+  },
   UPLOADS: {
     PRESIGN: "/uploads/presign",
     COMPLETE: "/uploads/complete",
@@ -45,6 +48,7 @@ export const API_ENDPOINTS = {
   },
   CONVERSATIONS: {
     LIST: "/conversations",
+    DETAIL: (id: string) => `/conversations/${id}`,
     FOR_JOB: (jobId: string) => `/jobs/${jobId}/conversation`,
     MARK_READ: (conversationId: string) => `/conversations/${conversationId}/read`,
   },

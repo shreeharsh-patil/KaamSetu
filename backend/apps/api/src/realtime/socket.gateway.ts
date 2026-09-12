@@ -238,6 +238,20 @@ export class RealtimeGateway {
   }
 
   /**
+   * Emits a typed event to all connected sockets in a specific conversation room.
+   */
+  emitToConversation<K extends keyof ServerToClientEvents>(
+    conversationId: string,
+    event: K,
+    data: Parameters<ServerToClientEvents[K]>[0]
+  ): boolean {
+    if (!this.io) return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this.io.to(`conversation:${conversationId}`) as any).emit(event, data);
+    return true;
+  }
+
+  /**
    * Broadcasts a typed event to all connected clients on the gateway.
    */
   broadcast<K extends keyof ServerToClientEvents>(

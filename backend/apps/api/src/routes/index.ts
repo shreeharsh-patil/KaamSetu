@@ -8,6 +8,7 @@ import { jobRoutes } from '../modules/jobs/job.routes.js';
 import { offerRoutes } from '../modules/job-offers/job-offer.routes.js';
 import { getWorkerOffers } from '../modules/job-offers/job-offer.controller.js';
 import { conversationRoutes } from '../modules/conversations/conversation.routes.js';
+import { getJobConversation } from '../modules/conversations/conversation.controller.js';
 import { messageRoutes } from '../modules/messages/message.routes.js';
 import { notificationRoutes } from '../modules/notifications/notification.routes.js';
 import { expenseRoutes } from '../modules/expenses/expense.routes.js';
@@ -64,12 +65,21 @@ export function createApiRouter(): Router {
   // Job offer endpoints under /api/v1/offers (Phase 5)
   apiV1Router.use('/offers', offerRoutes);
 
-  // Conversation endpoints under /api/v1 (e.g. /jobs/:jobId/conversation) (Phase 7)
-  // Also mounted at /conversations so GET /api/v1/conversations lists the user's conversations.
-  apiV1Router.use('/', conversationRoutes);
+  // Resolve-or-create the conversation for a job:
+  // GET /api/v1/jobs/:jobId/conversation (Phase 7).
+  // Must be registered explicitly — the conversations sub-router mounts
+  // under /conversations and must never swallow root-level GET paths.
+  apiV1Router.get(
+    '/jobs/:jobId/conversation',
+    authenticate(),
+    asyncHandler(getJobConversation)
+  );
+
+  // Conversation endpoints under /api/v1/conversations (Phase 7):
+  // GET /conversations (list) and GET /conversations/:id (detail).
   apiV1Router.use('/conversations', conversationRoutes);
 
-  // Message endpoints under /api/v1/conversations (Phase 7)
+  // Message endpoints under /api/v1/conversations/:id/messages (Phase 7)
   apiV1Router.use('/conversations', messageRoutes);
 
   // Notification endpoints under /api/v1/notifications (Phase 7)

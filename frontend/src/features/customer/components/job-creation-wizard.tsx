@@ -27,8 +27,10 @@ import { jobsApi } from "@/features/jobs/api";
 import { mapJobCreationFormToApi } from "@/features/jobs/mappers";
 import type { JobCreationFormState } from "@/features/jobs/types";
 import { putPresignedFile, uploadsApi } from "@/features/uploads/api";
+import { clearJobDraft, readJobDraft, writeJobDraft } from "@/features/customer/draft-storage";
+import { applyVoiceDraft, classificationToDraft, classifyTranscript } from "@/features/voice-booking/classification";
+import { customerApi } from "@/features/customer/api";
 
-const STORAGE_KEY = "kaamsetu_job_draft_v2";
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGES = 5;
@@ -72,6 +74,7 @@ export function JobCreationWizard() {
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const previewUrls = useRef(new Set<string>());
   const categoriesQuery = useQuery({ queryKey: ["service-categories"], queryFn: jobsApi.getCategories });
+  const customerQuery = useQuery({ queryKey: ["customer", "profile"], queryFn: customerApi.me });
   const skillsQuery = useQuery({ queryKey: ["service-skills", formData.categoryId], queryFn: () => jobsApi.getSkills(formData.categoryId), enabled: Boolean(formData.categoryId) });
 
   useEffect(() => {
@@ -88,56 +91,39 @@ export function JobCreationWizard() {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [voiceSuccessMsg, setVoiceSuccessMsg] = useState<string | null>(null);
 
-  const handleVoiceExtracted = (extractedText: string) => {
+  const handleVoiceExtracted = async (extractedText: string) => {
     const trimmed = extractedText.trim();
     if (!trimmed) return;
-
-    const currentTitle = formData.title.trim();
-    let newTitle = currentTitle;
-    if (!currentTitle) {
-      const firstSentence = trimmed.split(/[.?!।]/)[0]?.trim() || trimmed;
-      newTitle = firstSentence.length > 55 ? `${firstSentence.slice(0, 52)}...` : firstSentence;
+    try {
+      const draft = classificationToDraft(await classifyTranscript(trimmed));
+      writeJobDraft(draft);
+      setFormData((prev) => applyVoiceDraft(prev, draft));
+      setVoiceSuccessMsg("Booking details prepared from your voice. Please confirm the service location.");
+    } catch {
+      const fallback = { source: "VOICE" as const, originalTranscript: trimmed, description: trimmed };
+      writeJobDraft(fallback);
+      setFormData((prev) => applyVoiceDraft(prev, fallback));
+      setVoiceSuccessMsg("Your transcript was saved. Choose a service to complete the booking.");
     }
-
-    const lower = trimmed.toLowerCase();
-    let detectedUrgency = formData.urgency;
-    if (lower.includes("emergency") || lower.includes("turant") || lower.includes("aag") || lower.includes("blast")) {
-      detectedUrgency = "EMERGENCY";
-    } else if (lower.includes("urgent") || lower.includes("jaldi") || lower.includes("leak") || lower.includes("paani beh")) {
-      detectedUrgency = "TODAY";
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      title: newTitle,
-      description: prev.description ? `${prev.description}\n\n${trimmed}` : trimmed,
-      urgency: detectedUrgency,
-    }));
-
-    setVoiceSuccessMsg("Voice requirement transcribed and applied to your task!");
     setIsVoiceMode(false);
   };
 
-  // Restore draft from sessionStorage
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setFormData((prev) => ({ ...prev, ...parsed }));
-      }
-    } catch {
-      // Ignore storage errors
-    }
+    const saved = readJobDraft();
+    if (saved) setFormData((prev) => applyVoiceDraft(prev, saved));
   }, []);
 
-  // Persist draft to sessionStorage
   useEffect(() => {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-    } catch {
-      // Ignore storage errors
-    }
+    const address = customerQuery.data?.defaultAddress;
+    if (!address) return;
+    setFormData((prev) => prev.addressLine || prev.latitude !== undefined ? prev : ({
+      ...prev, addressLine: address.addressLine, city: address.city, state: address.state,
+      pincode: address.pincode, longitude: address.coordinates?.[0], latitude: address.coordinates?.[1],
+    }));
+  }, [customerQuery.data]);
+
+  useEffect(() => {
+    writeJobDraft(formData);
   }, [formData]);
 
   const handleCurrentLocation = () => {
@@ -217,7 +203,7 @@ export function JobCreationWizard() {
       const created = await jobsApi.createJob(mapJobCreationFormToApi(formData));
       // Clear saved draft
       try {
-        sessionStorage.removeItem(STORAGE_KEY);
+        clearJobDraft();
       } catch {
         // ignore
       }

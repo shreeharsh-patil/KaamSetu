@@ -403,19 +403,20 @@ export type WorkerLocationSocketDto = z.infer<typeof workerLocationSocketSchema>
 
 // ---------------- Messaging & Notifications Schemas (Phase 7) ----------------
 export const messageAttachmentSchema = z.object({
-  key: z.string().max(500).optional(),
-  url: z.string().url().max(1000).optional(),
-  mimeType: z.string().max(100).optional(),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
-  sizeBytes: z.number().int().positive().optional(),
+  key: z.string().max(500).optional().nullable(),
+  url: z.string().url().max(1000).optional().nullable(),
+  mimeType: z.string().max(100).optional().nullable(),
+  width: z.number().int().positive().optional().nullable(),
+  height: z.number().int().positive().optional().nullable(),
+  sizeBytes: z.number().int().positive().optional().nullable(),
   coordinates: z
     .tuple([
       z.number().min(-180).max(180),
       z.number().min(-90).max(90),
     ])
-    .optional(),
-  address: z.string().max(500).optional(),
+    .optional()
+    .nullable(),
+  address: z.string().max(500).optional().nullable(),
 });
 export type MessageAttachmentDto = z.infer<typeof messageAttachmentSchema>;
 
@@ -423,7 +424,7 @@ export const createMessageSchema = z
   .object({
     type: z.enum(['TEXT', 'IMAGE', 'LOCATION']), // Note: SYSTEM messages are blocked from client submission
     content: z.string().max(2000).default(''),
-    attachment: messageAttachmentSchema.optional(),
+    attachment: messageAttachmentSchema.optional().nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.type === 'TEXT' && (!data.content || data.content.trim().length === 0)) {
@@ -645,12 +646,18 @@ export type ListDisputesQueryDto = z.infer<typeof listDisputesQuerySchema>;
 
 // AI Structured Output Validation Schemas
 export const jobClassificationOutputSchema = z.object({
-  categorySlug: z.string().optional(),
-  suggestedCategoryName: z.string().optional(),
-  suggestedSkills: z.array(z.string()).default([]),
+  categorySlug: z.string().max(100).optional(),
+  suggestedCategoryName: z.string().max(200).optional(),
+  suggestedSkills: z.array(z.string().max(120)).default([]),
+  title: z.string().max(160).optional(),
+  description: z.string().max(2000).optional(),
   urgency: z.nativeEnum(JobUrgency).optional(),
+  timingIntent: z.enum(['ASAP', 'TODAY', 'TOMORROW', 'SCHEDULED']).optional(),
+  scheduledAt: z.string().datetime().optional(),
+  locationText: z.string().max(300).optional(),
+  problemSummary: z.string().max(500).optional(),
   estimatedPrice: z.number().positive().optional(),
-  confidence: z.number().min(0).max(1).default(0.8),
+  confidence: z.number().min(0).max(1),
 });
 export type JobClassificationOutputDto = z.infer<typeof jobClassificationOutputSchema>;
 

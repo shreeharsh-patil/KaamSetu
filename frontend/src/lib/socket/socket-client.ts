@@ -65,6 +65,21 @@ export function disconnectSocket(): void {
   }
 }
 
+export function syncSocketAuth(token: string | null): void {
+  if (!token) {
+    disconnectSocket();
+    return;
+  }
+  if (socketInstance) {
+    socketInstance.auth = { token };
+    if (!socketInstance.connected) {
+      socketInstance.connect();
+    }
+  } else {
+    connectSocket();
+  }
+}
+
 /**
  * Attaches central query invalidators to Socket events.
  * This guarantees UI cache synchronization without secondary state store drift.
@@ -91,6 +106,13 @@ export function setupSocketQuerySync(queryClient: QueryClient): () => void {
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
+  const handleMessageRead = (data?: { conversationId?: string }) => {
+    if (data?.conversationId) {
+      queryClient.invalidateQueries({ queryKey: ["messages", data.conversationId] });
+    }
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+  };
+
   const handleNotificationCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
   };
@@ -100,6 +122,7 @@ export function setupSocketQuerySync(queryClient: QueryClient): () => void {
   socket.on("job.status.changed", handleJobUpdated);
   socket.on("job.completed", handleJobUpdated);
   socket.on("message.created", handleMessageCreated);
+  socket.on("message.read", handleMessageRead);
   socket.on("notification.created", handleNotificationCreated);
 
   return () => {
@@ -108,6 +131,7 @@ export function setupSocketQuerySync(queryClient: QueryClient): () => void {
     socket.off("job.status.changed", handleJobUpdated);
     socket.off("job.completed", handleJobUpdated);
     socket.off("message.created", handleMessageCreated);
+    socket.off("message.read", handleMessageRead);
     socket.off("notification.created", handleNotificationCreated);
   };
 }

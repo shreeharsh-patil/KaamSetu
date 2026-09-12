@@ -20,6 +20,7 @@ export interface DashboardShellProps {
   /** Fallback top-bar title when no nav item matches the route. */
   fallbackTitle?: string;
   children: ReactNode;
+  contentClassName?: string;
 }
 
 function readCollapsedPref(): boolean {
@@ -43,7 +44,12 @@ function readCollapsedPref(): boolean {
  * shows "My Jobs" — no per-page title wiring needed. Sidebar offsets are
  * centralized here; pages must never set their own margin-left.
  */
-export function DashboardShell({ role: propRole, fallbackTitle, children }: DashboardShellProps) {
+export function DashboardShell({
+  role: propRole,
+  fallbackTitle,
+  contentClassName,
+  children,
+}: DashboardShellProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
 
@@ -103,7 +109,12 @@ export function DashboardShell({ role: propRole, fallbackTitle, children }: Dash
 
         <main id="main-content" className="flex-1">
           {/* pb-24 md:pb-6: clears the fixed mobile bottom navigation. */}
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 pb-24 sm:px-6 lg:px-8 md:pb-6">
+          <div
+            className={cn(
+              "mx-auto w-full max-w-[1400px] px-4 py-6 pb-24 sm:px-6 lg:px-8 md:pb-6",
+              contentClassName
+            )}
+          >
             {children}
           </div>
         </main>

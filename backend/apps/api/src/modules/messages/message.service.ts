@@ -175,7 +175,16 @@ export class MessageService {
       senderId: sender.id,
       type: input.type as MessageType,
       content: input.content ?? '',
-      attachment: input.attachment ?? undefined,
+      attachment: input.attachment ? {
+        ...(input.attachment.key ? { key: input.attachment.key } : {}),
+        ...(input.attachment.url ? { url: input.attachment.url } : {}),
+        ...(input.attachment.mimeType ? { mimeType: input.attachment.mimeType } : {}),
+        ...(input.attachment.sizeBytes !== null && input.attachment.sizeBytes !== undefined ? { sizeBytes: input.attachment.sizeBytes } : {}),
+        ...(input.attachment.width !== null && input.attachment.width !== undefined ? { width: input.attachment.width } : {}),
+        ...(input.attachment.height !== null && input.attachment.height !== undefined ? { height: input.attachment.height } : {}),
+        ...(input.attachment.coordinates ? { coordinates: input.attachment.coordinates } : {}),
+        ...(input.attachment.address ? { address: input.attachment.address } : {}),
+      } : undefined,
     });
 
     // Update conversation last message timestamp
@@ -202,8 +211,7 @@ export class MessageService {
       message: messageView,
     };
     this.realtime.emitToJob(conversation.jobId, 'message.created', newMsgPayload);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.realtime.getIO()?.to(`conversation:${conversationId}`) as any)?.emit('message.created', newMsgPayload);
+    this.realtime.emitToConversation(conversationId, 'message.created', newMsgPayload);
 
     // Notify other participants in the conversation
     const otherParticipants = conversation.participants.filter((p) => p !== sender.id);
@@ -264,8 +272,11 @@ export class MessageService {
       readerId: reader.id,
       readAt: new Date().toISOString(),
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.realtime.getIO()?.to(`conversation:${conversationId}`) as any)?.emit('message.read', readPayload);
+    this.realtime.emitToConversation(conversationId, 'message.read', readPayload);
+    const otherParticipants = conversation.participants.filter((p) => p !== reader.id);
+    for (const recipientId of otherParticipants) {
+      this.realtime.emitToUser(recipientId, 'message.read', readPayload);
+    }
 
     return result;
   }

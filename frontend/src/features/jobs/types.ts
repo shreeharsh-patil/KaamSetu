@@ -10,6 +10,7 @@ export interface ServiceSkill { id: string; name: string; slug: string; category
 export interface JobImage { key: string; width?: number; height?: number; mimeType?: string }
 
 export interface JobCreationFormState {
+  source?: "APP" | "VOICE";
   categoryId: string;
   requiredSkills: string[];
   title: string;

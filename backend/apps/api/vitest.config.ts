@@ -21,6 +21,12 @@ export default defineConfig({
       JWT_REFRESH_SECRET: 'test_jwt_refresh_secret_key_minimum_32_characters_long',
       CORS_ORIGINS: 'http://localhost:3000',
       LOG_LEVEL: 'fatal',
+      // Hermetic tests: pin the AI/speech key to empty so the provider
+      // registries keep the deterministic mock providers active. Without
+      // this, dotenv (via @kaamsetu/config) loads a developer's real
+      // GEMINI_API_KEY and the suite silently hits the live Gemini API —
+      // slow, non-deterministic, and failing the mock-output assertions.
+      GEMINI_API_KEY: '',
     },
     coverage: {
       provider: 'v8',

@@ -330,8 +330,15 @@ docker compose up --build -d
 ## 11. Vercel frontend + persistent API deployment
 
 For this repository, create a Vercel project with the monorepo **Root Directory**
-set to `frontend`. Use the Next.js framework preset, `pnpm install
---frozen-lockfile` as the install command, and `pnpm build` as the build command.
+set to `frontend`. Use the Next.js framework preset, `npm install` as the install
+command, and `npm run build` as the build command. Set Output Directory to
+`.next`, or leave the checked-in `frontend/vercel.json` in place.
+
+If the Vercel project currently reports `No Output Directory named "public"`,
+change its Framework Preset from **Other/Static** to **Next.js**, clear any
+manually configured `public` output directory, and set the Root Directory to
+`frontend`. The checked-in configuration explicitly selects the Next.js build
+and `.next` output.
 
 Set these Vercel variables for Production and Preview:
 

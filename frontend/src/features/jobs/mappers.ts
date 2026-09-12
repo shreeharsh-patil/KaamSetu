@@ -19,7 +19,7 @@ export function mapJobCreationFormToApi(form: JobCreationFormState, now = new Da
     requiredSkills: form.requiredSkills,
     title: form.title.trim(),
     description: form.description.trim(),
-    source: "APP",
+    source: form.source ?? "APP",
     location: { type: "Point", coordinates: [form.longitude, form.latitude] },
     address: { line: [form.addressLine.trim(), form.locality.trim()].filter(Boolean).join(", "), city: form.city.trim(), state: form.state.trim(), pincode: form.pincode.trim() },
     preferredTime: preferredTime.toISOString(),

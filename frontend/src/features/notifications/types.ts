@@ -2,6 +2,7 @@ export type NotificationType =
   | "JOB_OFFER"
   | "JOB_STATUS"
   | "MESSAGE"
+  | "NEW_MESSAGE"
   | "PAYMENT"
   | "SYSTEM";
 

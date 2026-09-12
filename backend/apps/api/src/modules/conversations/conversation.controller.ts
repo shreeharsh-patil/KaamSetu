@@ -31,3 +31,17 @@ export async function getJobConversation(req: Request, res: Response): Promise<v
   const conversation = await conversationService.getConversationForJob(jobId, actor);
   res.status(200).json({ success: true, data: { conversation } });
 }
+
+/** GET /api/v1/conversations/:id */
+export async function getConversation(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+  const rawId = req.params['id'];
+  const conversationId = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  if (!conversationId) {
+    throw new BadRequestError('Conversation ID is required');
+  }
+
+  const conversation = await conversationService.getConversationSummary(conversationId, actor);
+  res.status(200).json({ success: true, data: { conversation } });
+}

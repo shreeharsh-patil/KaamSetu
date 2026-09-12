@@ -41,14 +41,20 @@ Return JSON matching this exact structure:
   "categorySlug": "plumbing" | "electrical" | "cleaning" | "painting" | "carpentry" | "appliance-repair" | "general-maintenance",
   "suggestedCategoryName": string,
   "suggestedSkills": string[],
-  "urgency": "LOW" | "FLEXIBLE" | "URGENT" | "EMERGENCY",
+  "title": string | null,
+  "description": string | null,
+  "urgency": "FLEXIBLE" | "TODAY" | "EMERGENCY",
+  "timingIntent": "ASAP" | "TODAY" | "TOMORROW" | "SCHEDULED" | null,
+  "scheduledAt": ISO-8601 string | null,
+  "locationText": string | null,
+  "problemSummary": string | null,
   "estimatedPrice": number,
   "confidence": number
 }
 
 Rules:
 - categorySlug must be one of: "plumbing", "electrical", "cleaning", "painting", "carpentry", "appliance-repair", "general-maintenance".
-- urgency must be one of: "LOW", "FLEXIBLE", "URGENT", "EMERGENCY". If words like urgent, burst, emergency, shock, flood are present, set to "EMERGENCY" or "URGENT".
+- Preserve the customer's original language in description. Do not invent a category, time, location, or MongoDB IDs. For an unclear request omit categorySlug and use low confidence.
 - estimatedPrice in INR (realistic price for India, between 250 and 8000).
 - confidence between 0.70 and 0.99.`;
 
@@ -60,18 +66,24 @@ Rules:
       const parsed = JSON.parse(response.text);
 
       let urgencyEnum = JobUrgency.FLEXIBLE;
-      if (parsed.urgency === 'EMERGENCY' || parsed.urgency === 'URGENT') {
+      if (parsed.urgency === 'EMERGENCY') {
         urgencyEnum = JobUrgency.EMERGENCY;
       } else if (parsed.urgency === 'TODAY') {
         urgencyEnum = JobUrgency.TODAY;
       }
 
       return {
-        categorySlug: parsed.categorySlug || 'general-maintenance',
-        suggestedCategoryName: parsed.suggestedCategoryName || 'General Maintenance',
+        categorySlug: typeof parsed.categorySlug === 'string' ? parsed.categorySlug : undefined,
+        suggestedCategoryName: typeof parsed.suggestedCategoryName === 'string' ? parsed.suggestedCategoryName : undefined,
         suggestedSkills: Array.isArray(parsed.suggestedSkills) ? parsed.suggestedSkills : [],
         urgency: urgencyEnum,
         estimatedPrice: typeof parsed.estimatedPrice === 'number' ? parsed.estimatedPrice : 500,
+        title: typeof parsed.title === 'string' ? parsed.title : undefined,
+        description: typeof parsed.description === 'string' ? parsed.description : text.trim(),
+        timingIntent: ['ASAP', 'TODAY', 'TOMORROW', 'SCHEDULED'].includes(parsed.timingIntent) ? parsed.timingIntent : undefined,
+        scheduledAt: typeof parsed.scheduledAt === 'string' ? parsed.scheduledAt : undefined,
+        locationText: typeof parsed.locationText === 'string' ? parsed.locationText : undefined,
+        problemSummary: typeof parsed.problemSummary === 'string' ? parsed.problemSummary : undefined,
         confidence: typeof parsed.confidence === 'number' ? Math.min(1, Math.max(0, parsed.confidence)) : 0.85,
       };
     } catch (err) {

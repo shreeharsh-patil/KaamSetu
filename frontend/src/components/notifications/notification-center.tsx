@@ -49,6 +49,7 @@ export function NotificationCenter({ className }: { className?: string }) {
       case "JOB_STATUS":
         return <Briefcase className="h-4 w-4 text-primary" />;
       case "MESSAGE":
+      case "NEW_MESSAGE":
         return <MessageSquare className="h-4 w-4 text-blue-500" />;
       case "PAYMENT":
         return <IndianRupee className="h-4 w-4 text-emerald-500" />;

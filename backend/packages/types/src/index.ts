@@ -1471,6 +1471,12 @@ export interface JobClassificationResult {
   suggestedSkills: string[];
   urgency?: JobUrgency | undefined;
   estimatedPrice?: number | undefined;
+  title?: string | undefined;
+  description?: string | undefined;
+  timingIntent?: 'ASAP' | 'TODAY' | 'TOMORROW' | 'SCHEDULED' | undefined;
+  scheduledAt?: string | undefined;
+  locationText?: string | undefined;
+  problemSummary?: string | undefined;
   confidence: number; // 0 to 1
 }
 

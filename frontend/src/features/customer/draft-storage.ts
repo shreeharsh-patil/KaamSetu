@@ -1,12 +1,16 @@
-import type { JobTimingOption } from "@/features/jobs/types";
+import type { JobTimingOption, JobUrgency } from "@/features/jobs/types";
 
 export interface JobDraft {
+  version?: 3;
+  source?: "APP" | "VOICE";
+  originalTranscript?: string;
+  categorySlug?: string;
   categoryId?: string;
   category?: string; // category slug or name fallback
   requiredSkills?: string[];
   title?: string;
   description?: string;
-  urgency?: "FLEXIBLE" | "TODAY" | "EMERGENCY";
+  urgency?: JobUrgency;
   timingOption?: JobTimingOption;
   scheduledAt?: string;
   addressLine?: string;
@@ -16,6 +20,8 @@ export interface JobDraft {
   pincode?: string;
   latitude?: number;
   longitude?: number;
+  estimatedPrice?: number;
+  updatedAt?: string;
 }
 
 export const PRIMARY_DRAFT_KEY = "kaamsetu_job_draft_v2";
@@ -56,7 +62,7 @@ export function writeJobDraft(draft: Partial<JobDraft>): void {
   if (typeof window === "undefined") return;
   try {
     const existing = readJobDraft() || {};
-    const merged = { ...existing, ...draft };
+    const merged = { ...existing, ...draft, version: 3 as const, updatedAt: new Date().toISOString() };
     sessionStorage.setItem(PRIMARY_DRAFT_KEY, JSON.stringify(merged));
   } catch {
     // Ignore storage errors

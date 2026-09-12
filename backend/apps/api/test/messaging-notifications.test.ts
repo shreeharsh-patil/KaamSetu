@@ -240,6 +240,37 @@ describe('Messaging & Notifications (Phase 7)', () => {
       const res = await request(app).get('/api/v1/conversations');
       expect(res.status).toBe(401);
     });
+
+    it('GET /api/v1/conversations/:id — should return conversation summary with jobTitle and participants', async () => {
+      const res = await request(app)
+        .get(`/api/v1/conversations/${conversationId}`)
+        .set('Authorization', `Bearer ${customerUser.token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.conversation.id).toBe(conversationId);
+      expect(res.body.data.conversation.jobTitle).toBe('Refrigerator not cooling');
+      expect(res.body.data.conversation.otherParticipant.id).toBe(workerUser.id);
+      expect(res.body.data.conversation.otherParticipant.role).toBe(UserRole.WORKER);
+      expect(res.body.data.conversation.otherParticipant).not.toHaveProperty('phoneNumber');
+    });
+
+    it('GET /api/v1/conversations/:id — should forbid an unrelated user', async () => {
+      const res = await request(app)
+        .get(`/api/v1/conversations/${conversationId}`)
+        .set('Authorization', `Bearer ${otherUser.token}`);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('GET /api/v1/conversations/:id — should return 404 for nonexistent conversation', async () => {
+      const fakeId = '507f1f77bcf86cd799439011';
+      const res = await request(app)
+        .get(`/api/v1/conversations/${fakeId}`)
+        .set('Authorization', `Bearer ${customerUser.token}`);
+
+      expect(res.status).toBe(404);
+    });
   });
 
   describe('Messages (POST & GET /api/v1/conversations/:id/messages)', () => {
@@ -410,6 +441,53 @@ describe('Messaging & Notifications (Phase 7)', () => {
       for (const msg of messages) {
         expect(msg.readAt).toBeInstanceOf(Date);
       }
+    });
+
+    it('SECURITY RULE: Should ignore spoofed senderId in payload and set authenticated user', async () => {
+      const res = await request(app)
+        .post(`/api/v1/conversations/${conversationId}/messages`)
+        .set('Authorization', `Bearer ${customerUser.token}`)
+        .send({
+          type: MessageType.TEXT,
+          content: 'Attempting to spoof sender',
+          senderId: workerUser.id,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.message.senderId).toBe(customerUser.id);
+      expect(res.body.data.message.sender.id).toBe(customerUser.id);
+      expect(res.body.data.message.sender).not.toHaveProperty('phoneNumber');
+    });
+
+    it('POST /api/v1/conversations/:id/read — updates unread count to 0 in conversation summary', async () => {
+      // 1. Worker sends message
+      await request(app)
+        .post(`/api/v1/conversations/${conversationId}/messages`)
+        .set('Authorization', `Bearer ${workerUser.token}`)
+        .send({
+          type: MessageType.TEXT,
+          content: 'Unread count test message',
+        });
+
+      // 2. Customer lists conversations - unread count should be >= 1
+      const listBefore = await request(app)
+        .get('/api/v1/conversations')
+        .set('Authorization', `Bearer ${customerUser.token}`);
+      const convBefore = listBefore.body.data.conversations.find((c: any) => c.id === conversationId);
+      expect(convBefore.unreadCount).toBeGreaterThan(0);
+
+      // 3. Customer marks read
+      const readRes = await request(app)
+        .post(`/api/v1/conversations/${conversationId}/read`)
+        .set('Authorization', `Bearer ${customerUser.token}`);
+      expect(readRes.status).toBe(200);
+
+      // 4. Customer lists conversations - unread count should be 0
+      const listAfter = await request(app)
+        .get('/api/v1/conversations')
+        .set('Authorization', `Bearer ${customerUser.token}`);
+      const convAfter = listAfter.body.data.conversations.find((c: any) => c.id === conversationId);
+      expect(convAfter.unreadCount).toBe(0);
     });
   });
 
