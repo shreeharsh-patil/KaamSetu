@@ -4,9 +4,9 @@ import "@/styles/globals.css";
 import { siteConfig } from "@/config/site";
 import { RootProviders } from "@/providers/root-providers";
 import { AppHeader } from "@/components/layout/app-header";
-import { AppFooter } from "@/components/layout/app-footer";
 import { OfflineBanner } from "@/components/feedback/offline-banner";
 import { VoiceAssistantFAB } from "@/components/voice/voice-assistant-fab";
+import { ConditionalFooter } from "@/components/layout/conditional-footer";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -53,7 +53,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={interTight.variable}>
-      <body className={`${interTight.className} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground selection:bg-blue-500/20`}>
+      <body
+        className={`${interTight.className} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground selection:bg-blue-500/20`}
+      >
         {/* Accessible Skip Link */}
         <a
           href="#main-content"
@@ -63,13 +65,21 @@ export default function RootLayout({
         </a>
 
         <RootProviders>
+          {/*
+            AppHeader hides itself on authenticated dashboard routes.
+            DashboardShell renders its own sidebar + compact topbar for those.
+          */}
           <AppHeader />
           <OfflineBanner />
           <main id="main-content" className="flex-1 flex flex-col">
             {children}
           </main>
           <VoiceAssistantFAB />
-          <AppFooter />
+          {/*
+            ConditionalFooter hides AppFooter on authenticated dashboard pages.
+            Marketing/public pages still get the full footer.
+          */}
+          <ConditionalFooter />
         </RootProviders>
       </body>
     </html>

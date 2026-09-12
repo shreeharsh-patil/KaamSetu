@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, UserPlus, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
+import { SectionTitle } from "@/components/landing/section-title";
 
 export function FinalCTA() {
   return (
@@ -10,9 +11,9 @@ export function FinalCTA() {
             Get Started Today
           </span>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground text-balance leading-tight">
+          <SectionTitle className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground text-balance leading-tight">
             Ready to get quality work done?
-          </h2>
+          </SectionTitle>
 
           <p className="mt-4 text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
             Book local electricians, plumbers, carpenters, and technicians nearby, or enroll as a verified worker partner to grow your trade.

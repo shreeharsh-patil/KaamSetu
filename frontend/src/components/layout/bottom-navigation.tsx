@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Briefcase, MessageSquare, User, LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Home, Briefcase, MessageSquare, User, IndianRupee } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/i18n-context";
 
@@ -11,6 +12,8 @@ export interface BottomNavItem {
   href: string;
   icon: LucideIcon;
   badgeCount?: number;
+  /** Exact match only — prevents /customer activating all sub-routes */
+  exactMatch?: boolean;
 }
 
 export interface BottomNavigationProps {
@@ -26,35 +29,38 @@ export function BottomNavigation({
   const { t } = useTranslation();
 
   const customerItems: BottomNavItem[] = [
-    { label: t("nav.home", "Home"), href: "/customer", icon: Home },
+    { label: t("nav.home", "Home"), href: "/customer", icon: Home, exactMatch: true },
     { label: t("nav.jobs", "My Jobs"), href: "/customer/jobs", icon: Briefcase },
     { label: t("nav.messages", "Messages"), href: "/customer/messages", icon: MessageSquare },
     { label: t("nav.profile", "Profile"), href: "/customer/profile", icon: User },
   ];
 
   const workerItems: BottomNavItem[] = [
-    { label: t("nav.nearby", "Nearby"), href: "/worker", icon: Home },
-    { label: t("nav.offers", "Offers"), href: "/worker/jobs", icon: Briefcase },
+    { label: t("nav.nearby", "Overview"), href: "/worker", icon: Home, exactMatch: true },
+    { label: t("nav.offers", "Jobs"), href: "/worker/jobs", icon: Briefcase },
     { label: t("nav.messages", "Messages"), href: "/worker/messages", icon: MessageSquare },
-    { label: t("nav.earnings", "Earnings"), href: "/worker/earnings", icon: User },
+    { label: t("nav.earnings", "Earnings"), href: "/worker/earnings", icon: IndianRupee },
   ];
 
   const navItems = items || (role === "worker" ? workerItems : customerItems);
 
   return (
     <nav
-      aria-label="Mobile Bottom Navigation"
-      className="md:hidden fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-safe"
+      aria-label="Mobile navigation"
+      className="lg:hidden fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-safe"
     >
-      <div className="grid h-16 grid-cols-4 items-center">
+      <div className="grid h-16 items-center" style={{ gridTemplateColumns: `repeat(${navItems.length}, 1fr)` }}>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== "/customer" && item.href !== "/worker" && pathname.startsWith(item.href));
+          const isActive = item.exactMatch
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative flex flex-col items-center justify-center gap-0.5 py-1 text-[11px] font-medium transition-all select-none min-h-touch",
                 isActive
@@ -68,14 +74,24 @@ export function BottomNavigation({
                   isActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
                 )}
               >
-                <Icon className={cn("h-5 w-5 transition-transform", isActive && "stroke-[2.5px] scale-105")} />
+                <Icon
+                  className={cn(
+                    "h-5 w-5 transition-transform",
+                    isActive && "stroke-[2.5px] scale-105"
+                  )}
+                />
                 {item.badgeCount && item.badgeCount > 0 ? (
                   <span className="absolute -right-1 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
                     {item.badgeCount > 9 ? "9+" : item.badgeCount}
                   </span>
                 ) : null}
               </div>
-              <span className={cn("tracking-tight text-[10px]", isActive ? "font-bold text-primary" : "font-medium")}>
+              <span
+                className={cn(
+                  "tracking-tight text-[10px]",
+                  isActive ? "font-bold text-primary" : "font-medium"
+                )}
+              >
                 {item.label}
               </span>
             </Link>

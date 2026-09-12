@@ -11,6 +11,12 @@ export const notificationsApi = {
     return res.notifications ?? [];
   },
 
+  /** Unread badge count for nav (client-side; backend has no count endpoint). */
+  countUnread: async (): Promise<number> => {
+    const notifications = await notificationsApi.getNotifications();
+    return notifications.filter((n) => !n.read).length;
+  },
+
   markAsRead: async (id: string): Promise<{ success: boolean }> => {
     return apiClient.patch<{ success: boolean }>(API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id), {});
   },

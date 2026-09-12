@@ -109,6 +109,10 @@ html {
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased min-h-screen flex flex-col font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;

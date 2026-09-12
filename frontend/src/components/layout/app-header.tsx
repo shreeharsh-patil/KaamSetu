@@ -9,19 +9,9 @@ import {
   Moon,
   LogOut,
   User as UserIcon,
-  LayoutDashboard,
-  PlusCircle,
-  Briefcase,
-  MessageSquare,
-  BellRing,
-  IndianRupee,
-  Users,
-  ShieldCheck,
-  ClipboardList,
-  FileCheck,
+  ArrowUpRight,
   Menu,
   X,
-  ArrowUpRight,
 } from "lucide-react";
 import { LanguageSelector } from "@/components/shared/language-selector";
 import { useTheme } from "@/providers/theme-provider";
@@ -29,11 +19,43 @@ import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/i18n-context";
 
+/**
+ * AppHeader — serves public/guest pages only.
+ *
+ * On authenticated dashboard routes (/customer, /worker, /admin) the
+ * DashboardShell renders its own sidebar + compact topbar, so AppHeader
+ * hides itself to avoid duplicate navigation.
+ */
+
+const DASHBOARD_ROOTS = ["/customer", "/worker", "/admin"];
+
+function useIsAuthenticatedDashboard(): boolean {
+  const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  return (
+    isAuthenticated &&
+    DASHBOARD_ROOTS.some(
+      (root) => pathname === root || pathname.startsWith(`${root}/`)
+    )
+  );
+}
+
+// Guest landing navigation
+const guestNavItems = [
+  { href: "/#services", label: "Services", number: "01" },
+  { href: "/#how-it-works", label: "How It Works", number: "02" },
+  { href: "/#reviews", label: "Reviews", number: "03" },
+  { href: "/#guarantees", label: "Guarantees", number: "04" },
+  { href: "/#insights", label: "Insights", number: "05" },
+  { href: "/voice-ai", label: "Voice AI", number: "06" },
+];
+
 export function AppHeader() {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
   const { t } = useTranslation();
+  const isDashboard = useIsAuthenticatedDashboard();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -41,9 +63,7 @@ export function AppHeader() {
   const isHomePage = pathname === "/";
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 30);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 30);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -61,50 +81,10 @@ export function AppHeader() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileMenuOpen]);
 
-  // Guest landing numbered navigation matching ai-product-portfolio
-  const guestNavItems = [
-    { href: "/#services", label: "Services", number: "01" },
-    { href: "/#how-it-works", label: "How It Works", number: "02" },
-    { href: "/#reviews", label: "Reviews", number: "03" },
-    { href: "/#guarantees", label: "Guarantees", number: "04" },
-    { href: "/#insights", label: "Insights", number: "05" },
-    { href: "/voice-ai", label: "Voice AI", number: "06" },
-  ];
-
-  // Role-aware navigation when logged in
-  const customerLinks = [
-    { href: "/customer", label: t("nav.dashboard", "Dashboard"), icon: LayoutDashboard },
-    { href: "/customer/jobs/new", label: t("nav.bookService", "Book Service"), icon: PlusCircle },
-    { href: "/customer/jobs", label: t("nav.myJobs", "My Jobs"), icon: Briefcase },
-    { href: "/customer/messages", label: t("nav.messages", "Messages"), icon: MessageSquare },
-    { href: "/customer/profile", label: t("nav.profile", "Profile"), icon: UserIcon },
-  ];
-
-  const workerLinks = [
-    { href: "/worker", label: t("nav.overview", "Overview"), icon: LayoutDashboard },
-    { href: "/worker/offers", label: t("nav.jobOffers", "Job Offers"), icon: BellRing },
-    { href: "/worker/jobs", label: t("nav.activeWork", "Active Work"), icon: Briefcase },
-    { href: "/worker/earnings", label: t("nav.earnings", "Earnings"), icon: IndianRupee },
-    { href: "/worker/profile", label: t("nav.profile", "Profile"), icon: UserIcon },
-  ];
-
-  const adminLinks = [
-    { href: "/admin", label: t("nav.dashboard", "Dashboard"), icon: LayoutDashboard },
-    { href: "/admin/users", label: t("nav.users", "Users"), icon: Users },
-    { href: "/admin/workers", label: t("nav.workers", "Workers"), icon: ShieldCheck },
-    { href: "/admin/jobs", label: t("nav.jobs", "Jobs"), icon: ClipboardList },
-    { href: "/admin/verifications", label: t("nav.verifications", "Verifications"), icon: FileCheck },
-  ];
-
-  const activeUserLinks = isAuthenticated && user
-    ? user.role === "ADMIN" || user.role === "SUPPORT"
-      ? adminLinks
-      : user.role === "WORKER"
-      ? workerLinks
-      : customerLinks
-    : [];
-
-  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleSmoothScroll = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
     if (href.startsWith("/#") && isHomePage) {
       e.preventDefault();
       const targetId = href.replace("/#", "");
@@ -113,17 +93,17 @@ export function AppHeader() {
         const offset = 80;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = element.getBoundingClientRect().top;
-        const elementPosition = elementRect - bodyRect;
-        const offsetPosition = elementPosition - offset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
+        const offsetPosition = elementRect - bodyRect - offset;
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       }
       setMobileMenuOpen(false);
     }
   };
+
+  // Hide on authenticated dashboard routes — sidebar handles navigation there
+  if (isDashboard) {
+    return null;
+  }
 
   return (
     <header
@@ -159,48 +139,33 @@ export function AppHeader() {
             </div>
           </Link>
 
-          {/* Desktop Nav Items */}
+          {/* Desktop Guest Nav */}
           <div className="hidden lg:flex items-center gap-7">
-            {isAuthenticated && activeUserLinks.length > 0
-              ? activeUserLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-foreground inline-flex items-center gap-1.5",
-                      pathname === link.href || pathname.startsWith(`${link.href}/`)
-                        ? "text-[#203eec] font-semibold"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <link.icon className="w-4 h-4 opacity-70" />
-                    <span>{link.label}</span>
-                  </Link>
-                ))
-              : guestNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={(e) => handleSmoothScroll(e, item.href)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                  >
-                    <span>{item.label}</span>
-                    <span className="text-xs ml-1 opacity-40 group-hover:opacity-80 transition-opacity font-mono">
-                      ({item.number})
-                    </span>
-                  </Link>
-                ))}
+            {guestNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={(e) => handleSmoothScroll(e, item.href)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
+              >
+                <span>{item.label}</span>
+                <span className="text-xs ml-1 opacity-40 group-hover:opacity-80 transition-opacity font-mono">
+                  ({item.number})
+                </span>
+              </Link>
+            ))}
           </div>
 
-          {/* Right Action Elements */}
+          {/* Right Actions */}
           <div className="flex items-center gap-3">
-            {/* Language Selector */}
             <LanguageSelector className="inline-flex scale-90 sm:scale-100" />
 
             {/* Theme Toggle */}
             <button
               type="button"
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              onClick={() =>
+                setTheme(resolvedTheme === "dark" ? "light" : "dark")
+              }
               className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors hover:bg-secondary"
               aria-label="Toggle theme"
             >
@@ -211,7 +176,7 @@ export function AppHeader() {
               )}
             </button>
 
-            {/* Auth / CTA Button */}
+            {/* Auth CTA or logout */}
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
                 <Link
@@ -219,13 +184,17 @@ export function AppHeader() {
                     user.role === "ADMIN" || user.role === "SUPPORT"
                       ? "/admin"
                       : user.role === "WORKER"
-                      ? "/worker/profile"
-                      : "/customer/profile"
+                      ? "/worker"
+                      : "/customer"
                   }
                   className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-xs font-semibold border border-border"
                 >
-                  <UserIcon className="w-3.5 h-3.5 text-[#203eec]" />
-                  <span>{user.fullName || user.phoneNumber}</span>
+                  <UserIcon className="w-3.5 h-3.5 text-primary" />
+                  <span>
+                    {user.fullName
+                      ? user.fullName.split(" ")[0]
+                      : t("nav.dashboard", "Dashboard")}
+                  </span>
                 </Link>
                 <button
                   type="button"
@@ -244,7 +213,6 @@ export function AppHeader() {
                 >
                   Sign In
                 </Link>
-
                 <Link
                   href="/customer/jobs/new"
                   className="inline-flex items-center justify-center px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-full text-white transition-all hover:shadow-xl relative overflow-hidden group shadow-md"
@@ -262,14 +230,18 @@ export function AppHeader() {
               </div>
             )}
 
-            {/* Mobile Hamburger Button */}
+            {/* Mobile Hamburger */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </nav>
@@ -277,31 +249,21 @@ export function AppHeader() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-border bg-background/95 backdrop-blur-xl px-6 py-6 space-y-4 animate-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden border-b border-border bg-background/95 backdrop-blur-xl px-6 py-6 space-y-4 animate-menu-drop">
           <div className="flex flex-col space-y-3">
-            {isAuthenticated && activeUserLinks.length > 0
-              ? activeUserLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-base font-medium text-foreground py-1.5"
-                  >
-                    <link.icon className="w-4 h-4 text-[#203eec]" />
-                    <span>{link.label}</span>
-                  </Link>
-                ))
-              : guestNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={(e) => handleSmoothScroll(e, item.href)}
-                    className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-1.5 border-b border-border/40"
-                  >
-                    <span>{item.label}</span>
-                    <span className="text-xs font-mono text-muted-foreground">({item.number})</span>
-                  </Link>
-                ))}
+            {guestNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={(e) => handleSmoothScroll(e, item.href)}
+                className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-1.5 border-b border-border/40"
+              >
+                <span>{item.label}</span>
+                <span className="text-xs font-mono text-muted-foreground">
+                  ({item.number})
+                </span>
+              </Link>
+            ))}
           </div>
 
           <div className="pt-4 border-t border-border flex flex-col gap-3">

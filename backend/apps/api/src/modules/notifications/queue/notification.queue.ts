@@ -14,6 +14,8 @@ export class NotificationQueue {
       this.connection = new Redis(env.REDIS_URL, {
         maxRetriesPerRequest: null,
         lazyConnect: true,
+        connectTimeout: env.NODE_ENV === 'production' ? 10_000 : 1_000,
+        retryStrategy: env.NODE_ENV === 'production' ? undefined : () => null,
       });
 
       this.queue = new Queue<NotificationJobData>(NOTIFICATIONS_QUEUE_NAME, {
@@ -65,11 +67,21 @@ export class NotificationQueue {
 
   async close(): Promise<void> {
     if (this.queue) {
-      await this.queue.close();
+      try {
+        await this.queue.close();
+      } catch {
+        // Queue may already be closed
+      }
       this.queue = null;
     }
     if (this.connection) {
-      await this.connection.quit();
+      try {
+        if (this.connection.status !== "end" && this.connection.status !== "close") {
+          await this.connection.quit();
+        }
+      } catch {
+        // Connection may already be closed
+      }
       this.connection = null;
     }
   }
