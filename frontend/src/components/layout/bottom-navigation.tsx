@@ -2,59 +2,85 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
-import { Home, Briefcase, MessageSquare, User, IndianRupee } from "lucide-react";
+import { Home, Briefcase, MessageSquare, User, IndianRupee, BellRing, LayoutDashboard, Users, Scale, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/i18n-context";
+import { dashboardNavigation, resolveActiveNav, type NavRole } from "@/config/dashboard-navigation";
 
 export interface BottomNavItem {
   label: string;
   href: string;
   icon: LucideIcon;
   badgeCount?: number;
-  /** Exact match only — prevents /customer activating all sub-routes */
-  exactMatch?: boolean;
 }
 
 export interface BottomNavigationProps {
-  items?: BottomNavItem[];
-  role?: "customer" | "worker";
+  role?: "customer" | "worker" | "admin";
 }
 
-export function BottomNavigation({
-  items,
-  role = "customer",
-}: BottomNavigationProps) {
+/** href → icon for config-driven bottom nav items. */
+const ICON_BY_HREF: Record<string, LucideIcon> = {
+  "/customer": LayoutDashboard,
+  "/customer/jobs": Briefcase,
+  "/messages": MessageSquare,
+  "/customer/profile": User,
+  "/worker": LayoutDashboard,
+  "/worker/offers": BellRing,
+  "/worker/jobs": Briefcase,
+  "/worker/earnings": IndianRupee,
+  "/admin": LayoutDashboard,
+  "/admin/users": Users,
+  "/admin/jobs": Briefcase,
+  "/admin/disputes": Scale,
+};
+
+const FALLBACK_ICONS: Record<string, LucideIcon> = {
+  customer: Home,
+  worker: Home,
+  admin: LayoutDashboard,
+};
+
+/**
+ * Mobile bottom navigation — driven by the same dashboard-navigation config
+ * as the sidebar (`mobileHrefs`), so destinations never drift between the two.
+ */
+export function BottomNavigation({ role = "customer" }: BottomNavigationProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
 
-  const customerItems: BottomNavItem[] = [
-    { label: t("nav.home", "Home"), href: "/customer", icon: Home, exactMatch: true },
-    { label: t("nav.jobs", "My Jobs"), href: "/customer/jobs", icon: Briefcase },
-    { label: t("nav.messages", "Messages"), href: "/customer/messages", icon: MessageSquare },
-    { label: t("nav.profile", "Profile"), href: "/customer/profile", icon: User },
-  ];
+  const navRole: NavRole =
+    role === "worker" ? "WORKER" : role === "admin" ? "ADMIN" : "CUSTOMER";
+  const config = dashboardNavigation[navRole];
 
-  const workerItems: BottomNavItem[] = [
-    { label: t("nav.nearby", "Overview"), href: "/worker", icon: Home, exactMatch: true },
-    { label: t("nav.offers", "Jobs"), href: "/worker/jobs", icon: Briefcase },
-    { label: t("nav.messages", "Messages"), href: "/worker/messages", icon: MessageSquare },
-    { label: t("nav.earnings", "Earnings"), href: "/worker/earnings", icon: IndianRupee },
-  ];
+  const navItems: BottomNavItem[] = config.mobileHrefs
+    .map((href) => {
+      const item = config.sections.flatMap((s) => s.items).find((i) => i.href === href);
+      if (!item) return null;
+      return {
+        href,
+        label: t(item.labelKey, item.fallback),
+        icon: ICON_BY_HREF[href] ?? FALLBACK_ICONS[role] ?? Home,
+      } satisfies BottomNavItem;
+    })
+    .filter((v): v is BottomNavItem => v !== null);
 
-  const navItems = items || (role === "worker" ? workerItems : customerItems);
+  const activeHref = resolveActiveNav(pathname, config.mobileHrefs.map((href) => {
+    const item = config.sections.flatMap((s) => s.items).find((i) => i.href === href);
+    return { href, match: item?.match ?? ("prefix" as const) };
+  }));
 
   return (
     <nav
-      aria-label="Mobile navigation"
-      className="lg:hidden fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-safe"
+      aria-label="Mobile Bottom Navigation"
+      className="md:hidden fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-safe"
     >
-      <div className="grid h-16 items-center" style={{ gridTemplateColumns: `repeat(${navItems.length}, 1fr)` }}>
+      <div
+        className="grid items-center"
+        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.exactMatch
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive = activeHref === item.href;
 
           return (
             <Link
@@ -62,7 +88,7 @@ export function BottomNavigation({
               href={item.href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 py-1 text-[11px] font-medium transition-all select-none min-h-touch",
+                "relative flex flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium transition-all select-none min-h-touch",
                 isActive
                   ? "text-primary font-bold"
                   : "text-muted-foreground hover:text-foreground"
@@ -74,24 +100,9 @@ export function BottomNavigation({
                   isActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
                 )}
               >
-                <Icon
-                  className={cn(
-                    "h-5 w-5 transition-transform",
-                    isActive && "stroke-[2.5px] scale-105"
-                  )}
-                />
-                {item.badgeCount && item.badgeCount > 0 ? (
-                  <span className="absolute -right-1 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
-                    {item.badgeCount > 9 ? "9+" : item.badgeCount}
-                  </span>
-                ) : null}
+                <Icon className={cn("h-5 w-5 transition-transform", isActive && "stroke-[2.5px] scale-105")} />
               </div>
-              <span
-                className={cn(
-                  "tracking-tight text-[10px]",
-                  isActive ? "font-bold text-primary" : "font-medium"
-                )}
-              >
+              <span className={cn("tracking-tight text-[10px]", isActive ? "font-bold text-primary" : "font-medium")}>
                 {item.label}
               </span>
             </Link>
