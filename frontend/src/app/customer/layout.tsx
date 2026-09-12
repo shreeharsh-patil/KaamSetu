@@ -7,7 +7,7 @@ import { BottomNavigation } from "@/components/layout/bottom-navigation";
 
 export default function CustomerLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard requiredRole="CUSTOMER" fallbackUrl="/login">
+    <AuthGuard allowedRoles={["CUSTOMER", "WORKER"]} fallbackUrl="/login">
       {/* Shell renders sidebar (md+) and compact header; bottom navigation
           serves mobile primary destinations. One mount of children total. */}
       <DashboardShell role="CUSTOMER">
