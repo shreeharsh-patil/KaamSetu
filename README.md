@@ -1,5 +1,6 @@
 <div align="center">
-
+<p>Account: any valid phone number or gmail</p>
+<p>Default OTP 123456</p>
 # 🛠️ KaamSetu (काम सेतु)
 
 ### Hyperlocal Skilled-Worker Marketplace, Deterministic Geospatial Matching & Concurrency-Safe Service Architecture
@@ -554,7 +555,7 @@ pnpm load-test:concurrency
 - **Shreeharsh Patil** — [GitHub Profile](https://github.com/shreeharsh-patil)
 - **Savali Thakur**
 - **Abhishek Paste**
-- **Kenneth Alemida**
+- **Kenneth Almeida**
 
 ---
 
