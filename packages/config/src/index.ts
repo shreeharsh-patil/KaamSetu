@@ -65,6 +65,18 @@ const envSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
     .default('info'),
   BODY_SIZE_LIMIT: z.string().default('1mb'),
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().default('ap-south-1'),
+  S3_BUCKET: z.string().default('kaamsetu-uploads'),
+  S3_ACCESS_KEY_ID: z.string().default('test-access-key'),
+  S3_SECRET_ACCESS_KEY: z.string().default('test-secret-key'),
+  S3_FORCE_PATH_STYLE: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true' || val === undefined)
+    .default('true'),
+  CDN_BASE_URL: z.string().optional(),
+  STORAGE_PROVIDER: z.enum(['s3', 'mock']).default('mock'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -16,6 +16,8 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1130.0",
+    "@aws-sdk/s3-request-presigner": "^3.1130.0",
     "@kaamsetu/config": "workspace:*",
     "@kaamsetu/logger": "workspace:*",
     "@kaamsetu/types": "workspace:*",

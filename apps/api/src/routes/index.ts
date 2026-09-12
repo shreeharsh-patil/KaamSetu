@@ -19,6 +19,7 @@ import { disputeRoutes } from '../modules/disputes/dispute.routes.js';
 import { aiRoutes } from '../modules/ai/ai.routes.js';
 import { speechRoutes } from '../modules/speech/speech.routes.js';
 import { adminRoutes } from '../modules/admin/admin.routes.js';
+import { uploadRoutes } from '../modules/uploads/upload.routes.js';
 import { authenticate, requireRole } from '../middlewares/auth.middleware.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
@@ -97,6 +98,9 @@ export function createApiRouter(): Router {
 
   // Admin & operational control endpoints under /api/v1/admin (Phase 12)
   apiV1Router.use('/admin', adminRoutes);
+
+  // File upload & signed storage endpoints under /api/v1/uploads (Phase 10)
+  apiV1Router.use('/uploads', uploadRoutes);
 
   // Mount API version router
   router.use(env.API_PREFIX, apiV1Router);

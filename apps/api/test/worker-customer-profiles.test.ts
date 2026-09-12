@@ -20,11 +20,6 @@ describe('Worker and Customer Profiles (Phase 1)', () => {
 
   beforeAll(async () => {
     await connectMongoDB({ uri: TEST_MONGODB_URI });
-    try {
-      await UserModel.collection.dropIndex('email_1');
-    } catch {
-      // ignore
-    }
     await UserModel.syncIndexes();
     await ServiceCategoryModel.syncIndexes();
     await WorkerProfileModel.syncIndexes();

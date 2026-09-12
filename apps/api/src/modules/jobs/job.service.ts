@@ -191,6 +191,9 @@ export class JobService {
         effectiveFilters.assignedWorkerId = user.id;
       } else if (!effectiveFilters.status) {
         effectiveFilters.status = JobStatus.OPEN;
+      } else if (effectiveFilters.status !== JobStatus.OPEN) {
+        // Any non-OPEN status requested by a worker MUST be scoped to their assigned jobs
+        effectiveFilters.assignedWorkerId = user.id;
       }
     }
 

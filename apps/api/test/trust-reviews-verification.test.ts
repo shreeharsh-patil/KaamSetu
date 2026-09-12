@@ -67,14 +67,18 @@ describe('Trust, Reviews, Verification & Safety (Phase 9)', () => {
     await SkillModel.syncIndexes();
 
     // Isolated test cleanup
-    await UserModel.deleteMany({ phoneNumber: /^\+91900000/ });
+    const staleUsers = await UserModel.find({ phoneNumber: /^\+91900000/ }).select('_id').lean();
+    const staleIds = staleUsers.map((u) => u._id);
+    if (staleIds.length > 0) {
+      await ReviewModel.deleteMany({ $or: [{ reviewerId: { $in: staleIds } }, { revieweeId: { $in: staleIds } }] });
+      await VerificationRequestModel.deleteMany({ workerId: { $in: staleIds } });
+      await ReportModel.deleteMany({ $or: [{ reporterId: { $in: staleIds } }, { targetId: { $in: staleIds.map(String) } }] });
+      await DisputeModel.deleteMany({ $or: [{ initiatorId: { $in: staleIds } }, { respondentId: { $in: staleIds } }] });
+      await AuditLogModel.deleteMany({ actorId: { $in: staleIds.map(String) } });
+      await UserModel.deleteMany({ _id: { $in: staleIds } });
+    }
     await ServiceCategoryModel.deleteMany({ slug: /^phase9-/ });
     await SkillModel.deleteMany({ slug: /^phase9-/ });
-    await ReviewModel.deleteMany({});
-    await VerificationRequestModel.deleteMany({});
-    await ReportModel.deleteMany({});
-    await DisputeModel.deleteMany({});
-    await AuditLogModel.deleteMany({});
 
     // 1. Create Category and Skill
     const cat = await serviceCategoryRepository.create({
@@ -188,14 +192,17 @@ describe('Trust, Reviews, Verification & Safety (Phase 9)', () => {
   });
 
   afterAll(async () => {
-    await UserModel.deleteMany({ phoneNumber: /^\+91900000/ });
+    const userIds = [customerUser?.id, workerUser1?.id, workerUser2?.id, supportUser?.id, adminUser?.id].filter(Boolean);
+    if (userIds.length > 0) {
+      await ReviewModel.deleteMany({ $or: [{ reviewerId: { $in: userIds } }, { revieweeId: { $in: userIds } }] });
+      await VerificationRequestModel.deleteMany({ workerId: { $in: userIds } });
+      await ReportModel.deleteMany({ $or: [{ reporterId: { $in: userIds } }, { targetId: { $in: userIds } }] });
+      await DisputeModel.deleteMany({ $or: [{ initiatorId: { $in: userIds } }, { respondentId: { $in: userIds } }] });
+      await AuditLogModel.deleteMany({ actorId: { $in: userIds } });
+      await UserModel.deleteMany({ _id: { $in: userIds } });
+    }
     await ServiceCategoryModel.deleteMany({ slug: /^phase9-/ });
     await SkillModel.deleteMany({ slug: /^phase9-/ });
-    await ReviewModel.deleteMany({});
-    await VerificationRequestModel.deleteMany({});
-    await ReportModel.deleteMany({});
-    await DisputeModel.deleteMany({});
-    await AuditLogModel.deleteMany({});
     await TransactionModel.collection.deleteMany({
       referenceId: { $regex: /^dispute:/ },
     });

@@ -18,6 +18,7 @@ import {
   ReportStatus,
   DisputeReason,
   DisputeStatus,
+  UploadPurpose,
 } from '@kaamsetu/types';
 
 export const objectIdSchema = z
@@ -829,6 +830,25 @@ export const adminAuditLogListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type AdminAuditLogListQueryDto = z.infer<typeof adminAuditLogListQuerySchema>;
+
+// ---------------- File Upload & Storage Schemas (Phase 10) ----------------
+
+export const presignUploadSchema = z.object({
+  purpose: z.nativeEnum(UploadPurpose),
+  filename: z.string().min(1, 'Filename is required').max(255),
+  mimeType: z.string().min(3, 'MIME type is required').max(100),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive('Size must be positive')
+    .max(50 * 1024 * 1024, 'File exceeds maximum upload size limit (50MB)'),
+});
+export type PresignUploadInputDto = z.infer<typeof presignUploadSchema>;
+
+export const completeUploadSchema = z.object({
+  uploadId: objectIdSchema,
+});
+export type CompleteUploadInputDto = z.infer<typeof completeUploadSchema>;
 
 export function formatZodIssues(error: z.ZodError): ErrorDetails[] {
   return error.issues.map((issue) => ({

@@ -1451,3 +1451,84 @@ export interface AIProviderStatus {
   circuitBreaker: CircuitBreakerStatus;
 }
 
+// ---------------- Phase 10: File Upload & Storage Layer ----------------
+
+export enum UploadPurpose {
+  PROFILE_PHOTO = 'PROFILE_PHOTO',
+  WORKER_PORTFOLIO = 'WORKER_PORTFOLIO',
+  JOB_IMAGE = 'JOB_IMAGE',
+  EXPENSE_RECEIPT = 'EXPENSE_RECEIPT',
+  VERIFICATION_DOCUMENT = 'VERIFICATION_DOCUMENT',
+}
+
+export enum UploadStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
+export interface IUploadEntity {
+  id: string;
+  userId: string;
+  purpose: UploadPurpose;
+  key: string;
+  originalFilename?: string | null | undefined;
+  mimeType: string;
+  sizeBytes: number;
+  status: UploadStatus;
+  isPublic: boolean;
+  publicUrl?: string | null | undefined;
+  expiresAt?: Date | null | undefined;
+  metadata?: Record<string, unknown> | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IPresignedUploadResult {
+  uploadId: string;
+  uploadUrl: string;
+  key: string;
+  expiresInSeconds: number;
+  requiredHeaders?: Record<string, string> | undefined;
+}
+
+export interface IPresignedDownloadResult {
+  downloadUrl: string;
+  expiresInSeconds: number;
+}
+
+export interface IStorageProvider {
+  readonly name: string;
+  createPresignedUploadUrl(
+    key: string,
+    mimeType: string,
+    maxSizeBytes: number,
+    expiresInSeconds?: number
+  ): Promise<{
+    uploadUrl: string;
+    expiresInSeconds: number;
+    requiredHeaders?: Record<string, string> | undefined;
+  }>;
+
+  createPresignedDownloadUrl(
+    key: string,
+    expiresInSeconds?: number
+  ): Promise<{
+    downloadUrl: string;
+    expiresInSeconds: number;
+  }>;
+
+  verifyObjectMetadata(
+    key: string
+  ): Promise<{
+    exists: boolean;
+    sizeBytes?: number | undefined;
+    mimeType?: string | undefined;
+  }>;
+
+  deleteObject(key: string): Promise<void>;
+
+  getPublicUrl(key: string): string;
+}
+
+

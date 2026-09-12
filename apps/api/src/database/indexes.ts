@@ -17,6 +17,7 @@ import { VerificationRequestModel } from '../modules/verification/verification-r
 import { ReportModel } from '../modules/reports/report.model.js';
 import { DisputeModel } from '../modules/disputes/dispute.model.js';
 import { AuditLogModel } from '../modules/audit-logs/audit-log.model.js';
+import { UploadModel } from '../modules/uploads/upload.model.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -46,6 +47,7 @@ export async function ensureIndexes(): Promise<void> {
       ReportModel.syncIndexes(),
       DisputeModel.syncIndexes(),
       AuditLogModel.syncIndexes(),
+      UploadModel.syncIndexes(),
     ]);
 
     logger.info('All database indexes synchronized successfully');
