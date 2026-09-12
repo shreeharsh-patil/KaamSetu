@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🛠️ KaamSetu (कामसेतु)
+# 🛠️Hunar
 
 ### Hyperlocal Skilled-Worker Marketplace, Deterministic Geospatial Matching & Concurrency-Safe Service Architecture
 
-**KaamSetu** is an enterprise-grade, voice-first hyperlocal service marketplace engineered to connect customers with verified, skilled trade professionals (electricians, plumbers, carpenters, mechanics, appliance technicians, and masons). Built on a modern full-stack monorepo featuring Next.js 16 (React 19), Express 5, MongoDB 7.0 (GeoJSON `2dsphere`), Redis 7.0, and BullMQ background workers, KaamSetu pairs accessibility-first regional voice onboarding with race-condition-safe atomic state transitions and net-profit financial ledgers.
+**Hunar** is an enterprise-grade, voice-first hyperlocal service marketplace engineered to connect customers with verified, skilled trade professionals (electricians, plumbers, carpenters, mechanics, appliance technicians, and masons). Built on a modern full-stack monorepo featuring Next.js 16 (React 19), Express 5, MongoDB 7.0 (GeoJSON `2dsphere`), Redis 7.0, and BullMQ background workers, KaamSetu pairs accessibility-first regional voice onboarding with race-condition-safe atomic state transitions and net-profit financial ledgers.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
