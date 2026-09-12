@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -25,12 +26,12 @@ export function AuthCard({
   return (
     <div
       className={cn(
-        "w-full max-w-[440px] mx-auto bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 transition-all",
+        "w-full max-w-[470px] mx-auto bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-[0_16px_40px_rgba(15,42,76,0.10)] p-6 sm:p-9 space-y-6",
         className
       )}
     >
       {/* Top Bar: Back button or mobile brand header */}
-      <div className="flex items-center justify-between min-h-[28px]">
+      <div className="flex items-center justify-between min-h-[38px]">
         {backHref ? (
           <Link
             href={backHref}
@@ -52,14 +53,9 @@ export function AuthCard({
           <span />
         )}
 
-        {/* Mobile-only logo */}
-        <div className="lg:hidden flex items-center gap-1.5">
-          <div className="h-6 w-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-            K
-          </div>
-          <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
-            Kaam<span className="text-blue-600">Setu</span>
-          </span>
+        <div className="flex items-center gap-2">
+          <Image src="/brand-logo.png" alt="KaamSetu" width={32} height={32} className="rounded-lg" priority />
+          <span className="text-sm font-bold tracking-tight text-[#102a4c] dark:text-white">KaamSetu</span>
         </div>
       </div>
 

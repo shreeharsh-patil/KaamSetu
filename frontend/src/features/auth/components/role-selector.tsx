@@ -27,7 +27,7 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
           "flex flex-col items-center justify-center py-2.5 px-3 rounded-xl text-center transition-all min-h-[52px]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
           value === "CUSTOMER"
-            ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/70 dark:border-slate-700"
+            ? "bg-white dark:bg-slate-800 text-[#102a4c] dark:text-white shadow-sm border border-[#1d5be8]/30 ring-1 ring-[#1d5be8]/10"
             : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
         )}
       >
@@ -47,7 +47,7 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
           "flex flex-col items-center justify-center py-2.5 px-3 rounded-xl text-center transition-all min-h-[52px]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
           value === "WORKER"
-            ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/70 dark:border-slate-700"
+            ? "bg-white dark:bg-slate-800 text-[#102a4c] dark:text-white shadow-sm border border-[#1d5be8]/30 ring-1 ring-[#1d5be8]/10"
             : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
         )}
       >
