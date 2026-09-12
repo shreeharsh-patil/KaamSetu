@@ -19,7 +19,7 @@ import { formatMoney } from "@/lib/money/format-money";
 import { adminApi } from "@/features/admin/api";
 
 export default function AdminOverviewPage() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ["admin", "stats"],
     queryFn: () => adminApi.getStats(),
   });
@@ -33,6 +33,8 @@ export default function AdminOverviewPage() {
         </p>
       </div>
 
+      {error ? <p className="text-sm text-destructive">Platform statistics could not be loaded.</p> : null}
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -42,7 +44,7 @@ export default function AdminOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoading ? "..." : (stats?.totalUsers ?? 1284)}
+              {isLoading ? "..." : (stats?.totalUsers ?? 0)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">Customers & Service Workers</p>
           </CardContent>
@@ -55,7 +57,7 @@ export default function AdminOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-600">
-              {isLoading ? "..." : (stats?.verifiedWorkers ?? 432)}
+              {isLoading ? "..." : (stats?.verifiedWorkers ?? 0)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">KYC & skill-approved workers</p>
           </CardContent>
@@ -68,7 +70,7 @@ export default function AdminOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {isLoading ? "..." : (stats?.activeJobs ?? 48)}
+              {isLoading ? "..." : (stats?.activeJobs ?? 0)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">Matching or in-progress now</p>
           </CardContent>
@@ -81,7 +83,7 @@ export default function AdminOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {isLoading ? "..." : formatMoney(stats?.platformGmv ?? 842500)}
+              {isLoading ? "..." : formatMoney(stats?.platformGmv ?? 0)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">Gross merchandise value</p>
           </CardContent>
@@ -96,7 +98,7 @@ export default function AdminOverviewPage() {
               <CardTitle className="text-base flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-amber-600" /> Pending Worker Verifications
               </CardTitle>
-              <Badge className="bg-amber-500 text-white font-bold">14 Pending</Badge>
+              <Badge className="bg-amber-500 text-white font-bold">Review queue</Badge>
             </div>
             <CardDescription className="text-xs">
               Review ID cards and trade experience submissions to onboard workers.
@@ -117,7 +119,7 @@ export default function AdminOverviewPage() {
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" /> Active Customer Disputes
               </CardTitle>
-              <Badge variant="destructive">3 Open</Badge>
+              <Badge variant="destructive">{stats?.openDisputes ?? 0} Open</Badge>
             </div>
             <CardDescription className="text-xs">
               Resolve payment, cancellation, or work quality escalations.
