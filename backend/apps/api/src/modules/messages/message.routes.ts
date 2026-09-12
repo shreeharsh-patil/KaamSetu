@@ -15,7 +15,8 @@ router.get('/:id/messages', authenticate(), asyncHandler(getMessages));
 // POST /api/v1/conversations/:id/messages
 router.post('/:id/messages', authenticate(), asyncHandler(sendMessage));
 
-// POST /api/v1/conversations/:id/read
+// POST or PATCH /api/v1/conversations/:id/read
 router.post('/:id/read', authenticate(), asyncHandler(markAsRead));
+router.patch('/:id/read', authenticate(), asyncHandler(markAsRead));
 
 export const messageRoutes: Router = router;

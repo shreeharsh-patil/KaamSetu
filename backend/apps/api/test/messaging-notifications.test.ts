@@ -637,6 +637,52 @@ describe('Messaging & Notifications (Phase 7)', () => {
       workerSocket.disconnect();
     });
 
+    it('should broadcast message.read in conversation room when participant marks as read', async () => {
+      const customerSocket = ioClient(socketUrl, {
+        auth: { token: customerUser.token },
+        autoConnect: false,
+        reconnection: false,
+      });
+      const workerSocket = ioClient(socketUrl, {
+        auth: { token: workerUser.token },
+        autoConnect: false,
+        reconnection: false,
+      });
+
+      await new Promise<void>((resolve) => {
+        customerSocket.on('connect', () => resolve());
+        customerSocket.connect();
+      });
+      await new Promise<void>((resolve) => {
+        workerSocket.on('connect', () => resolve());
+        workerSocket.connect();
+      });
+
+      // Worker joins conversation room to listen for read receipts
+      await new Promise((resolve) => {
+        workerSocket.emit('join:conversation', { conversationId }, resolve);
+      });
+
+      const readPromise = new Promise<any>((resolve) => {
+        workerSocket.on('message.read', (payload) => {
+          resolve(payload);
+        });
+      });
+
+      // Customer calls mark-read via HTTP
+      await request(app)
+        .post(`/api/v1/conversations/${conversationId}/read`)
+        .set('Authorization', `Bearer ${customerUser.token}`);
+
+      const readEvent = await readPromise;
+      expect(readEvent.conversationId).toBe(conversationId);
+      expect(readEvent.readerId).toBe(customerUser.id);
+      expect(readEvent.readAt).toBeTruthy();
+
+      customerSocket.disconnect();
+      workerSocket.disconnect();
+    });
+
     it('should receive in-app notification.created on personal user room', async () => {
       const customerSocket = ioClient(socketUrl, {
         auth: { token: customerUser.token },
