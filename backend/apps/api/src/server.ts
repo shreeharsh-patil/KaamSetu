@@ -52,6 +52,20 @@ async function bootstrap(): Promise<void> {
   const httpServer = http.createServer(app);
   realtimeGateway.initialize(httpServer, env.CORS_ORIGINS);
 
+  // 3b. Start the in-process BullMQ notification delivery worker. It owns the
+  // full delivery lifecycle (provider dispatch + delivered/failed status).
+  // Graceful shutdown below already closes it.
+  try {
+    const { notificationWorker } = await import('./modules/notifications/index.js');
+    notificationWorker.start();
+    logger.info('In-process notification delivery worker started');
+  } catch (error) {
+    logger.error(
+      { err: error instanceof Error ? error.message : String(error) },
+      'Failed to start notification delivery worker; notifications will remain queued'
+    );
+  }
+
   httpServer.listen(env.PORT, () => {
     logger.info(
       {

@@ -73,6 +73,23 @@ const notificationWorker = new Worker(
     // Simulated / provider dispatch
     await new Promise((resolve) => setTimeout(resolve, 50));
 
+    // Bookkeeping: if this consumer won the job, mark the notification record
+    // delivered so it never remains stuck in PENDING. Mirrors the API's
+    // notificationWorker markAsDelivered semantics.
+    if (notificationId && mongoose.connection.readyState === 1) {
+      try {
+        await mongoose.connection.collection('notifications').updateOne(
+          { _id: new mongoose.Types.ObjectId(notificationId) },
+          { $set: { deliveredAt: new Date(), failedAt: null, failureReason: null } }
+        );
+      } catch (err) {
+        logger.warn(
+          { err: err instanceof Error ? err.message : String(err), notificationId },
+          'Could not update notification delivery status in background worker'
+        );
+      }
+    }
+
     logger.info(
       { jobId: job.id, notificationId, channel, title },
       'Notification dispatched successfully by background worker'
