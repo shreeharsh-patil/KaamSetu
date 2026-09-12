@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, Check, X, FileText, AlertCircle } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +47,7 @@ export default function AdminVerificationsPage() {
   };
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-primary" /> Worker Verification Pipeline
@@ -191,6 +190,6 @@ export default function AdminVerificationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Container>
+    </div>
   );
 }

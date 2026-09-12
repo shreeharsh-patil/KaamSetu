@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, UserX, UserCheck, AlertCircle } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">User Management</h1>
         <p className="text-sm text-muted-foreground">
@@ -172,6 +171,6 @@ export default function AdminUsersPage() {
         variant={selectedUser?.status === "ACTIVE" ? "destructive" : "default"}
         onConfirm={() => suspendMutation.mutate()}
       />
-    </Container>
+    </div>
   );
 }

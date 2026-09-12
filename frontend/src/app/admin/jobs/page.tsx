@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, AlertCircle } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -20,7 +19,7 @@ export default function AdminJobsMonitorPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Platform Jobs Pipeline</h1>
@@ -101,6 +100,6 @@ export default function AdminJobsMonitorPage() {
           )}
         </CardContent>
       </Card>
-    </Container>
+    </div>
   );
 }

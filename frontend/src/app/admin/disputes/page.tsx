@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +32,7 @@ export default function AdminDisputesPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <AlertTriangle className="h-6 w-6 text-destructive" /> Dispute Resolution Console
@@ -135,6 +134,6 @@ export default function AdminDisputesPage() {
           ))}
         </div>
       )}
-    </Container>
+    </div>
   );
 }

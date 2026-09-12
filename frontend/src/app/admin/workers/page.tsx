@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserX, UserCheck, Eye, AlertCircle } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +39,7 @@ export default function AdminWorkersPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Worker Fleet Management</h1>
@@ -172,6 +171,6 @@ export default function AdminWorkersPage() {
         variant={selectedWorker?.isSuspended ? "default" : "destructive"}
         onConfirm={() => suspendMutation.mutate()}
       />
-    </Container>
+    </div>
   );
 }

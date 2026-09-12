@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Clock, AlertCircle } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { adminApi } from "@/features/admin/api";
@@ -14,7 +13,7 @@ export default function AdminAuditLogsPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Clock className="h-6 w-6 text-primary" /> Administrative Audit Trail
@@ -74,6 +73,6 @@ export default function AdminAuditLogsPage() {
           )}
         </CardContent>
       </Card>
-    </Container>
+    </div>
   );
 }

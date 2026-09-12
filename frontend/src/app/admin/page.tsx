@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Clock,
 } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +24,7 @@ export default function AdminOverviewPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Platform Operations Console</h1>
         <p className="text-sm text-muted-foreground">
@@ -162,6 +161,6 @@ export default function AdminOverviewPage() {
           </Link>
         </Button>
       </div>
-    </Container>
+    </div>
   );
 }
