@@ -4,7 +4,8 @@ import {
   MessageType,
   NotificationChannel,
   NotificationType,
-  type IMessageEntity,
+  type IMessageView,
+  type IMessageSenderView,
   type CursorPage,
 } from '@kaamsetu/types';
 import type { CreateMessageInputDto } from '@kaamsetu/validation';
@@ -12,6 +13,9 @@ import { messageRepository, IMessageRepository } from './message.repository.js';
 import { conversationRepository, IConversationRepository } from '../conversations/conversation.repository.js';
 import { notificationService, NotificationService } from '../notifications/notification.service.js';
 import { realtimeGateway, RealtimeGateway } from '../../realtime/index.js';
+import { userRepository } from '../users/user.repository.js';
+import { workerProfileRepository } from '../worker-profiles/worker-profile.repository.js';
+import { customerProfileRepository } from '../customer-profiles/customer-profile.repository.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../../errors/index.js';
 
 export class MessageService {
@@ -23,6 +27,41 @@ export class MessageService {
   ) {}
 
   /**
+   * Resolves a user ID to an IMessageSenderView with privacy protection.
+   */
+  async resolveSender(userId: string): Promise<IMessageSenderView> {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return {
+        id: userId,
+        displayName: 'User',
+        role: UserRole.CUSTOMER,
+        avatarUrl: null,
+      };
+    }
+
+    let displayName = user.phoneNumber ? `User ${user.phoneNumber.slice(-4)}` : 'User';
+    const avatarUrl = user.profilePhotoUrl ?? null;
+
+    if (user.role === UserRole.WORKER) {
+      const profile = await workerProfileRepository.findByUserId(userId);
+      if (profile?.displayName) displayName = profile.displayName;
+    } else if (user.role === UserRole.CUSTOMER) {
+      const profile = await customerProfileRepository.findByUserId(userId);
+      if (profile?.displayName) displayName = profile.displayName;
+    } else if (user.role === UserRole.ADMIN) {
+      displayName = 'KaamSetu Support';
+    }
+
+    return {
+      id: user.id,
+      displayName,
+      role: user.role,
+      avatarUrl,
+    };
+  }
+
+  /**
    * Fetch messages for a conversation with cursor pagination.
    * Access rule: Only conversation participants or admins can view messages.
    */
@@ -31,7 +70,7 @@ export class MessageService {
     user: { id: string; role: UserRole },
     cursor?: string,
     limit?: number
-  ): Promise<CursorPage<IMessageEntity>> {
+  ): Promise<CursorPage<IMessageView>> {
     if (!Types.ObjectId.isValid(conversationId)) {
       throw new BadRequestError('Invalid conversation ID format');
     }
@@ -48,7 +87,45 @@ export class MessageService {
       throw new ForbiddenError('You are not a participant in this conversation');
     }
 
-    return this.messageRepo.listMessagesCursor(conversationId, cursor, limit);
+    const page = await this.messageRepo.listMessagesCursor(conversationId, cursor, limit);
+
+    // Batch resolve distinct senders to avoid N+1 queries
+    const distinctSenderIds = Array.from(new Set(page.items.map((m) => m.senderId)));
+    const senderMap = new Map<string, IMessageSenderView>();
+
+    await Promise.all(
+      distinctSenderIds.map(async (senderId) => {
+        const s = await this.resolveSender(senderId);
+        senderMap.set(senderId, s);
+      })
+    );
+
+    const items: IMessageView[] = page.items.map((m) => {
+      const sender = senderMap.get(m.senderId) ?? {
+        id: m.senderId,
+        displayName: 'User',
+        role: UserRole.CUSTOMER,
+        avatarUrl: null,
+      };
+
+      return {
+        id: m.id,
+        conversationId: m.conversationId,
+        sender,
+        senderId: m.senderId,
+        type: m.type,
+        content: m.content,
+        attachment: m.attachment ?? undefined,
+        readAt: m.readAt ? new Date(m.readAt).toISOString() : null,
+        createdAt: new Date(m.createdAt).toISOString(),
+      };
+    });
+
+    return {
+      items,
+      nextCursor: page.nextCursor,
+      hasMore: page.hasMore,
+    };
   }
 
   /**
@@ -60,7 +137,7 @@ export class MessageService {
     conversationId: string,
     sender: { id: string; role: UserRole },
     input: CreateMessageInputDto
-  ): Promise<IMessageEntity> {
+  ): Promise<IMessageView> {
     if (!Types.ObjectId.isValid(conversationId)) {
       throw new BadRequestError('Invalid conversation ID format');
     }
@@ -104,11 +181,25 @@ export class MessageService {
     // Update conversation last message timestamp
     await this.conversationRepo.updateLastMessageAt(conversationId, message.createdAt);
 
+    // Build the MessageView DTO for client & realtime consumers
+    const senderView = await this.resolveSender(sender.id);
+    const messageView: IMessageView = {
+      id: message.id,
+      conversationId: message.conversationId,
+      sender: senderView,
+      senderId: sender.id,
+      type: message.type,
+      content: message.content,
+      attachment: message.attachment ?? undefined,
+      readAt: message.readAt ? new Date(message.readAt).toISOString() : null,
+      createdAt: new Date(message.createdAt).toISOString(),
+    };
+
     // Emit realtime notifications via Socket.IO
     const newMsgPayload = {
       conversationId,
       jobId: conversation.jobId,
-      message,
+      message: messageView,
     };
     this.realtime.emitToJob(conversation.jobId, 'message.created', newMsgPayload);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,7 +230,7 @@ export class MessageService {
       });
     }
 
-    return message;
+    return messageView;
   }
 
   /**

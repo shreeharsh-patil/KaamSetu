@@ -1,30 +1,20 @@
 import { Types } from 'mongoose';
-import { UserRole, type IConversationEntity } from '@kaamsetu/types';
+import { UserRole, type IConversationEntity, type IConversationSummaryView } from '@kaamsetu/types';
 import { conversationRepository, IConversationRepository } from './conversation.repository.js';
 import { jobRepository, IJobRepository } from '../jobs/job.repository.js';
+import { messageRepository, IMessageRepository } from '../messages/message.repository.js';
 import { userRepository } from '../users/user.repository.js';
 import { workerProfileRepository } from '../worker-profiles/worker-profile.repository.js';
 import { customerProfileRepository } from '../customer-profiles/customer-profile.repository.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../../errors/index.js';
 
-/** Conversation summary shape returned to clients. */
-export interface ConversationSummaryView {
-  id: string;
-  jobId: string;
-  jobTitle: string;
-  otherParticipant: {
-    id: string;
-    name: string;
-    role: UserRole;
-  };
-  lastMessageAt: string | null;
-  updatedAt: string;
-}
+export type ConversationSummaryView = IConversationSummaryView;
 
 export class ConversationService {
   constructor(
     private readonly conversationRepo: IConversationRepository = conversationRepository,
-    private readonly jobRepo: IJobRepository = jobRepository
+    private readonly jobRepo: IJobRepository = jobRepository,
+    private readonly messageRepo: IMessageRepository = messageRepository
   ) {}
 
   /**
@@ -85,19 +75,23 @@ export class ConversationService {
 
   /**
    * Lists all conversations the user participates in, newest activity first,
-   * with the job title and the other participant's display name resolved.
+   * with the job title, unread count, last message, and other participant's display name resolved.
    */
   async listConversationsForUser(
     user: { id: string; role: UserRole }
-  ): Promise<ConversationSummaryView[]> {
+  ): Promise<IConversationSummaryView[]> {
     const conversations = await this.conversationRepo.listForUser(user.id);
 
     return Promise.all(
       conversations.map(async (conversation) => {
-        const job = await this.jobRepo.findById(conversation.jobId);
-
         const otherId = conversation.participants.find((p) => p !== user.id);
-        const otherParticipant = otherId ? await this.resolveParticipantName(otherId) : null;
+
+        const [job, otherParticipant, lastMsg, unreadCount] = await Promise.all([
+          this.jobRepo.findById(conversation.jobId),
+          otherId ? this.resolveParticipant(otherId) : null,
+          this.messageRepo.findLastMessage(conversation.id),
+          this.messageRepo.countUnread(conversation.id, user.id),
+        ]);
 
         return {
           id: conversation.id,
@@ -107,33 +101,47 @@ export class ConversationService {
             id: otherId ?? '',
             name: otherParticipant?.name ?? 'Participant',
             role: otherParticipant?.role ?? UserRole.CUSTOMER,
+            avatarUrl: otherParticipant?.avatarUrl ?? null,
           },
+          lastMessage: lastMsg
+            ? {
+                content: lastMsg.content,
+                type: lastMsg.type,
+                senderId: lastMsg.senderId,
+                createdAt: new Date(lastMsg.createdAt).toISOString(),
+              }
+            : null,
           lastMessageAt: conversation.lastMessageAt
             ? new Date(conversation.lastMessageAt).toISOString()
             : null,
+          unreadCount,
           updatedAt: new Date(conversation.updatedAt).toISOString(),
         };
       })
     );
   }
 
-  /** Resolves a user id to a display name via profile-first, user fallback. */
-  private async resolveParticipantName(
+  /** Resolves a user id to a display name and avatar via profile-first, user fallback. */
+  private async resolveParticipant(
     userId: string
-  ): Promise<{ name: string; role: UserRole } | null> {
+  ): Promise<{ name: string; role: UserRole; avatarUrl: string | null } | null> {
     const user = await userRepository.findById(userId);
     if (!user) return null;
 
-    let name = user.phoneNumber;
+    let name = user.phoneNumber ? `User ${user.phoneNumber.slice(-4)}` : 'User';
+    const avatarUrl = user.profilePhotoUrl ?? null;
+
     if (user.role === UserRole.WORKER) {
       const profile = await workerProfileRepository.findByUserId(userId);
       if (profile?.displayName) name = profile.displayName;
     } else if (user.role === UserRole.CUSTOMER) {
       const profile = await customerProfileRepository.findByUserId(userId);
       if (profile?.displayName) name = profile.displayName;
+    } else if (user.role === UserRole.ADMIN) {
+      name = 'KaamSetu Support';
     }
 
-    return { name, role: user.role };
+    return { name, role: user.role, avatarUrl };
   }
 }
 

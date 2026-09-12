@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: kaamsetu-api
+    runtime: node
+    rootDir: backend
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @kaamsetu/api build
+    startCommand: pnpm --filter @kaamsetu/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+  - type: worker
+    name: kaamsetu-worker
+    runtime: node
+    rootDir: backend
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @kaamsetu/worker build
+    startCommand: pnpm --filter @kaamsetu/worker start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        fromService:
+          type: web
+          name: kaamsetu-api
+          envVarKey: JWT_ACCESS_SECRET
+      - key: JWT_REFRESH_SECRET
+        fromService:
+          type: web
+          name: kaamsetu-api
+          envVarKey: JWT_REFRESH_SECRET

@@ -326,3 +326,32 @@ docker compose down
 git checkout <previous_stable_commit>
 docker compose up --build -d
 ```
+
+## 11. Vercel frontend + persistent API deployment
+
+For this repository, create a Vercel project with the monorepo **Root Directory**
+set to `frontend`. Use the Next.js framework preset, `pnpm install
+--frozen-lockfile` as the install command, and `pnpm build` as the build command.
+
+Set these Vercel variables for Production and Preview:
+
+```text
+NEXT_PUBLIC_API_URL=https://api.example.com/api/v1
+NEXT_PUBLIC_SOCKET_URL=https://api.example.com
+NEXT_PUBLIC_APP_URL=https://app.example.com
+NEXT_PUBLIC_MAP_PROVIDER=osm
+```
+
+Deploy the Express API using the included `render.yaml`, or use Railway/Fly.io
+with the `backend` directory as the service root. The API must stay persistent:
+Vercel functions are not suitable for Socket.IO connections or BullMQ workers.
+
+Set the API `CORS_ORIGINS` value to the exact Vercel/custom frontend origin:
+
+```text
+CORS_ORIGINS=https://app.example.com,https://your-project.vercel.app
+```
+
+Use managed MongoDB Atlas and Redis (for example Upstash Redis or Redis Cloud).
+After deployment, verify `https://api.example.com/health` and
+`https://api.example.com/ready` before opening the Vercel site.

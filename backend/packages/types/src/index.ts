@@ -863,6 +863,46 @@ export interface ICreateMessageInput {
   attachment?: IMessageAttachment | null | undefined;
 }
 
+export interface IMessageSenderView {
+  id: string;
+  displayName: string;
+  role: UserRole;
+  avatarUrl?: string | null | undefined;
+}
+
+export interface IMessageView {
+  id: string;
+  conversationId: string;
+  sender: IMessageSenderView;
+  senderId: string;
+  type: MessageType;
+  content: string;
+  attachment?: IMessageAttachment | null | undefined;
+  readAt?: string | null | undefined;
+  createdAt: string;
+}
+
+export interface IConversationSummaryView {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  otherParticipant: {
+    id: string;
+    name: string;
+    role: UserRole;
+    avatarUrl?: string | null | undefined;
+  };
+  lastMessage: {
+    content: string;
+    type: MessageType;
+    senderId: string;
+    createdAt: string;
+  } | null;
+  lastMessageAt?: string | null | undefined;
+  unreadCount: number;
+  updatedAt: string;
+}
+
 export interface ListMessagesFilters {
   conversationId: string;
   cursor?: string | undefined;
@@ -926,7 +966,7 @@ export interface NotificationJobData {
 export interface NewMessageSocketPayload {
   conversationId: string;
   jobId: string;
-  message: IMessageEntity;
+  message: IMessageView | IMessageEntity;
 }
 
 export interface MessageReadSocketPayload {

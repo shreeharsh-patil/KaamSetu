@@ -209,6 +209,9 @@ describe('Messaging & Notifications (Phase 7)', () => {
       expect(mine.jobTitle).toBe('Refrigerator not cooling');
       expect(mine.otherParticipant.id).toBe(workerUser.id);
       expect(mine.otherParticipant.name).toBeTruthy();
+      expect(mine.otherParticipant.role).toBe(UserRole.WORKER);
+      expect(mine).toHaveProperty('unreadCount');
+      expect(mine).toHaveProperty('lastMessage');
     });
 
     it('should list from the worker side with the customer as other participant', async () => {
@@ -254,6 +257,10 @@ describe('Messaging & Notifications (Phase 7)', () => {
       expect(res.body.data.message.content).toBe('Hello, what time will you arrive?');
       expect(res.body.data.message.type).toBe(MessageType.TEXT);
       expect(res.body.data.message.senderId).toBe(customerUser.id);
+      expect(res.body.data.message.sender).toBeDefined();
+      expect(res.body.data.message.sender.id).toBe(customerUser.id);
+      expect(res.body.data.message.sender.role).toBe(UserRole.CUSTOMER);
+      expect(res.body.data.message.sender.displayName).toBeTruthy();
       expect(res.body.data.message.readAt).toBeNull();
     });
 
@@ -296,6 +303,18 @@ describe('Messaging & Notifications (Phase 7)', () => {
       expect(res.status).toBe(201);
       expect(res.body.data.message.type).toBe(MessageType.LOCATION);
       expect(res.body.data.message.attachment.coordinates).toEqual([77.5946, 12.9716]);
+    });
+
+    it('should reject LOCATION message with missing coordinates', async () => {
+      const res = await request(app)
+        .post(`/api/v1/conversations/${conversationId}/messages`)
+        .set('Authorization', `Bearer ${workerUser.token}`)
+        .send({
+          type: MessageType.LOCATION,
+          content: 'I am waiting here without coordinates',
+        });
+
+      expect([400, 422]).toContain(res.status);
     });
 
     it('SECURITY RULE: Should block clients from submitting SYSTEM messages', async () => {

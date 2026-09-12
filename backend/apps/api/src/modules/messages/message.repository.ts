@@ -16,6 +16,7 @@ export interface IMessageRepository {
   ): Promise<CursorPage<IMessageEntity>>;
   markAsRead(conversationId: string, readerUserId: string): Promise<{ modifiedCount: number }>;
   countUnread(conversationId: string, userId: string): Promise<number>;
+  findLastMessage(conversationId: string): Promise<IMessageEntity | null>;
 }
 
 export class MessageRepository implements IMessageRepository {
@@ -136,6 +137,20 @@ export class MessageRepository implements IMessageRepository {
       senderId: { $ne: new Types.ObjectId(userId) },
       readAt: null,
     }).exec();
+  }
+
+  async findLastMessage(conversationId: string): Promise<IMessageEntity | null> {
+    if (!Types.ObjectId.isValid(conversationId)) {
+      return null;
+    }
+
+    const doc = await MessageModel.findOne({
+      conversationId: new Types.ObjectId(conversationId),
+    })
+      .sort({ createdAt: -1, _id: -1 })
+      .exec();
+
+    return doc ? toMessageEntity(doc) : null;
   }
 }
 
