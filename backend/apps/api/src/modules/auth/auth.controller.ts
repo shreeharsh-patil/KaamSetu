@@ -1,4 +1,4 @@
-import type { Request, Response, CookieOptions } from 'express';
+import type { Request, Response } from 'express';
 import { authService } from './auth.service.js';
 import { sessionService } from '../sessions/session.service.js';
 import { verifyRefreshToken } from './token.util.js';
@@ -12,17 +12,15 @@ import {
 } from '@kaamsetu/validation';
 import { UnauthorizedError } from '../../errors/index.js';
 import { env } from '../../config/index.js';
+import {
+  getRefreshCookieClearOptions,
+  getRefreshCookieOptions,
+} from './auth-cookie-options.js';
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
 
-function getCookieOptions(): CookieOptions {
-  return {
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/api/v1/auth',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  };
+function getCookieOptions() {
+  return getRefreshCookieOptions(env.NODE_ENV === 'production');
 }
 
 export async function requestOtp(req: Request, res: Response): Promise<void> {
@@ -176,12 +174,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
     await authService.logout(sessionId);
   }
 
-  res.clearCookie(REFRESH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/api/v1/auth',
-  });
+  res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions(env.NODE_ENV === 'production'));
 
   res.status(200).json({
     success: true,
@@ -198,12 +191,7 @@ export async function logoutAll(req: Request, res: Response): Promise<void> {
 
   await authService.logoutAll(req.user.id);
 
-  res.clearCookie(REFRESH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/api/v1/auth',
-  });
+  res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions(env.NODE_ENV === 'production'));
 
   res.status(200).json({
     success: true,
