@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import {
+  NotificationChannel,
   type INotificationEntity,
   type ICreateNotificationInput,
 } from '@kaamsetu/types';
@@ -23,8 +24,15 @@ export class NotificationService {
   ) {}
 
   /**
-   * Creates a notification record and dispatches delivery via BullMQ.
-   * If queueing fails or is unavailable, falls back gracefully to immediate delivery.
+   * Creates a notification record and dispatches delivery.
+   *
+   * IN_APP notifications are always delivered synchronously via the realtime
+   * gateway (a local socket emit) — routing them through BullMQ would require
+   * a running worker process and introduces unnecessary latency.
+   *
+   * External channels (EMAIL, SMS, PUSH) are enqueued to BullMQ for reliable
+   * async delivery with retries. Falls back to direct delivery if the queue
+   * is unavailable.
    */
   async sendNotification(input: ICreateNotificationInput): Promise<INotificationEntity> {
     if (!Types.ObjectId.isValid(input.userId)) {
@@ -33,7 +41,21 @@ export class NotificationService {
 
     const notification = await this.repo.create(input);
 
-    // Try enqueuing to BullMQ
+    // IN_APP = local socket emit: always deliver synchronously, skip the queue
+    if (notification.channel === NotificationChannel.IN_APP) {
+      try {
+        const provider = this.registry.getProvider(notification.channel);
+        await provider.send(notification);
+        await this.repo.markAsDelivered(notification.id);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        logger.error({ err: errorMsg, notificationId: notification.id }, 'IN_APP notification delivery failed');
+        await this.repo.markAsFailed(notification.id, errorMsg);
+      }
+      return notification;
+    }
+
+    // External channels (EMAIL, SMS, PUSH): enqueue for reliable async delivery
     const jobId = await this.queue.enqueue(notification);
 
     // If queue is not active or enqueuing was bypassed, deliver directly
