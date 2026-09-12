@@ -99,13 +99,11 @@ export function DashboardShell({ role: propRole, fallbackTitle, children }: Dash
           collapsed ? "lg:pl-[72px]" : "lg:pl-[248px]"
         )}
       >
-        <DashboardTopbar
-          title={title}
-          onOpenMobileNav={() => setMobileOpen(true)}
-        />
+        <DashboardTopbar title={title} />
 
         <main id="main-content" className="flex-1">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+          {/* pb-24 md:pb-6: clears the fixed mobile bottom navigation. */}
+          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 pb-24 sm:px-6 lg:px-8 md:pb-6">
             {children}
           </div>
         </main>
