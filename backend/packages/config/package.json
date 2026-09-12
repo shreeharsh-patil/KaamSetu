@@ -9,11 +9,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@kaamsetu/types": "workspace:*",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@kaamsetu/types": "workspace:*",
     "typescript": "^5.8.2"
   }
 }

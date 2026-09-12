@@ -12,7 +12,7 @@ WORKDIR /app
 
 FROM base AS builder
 ENV CI=true
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY backend/packages/config/package.json ./backend/packages/config/
 COPY backend/packages/logger/package.json ./backend/packages/logger/
 COPY backend/packages/types/package.json ./backend/packages/types/

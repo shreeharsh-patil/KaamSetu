@@ -38,6 +38,12 @@
     "lint:backend": "pnpm --filter @kaamsetu/api lint",
     "lint:frontend": "npm --prefix frontend run lint"
   },
+  "dependencies": {
+    "@kaamsetu/config": "workspace:*",
+    "@kaamsetu/logger": "workspace:*",
+    "@kaamsetu/types": "workspace:*",
+    "@kaamsetu/validation": "workspace:*"
+  },
   "devDependencies": {
     "prettier": "^3.5.3",
     "tsx": "^4.19.3",
