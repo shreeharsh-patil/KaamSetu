@@ -1,4 +1,4 @@
-import dns from 'dns';
+import dns from 'node:dns';
 import mongoose from 'mongoose';
 import { logger } from '../config/index.js';
 import type { ServiceConnectionStatus } from '@kaamsetu/types';
@@ -7,7 +7,7 @@ import type { ServiceConnectionStatus } from '@kaamsetu/types';
 try {
   const currentServers = dns.getServers();
   if (!currentServers.length || currentServers.every((s) => s === '127.0.0.1' || s === '::1')) {
-    dns.setServers(['192.168.0.1', '8.8.8.8', '1.1.1.1']);
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
   }
 } catch {
   // ignore
@@ -37,6 +37,15 @@ export async function connectMongoDB(config: MongoConfig): Promise<typeof mongoo
     connectTimeoutMS = DEFAULT_CONNECT_TIMEOUT_MS,
     socketTimeoutMS = DEFAULT_SOCKET_TIMEOUT_MS,
   } = config;
+
+  // Resolve SRV lookups reliably across environments (e.g. Windows c-ares resolver)
+  if (uri.startsWith('mongodb+srv://') || uri.includes('mongodb.net')) {
+    try {
+      dns.setServers(['8.8.8.8', '1.1.1.1']);
+    } catch {
+      // Ignore if cannot set servers in current sandbox
+    }
+  }
 
   mongoose.connection.on('connected', () => {
     logger.info({ host: mongoose.connection.host }, 'MongoDB connected successfully');
@@ -86,6 +95,9 @@ export function getMongoDBStatus(): ServiceConnectionStatus {
       return 'connected';
     case 2:
       return 'connecting';
+    case 3:
+      return 'disconnected';
+    case 0:
     default:
       return 'disconnected';
   }

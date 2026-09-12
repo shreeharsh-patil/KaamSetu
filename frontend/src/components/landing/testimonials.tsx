@@ -89,7 +89,7 @@ export function Testimonials() {
   const row2 = [...TESTIMONIALS.slice().reverse(), ...TESTIMONIALS.slice().reverse()];
 
   return (
-    <section id="testimonials" className="py-20 md:py-28 overflow-hidden relative">
+    <section id="reviews" className="py-20 md:py-28 overflow-hidden relative">
       <div className="max-w-[1280px] mx-auto px-6 md:px-12 mb-12 md:mb-16">
         <span className="text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400">
           Verified Reviews
@@ -132,7 +132,13 @@ export function Testimonials() {
 
               <div className="mt-5 pt-4 border-t border-border/60 flex items-center gap-3">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
-                  <Image src={item.avatar} alt={item.author} fill className="object-cover" />
+                  <Image
+                    src={item.avatar}
+                    alt={item.author}
+                    fill
+                    sizes="40px"
+                    className="object-cover"
+                  />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -177,7 +183,13 @@ export function Testimonials() {
 
               <div className="mt-5 pt-4 border-t border-border/60 flex items-center gap-3">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
-                  <Image src={item.avatar} alt={item.author} fill className="object-cover" />
+                  <Image
+                    src={item.avatar}
+                    alt={item.author}
+                    fill
+                    sizes="40px"
+                    className="object-cover"
+                  />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">

@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Briefcase } from "lucide-react";
-import { useTranslation } from "@/lib/i18n/i18n-context";
 import { useAuth } from "@/features/auth/use-auth";
 
-import { GradientBar } from "@/components/landing/gradient-bar";
 import { Hero } from "@/components/landing/hero";
 import { FeaturedServices } from "@/components/landing/featured-services";
 import { HowItWorks } from "@/components/landing/how-it-works";
@@ -16,9 +13,9 @@ import { TrustGuarantees } from "@/components/landing/trust-guarantees";
 import { Insights } from "@/components/landing/insights";
 import { FinalCTA } from "@/components/landing/final-cta";
 import { WorkerLeadBoard } from "@/components/landing/worker-lead-board";
+import { GradientBar } from "@/components/landing/gradient-bar";
 
 export default function HomePage() {
-  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -45,42 +42,44 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Subtle floating animated gradient bar */}
-      <GradientBar />
+      <main className="flex flex-col">
+      {/* Hero Section */}
+      <Hero activeRole={activeRole} onSelectRole={setActiveRole} />
 
-      {/* Role Switcher Pill pinned near the top of the content */}
-      <div className="pt-6 sm:pt-8 flex justify-center px-4 relative z-20">
-        <div className="inline-flex p-1 rounded-full bg-secondary/80 backdrop-blur-md border border-border shadow-xs">
-          <button
-            type="button"
-            onClick={() => setActiveRole("customer")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-              activeRole === "customer"
-                ? "bg-foreground text-background shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            <span>{t("home.roleHire", "Hire Workers (Customer)")}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveRole("worker")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-              activeRole === "worker"
-                ? "bg-foreground text-background shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Briefcase className="h-4 w-4" />
-            <span>{t("home.roleEarn", "Find Jobs & Earn (Worker)")}</span>
-          </button>
+      {/* Contextual role view switcher above the dynamic feed */}
+      <div className="border-t border-border/60 bg-muted/20 py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span className="text-muted-foreground font-medium">
+            {activeRole === "customer"
+              ? "Browsing as Customer: Instant booking & verified local services"
+              : "Browsing as Worker: Live job feed & nearby service requests"}
+          </span>
+          <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
+            <button
+              type="button"
+              onClick={() => setActiveRole("customer")}
+              className={`px-3 py-1.5 rounded-md font-semibold transition-colors ${
+                activeRole === "customer"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Hire Workers
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveRole("worker")}
+              className={`px-3 py-1.5 rounded-md font-semibold transition-colors ${
+                activeRole === "worker"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Find Work (Leads)
+            </button>
+          </div>
         </div>
       </div>
-
-      <main className="flex flex-col">
-        {/* Hero Section */}
-        <Hero />
 
         {activeRole === "customer" ? (
           <>
@@ -124,6 +123,7 @@ export default function HomePage() {
           </>
         )}
       </main>
+      <GradientBar />
     </>
   );
 }

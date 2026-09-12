@@ -4,11 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Wifi,
-  WifiOff,
+  Hammer,
   Sun,
   Moon,
-  LogIn,
   LogOut,
   User as UserIcon,
   LayoutDashboard,
@@ -21,35 +19,59 @@ import {
   ShieldCheck,
   ClipboardList,
   FileCheck,
-  Mic,
   Menu,
   X,
+  ArrowUpRight,
 } from "lucide-react";
-import { Container } from "./container";
-import { Button } from "@/components/ui/button";
 import { LanguageSelector } from "@/components/shared/language-selector";
-import { useNetwork } from "@/providers/network-provider";
 import { useTheme } from "@/providers/theme-provider";
 import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
-import { BrandLogo } from "@/components/shared/brand-logo";
-
 import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export function AppHeader() {
   const pathname = usePathname();
-  const { isOnline } = useNetwork();
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
   const { t } = useTranslation();
 
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isHomePage = pathname === "/";
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 30);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Role-aware navigation — determined from user profile after login
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileMenuOpen]);
+
+  // Guest landing numbered navigation matching ai-product-portfolio
+  const guestNavItems = [
+    { href: "/#services", label: "Services", number: "01" },
+    { href: "/#how-it-works", label: "How It Works", number: "02" },
+    { href: "/#reviews", label: "Reviews", number: "03" },
+    { href: "/#guarantees", label: "Guarantees", number: "04" },
+    { href: "/#insights", label: "Insights", number: "05" },
+    { href: "/voice-ai", label: "Voice AI", number: "06" },
+  ];
+
+  // Role-aware navigation when logged in
   const customerLinks = [
     { href: "/customer", label: t("nav.dashboard", "Dashboard"), icon: LayoutDashboard },
     { href: "/customer/jobs/new", label: t("nav.bookService", "Book Service"), icon: PlusCircle },
@@ -74,216 +96,249 @@ export function AppHeader() {
     { href: "/admin/verifications", label: t("nav.verifications", "Verifications"), icon: FileCheck },
   ];
 
-  const guestLinks = [
-    { href: "/services", label: "Services", icon: Briefcase },
-    { href: "/voice-ai", label: "Voice AI", icon: Mic },
-  ];
-
-  const navLinks = isAuthenticated && user
+  const activeUserLinks = isAuthenticated && user
     ? user.role === "ADMIN" || user.role === "SUPPORT"
       ? adminLinks
       : user.role === "WORKER"
       ? workerLinks
       : customerLinks
-    : guestLinks;
+    : [];
+
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("/#") && isHomePage) {
+      e.preventDefault();
+      const targetId = href.replace("/#", "");
+      const element = document.getElementById(targetId);
+      if (element) {
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+      }
+      setMobileMenuOpen(false);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <Container className="flex h-16 items-center justify-between gap-2 sm:gap-4">
-        {/* Brand Logo & Location */}
-        <div className="flex items-center gap-3 sm:gap-6 shrink-0">
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        isScrolled || !isHomePage
+          ? "bg-background/80 backdrop-blur-md border-b border-border shadow-xs"
+          : "bg-transparent"
+      )}
+    >
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+        <nav className="flex items-center justify-between h-16 md:h-20">
+          {/* Brand Logo */}
           <Link
             href="/"
-            className="flex flex-row items-center transition-opacity hover:opacity-90 shrink-0 whitespace-nowrap min-w-max"
-            aria-label="Hunar Home"
+            className="flex items-center gap-2.5 font-semibold text-lg tracking-tight group"
           >
-            <BrandLogo height={42} className="shrink-0" />
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs transition-transform group-hover:scale-105"
+              style={{
+                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+              }}
+            >
+              <Hammer className="h-4 w-4" />
+            </span>
+            <div className="flex flex-col">
+              <span className="font-sans font-bold text-xl tracking-tight text-foreground">
+                KaamSetu
+              </span>
+              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase -mt-0.5">
+                Blue-Collar Protocol
+              </span>
+            </div>
           </Link>
 
-          {/* Location Chip */}
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/80 border border-border/60 text-xs font-medium text-foreground">
-            <span className="text-primary font-bold">📍</span>
-            <span>{t("header.location", "Mumbai Suburban")}</span>
-          </div>
-
-          {/* Desktop Navigation Links — role-aware */}
-          {navLinks.length > 0 && (
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive =
-                  link.href === (user?.role === "WORKER" ? "/worker" : user?.role === "CUSTOMER" ? "/customer" : "/admin")
-                    ? pathname === link.href
-                    : pathname.startsWith(link.href);
-                return (
+          {/* Desktop Nav Items */}
+          <div className="hidden lg:flex items-center gap-7">
+            {isAuthenticated && activeUserLinks.length > 0
+              ? activeUserLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all min-h-[36px]",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      "text-sm font-medium transition-colors hover:text-foreground inline-flex items-center gap-1.5",
+                      pathname === link.href || pathname.startsWith(`${link.href}/`)
+                        ? "text-[#203eec] font-semibold"
+                        : "text-muted-foreground"
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="hidden lg:inline">{link.label}</span>
+                    <link.icon className="w-4 h-4 opacity-70" />
+                    <span>{link.label}</span>
                   </Link>
-                );
-              })}
-            </nav>
-          )}
-        </div>
-
-        {/* Right side: Network indicator, Language, Theme, Auth */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* Language selector - always accessible */}
-          <LanguageSelector className="inline-flex" />
-
-          {/* Network connectivity badge */}
-          <div
-            className={cn(
-              "hidden sm:flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border",
-              isOnline
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300"
-                : "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
-            )}
-            title={isOnline ? t("status.online", "Network: Online") : t("status.offline", "Network: Offline")}
-          >
-            {isOnline ? (
-              <>
-                <Wifi className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                <span className="hidden xl:inline">{t("status.online", "Online")}</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-3 w-3 text-red-600 dark:text-red-400" />
-                <span>{t("status.offline", "Offline")}</span>
-              </>
-            )}
+                ))
+              : guestNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={(e) => handleSmoothScroll(e, item.href)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-xs ml-1 opacity-40 group-hover:opacity-80 transition-opacity font-mono">
+                      ({item.number})
+                    </span>
+                  </Link>
+                ))}
           </div>
 
-          {/* Theme switcher (hidden on <sm: saves space for logo + language + menu; dark mode still reachable via system preference) */}
-          <button
-            type="button"
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full border border-border/80 bg-card text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
-          >
-            {resolvedTheme === "dark" ? (
-              <Sun className="h-4 w-4 text-amber-400" />
-            ) : (
-              <Moon className="h-4 w-4 text-slate-700" />
-            )}
-          </button>
+          {/* Right Action Elements */}
+          <div className="flex items-center gap-3">
+            {/* Language Selector */}
+            <LanguageSelector className="inline-flex scale-90 sm:scale-100" />
 
-          {/* Auth State Button */}
-          {isAuthenticated && user ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href={user.role === "ADMIN" || user.role === "SUPPORT" ? "/admin" : user.role === "WORKER" ? "/worker/profile" : "/customer/profile"}
-                className="hidden sm:flex items-center gap-1.5 bg-secondary px-3 py-1 rounded-full text-xs font-medium border border-border/60 hover:bg-muted transition-colors"
-              >
-                <UserIcon className="h-3.5 w-3.5 text-primary" />
-                <span className="font-mono font-bold text-foreground">{user.fullName || user.phoneNumber}</span>
-                <span className="text-[9px] py-0.5 px-1.5 rounded-full bg-primary/10 text-primary font-bold uppercase">
-                  {user.role}
-                </span>
-              </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => logout()}
-                leftIcon={<LogOut className="h-3.5 w-3.5" />}
-                title={t("nav.logout", "Logout")}
-                className="rounded-full"
-              >
-                <span className="hidden sm:inline">{t("nav.logout", "Logout")}</span>
-              </Button>
-            </div>
-          ) : (
-            <Link href="/login" className="hidden sm:inline-flex">
-              <Button size="sm" className="rounded-full px-3.5 sm:px-4" leftIcon={<LogIn className="h-3.5 w-3.5" />}>
-                <span>{t("nav.login", "Sign In")}</span>
-              </Button>
-            </Link>
-          )}
-          {/* Mobile menu toggle button */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex md:hidden h-9 w-9 items-center justify-center rounded-full border border-border/80 bg-card text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </button>
-        </div>
-      </Container>
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors hover:bg-secondary"
+              aria-label="Toggle theme"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-4 w-4 text-amber-400" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
 
-      {/* Mobile Navigation Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t bg-background/95 backdrop-blur-md px-4 py-4 space-y-3 shadow-lg animate-in slide-in-from-top-2 duration-200">
-          {isAuthenticated && user && (
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/60 border border-border/60 mb-2">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
-                  {(user.fullName || user.phoneNumber).slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground leading-tight">{user.fullName || user.phoneNumber}</p>
-                  <span className="text-[9px] font-bold uppercase text-primary tracking-wider">{user.role}</span>
-                </div>
+            {/* Auth / CTA Button */}
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  href={
+                    user.role === "ADMIN" || user.role === "SUPPORT"
+                      ? "/admin"
+                      : user.role === "WORKER"
+                      ? "/worker/profile"
+                      : "/customer/profile"
+                  }
+                  className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-xs font-semibold border border-border"
+                >
+                  <UserIcon className="w-3.5 h-3.5 text-[#203eec]" />
+                  <span>{user.fullName || user.phoneNumber}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="hidden sm:inline-flex p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors hover:bg-secondary"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/login"
+                  className="hidden sm:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
+                >
+                  Sign In
+                </Link>
+
+                <Link
+                  href="/customer/jobs/new"
+                  className="inline-flex items-center justify-center px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-full text-white transition-all hover:shadow-xl relative overflow-hidden group shadow-md"
+                  style={{
+                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                    boxShadow: "0 4px 18px rgba(32, 62, 236, 0.35)",
+                  }}
+                >
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    Book Service
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </span>
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md bg-gradient-to-r from-[#203eec] to-[#00d4ff]" />
+                </Link>
+              </div>
+            )}
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </nav>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-b border-border bg-background/95 backdrop-blur-xl px-6 py-6 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex flex-col space-y-3">
+            {isAuthenticated && activeUserLinks.length > 0
+              ? activeUserLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2.5 text-base font-medium text-foreground py-1.5"
+                  >
+                    <link.icon className="w-4 h-4 text-[#203eec]" />
+                    <span>{link.label}</span>
+                  </Link>
+                ))
+              : guestNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={(e) => handleSmoothScroll(e, item.href)}
+                    className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-1.5 border-b border-border/40"
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-xs font-mono text-muted-foreground">({item.number})</span>
+                  </Link>
+                ))}
+          </div>
+
+          <div className="pt-4 border-t border-border flex flex-col gap-3">
+            {isAuthenticated ? (
+              <button
+                type="button"
                 onClick={() => {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className="text-xs h-7 px-2 text-destructive hover:bg-destructive/10"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border border-border text-sm font-semibold"
               >
-                <LogOut className="h-3.5 w-3.5 mr-1" /> Logout
-              </Button>
-            </div>
-          )}
-
-          <nav className="flex flex-col gap-1">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive =
-                link.href === (user?.role === "WORKER" ? "/worker" : user?.role === "CUSTOMER" ? "/customer" : "/admin")
-                  ? pathname === link.href
-                  : pathname.startsWith(link.href);
-
-              return (
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
+            ) : (
+              <>
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-xs"
-                      : "text-foreground hover:bg-muted"
-                  )}
+                  className="w-full flex items-center justify-center py-2.5 rounded-full border border-border text-sm font-semibold"
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{link.label}</span>
+                  Sign In
                 </Link>
-              );
-            })}
-          </nav>
-
-          {!isAuthenticated && (
-            <div className="pt-2 border-t flex flex-col gap-2">
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full rounded-xl font-bold gap-2">
-                  <LogIn className="h-4 w-4" /> Sign In
-                </Button>
-              </Link>
-            </div>
-          )}
+                <Link
+                  href="/customer/jobs/new"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center py-3 rounded-full text-white text-sm font-semibold"
+                  style={{
+                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                  }}
+                >
+                  Book Service Now
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       )}
     </header>

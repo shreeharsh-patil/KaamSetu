@@ -31,20 +31,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [pendingPhone, setPendingPhoneState] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("kaamsetu_pending_phone");
+  const [pendingPhone, setPendingPhoneState] = useState<string | null>(null);
+
+  // Restore pendingPhone on client mount to avoid SSR hydration mismatch
+  useEffect(() => {
+    try {
+      const savedPhone = sessionStorage.getItem("kaamsetu_pending_phone");
+      if (savedPhone) {
+        setPendingPhoneState(savedPhone);
+      }
+    } catch {
+      // Ignore storage errors
     }
-    return null;
-  });
+  }, []);
 
   const setPendingPhone = useCallback((phone: string | null) => {
     setPendingPhoneState(phone);
     if (typeof window !== "undefined") {
-      if (phone) {
-        sessionStorage.setItem("kaamsetu_pending_phone", phone);
-      } else {
-        sessionStorage.removeItem("kaamsetu_pending_phone");
+      try {
+        if (phone) {
+          sessionStorage.setItem("kaamsetu_pending_phone", phone);
+        } else {
+          sessionStorage.removeItem("kaamsetu_pending_phone");
+        }
+      } catch {
+        // Ignore storage errors
       }
     }
   }, []);
@@ -135,7 +146,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: {
             phone,
             otp,
-            deviceName: typeof navigator !== "undefined" ? navigator.userAgent : "web-client",
+            deviceName:
+              typeof navigator !== "undefined"
+                ? navigator.userAgent.slice(0, 100)
+                : "web-client",
           },
           skipAuth: true,
         }

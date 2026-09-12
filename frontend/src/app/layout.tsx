@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Bricolage_Grotesque } from "next/font/google";
+import { Inter_Tight } from "next/font/google";
 import "@/styles/globals.css";
 import { siteConfig } from "@/config/site";
 import { RootProviders } from "@/providers/root-providers";
@@ -7,16 +7,11 @@ import { AppHeader } from "@/components/layout/app-header";
 import { AppFooter } from "@/components/layout/app-footer";
 import { OfflineBanner } from "@/components/feedback/offline-banner";
 import { VoiceAssistantFAB } from "@/components/voice/voice-assistant-fab";
+import { MagneticCursor } from "@/components/ui/magnetic-cursor";
 
-const inter = Inter({
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-inter-tight",
   display: "swap",
 });
 
@@ -58,8 +53,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${bricolage.variable}`}>
-      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
+    <html lang="en" suppressHydrationWarning className={interTight.variable}>
+      <body className={`${interTight.className} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground selection:bg-blue-500/20`}>
+        <MagneticCursor />
+
         {/* Accessible Skip Link */}
         <a
           href="#main-content"

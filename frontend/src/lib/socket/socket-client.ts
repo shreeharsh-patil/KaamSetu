@@ -8,7 +8,7 @@ let socketInstance: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socketInstance) {
-  const socketUrl = env.NEXT_PUBLIC_SOCKET_URL;
+    const socketUrl = env.NEXT_PUBLIC_SOCKET_URL;
 
     socketInstance = io(socketUrl, {
       autoConnect: false,
@@ -18,7 +18,7 @@ export function getSocket(): Socket {
       transports: ["websocket", "polling"],
       auth: (cb) => {
         const token = getAccessToken();
-        cb({ token: token ? `Bearer ${token}` : undefined });
+        cb({ token: token ?? undefined });
       },
     });
 
@@ -27,19 +27,22 @@ export function getSocket(): Socket {
     socketInstance.on("connect", () => {
       hasWarnedSocket = false;
       if (process.env.NODE_ENV !== "production") {
-        console.info("[Socket] Connected:", socketInstance?.id);
+        console.warn("[Socket] Connected:", socketInstance?.id);
       }
     });
 
     socketInstance.on("disconnect", (reason) => {
       if (process.env.NODE_ENV !== "production") {
-        console.info("[Socket] Disconnected:", reason);
+        console.warn("[Socket] Disconnected:", reason);
       }
     });
 
     socketInstance.on("connect_error", (error) => {
       if (process.env.NODE_ENV !== "production" && !hasWarnedSocket) {
-        console.info("[Socket] Backend server unreachable (running in offline/mock mode):", error.message);
+        console.warn(
+          "[Socket] Backend server unreachable (running in offline/mock mode):",
+          error.message,
+        );
         hasWarnedSocket = true;
       }
     });

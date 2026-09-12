@@ -76,8 +76,8 @@ const config: Config = {
         touch: "44px",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "-apple-system", "sans-serif"],
-        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter-tight)", "var(--font-sans)", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-inter-tight)", "var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
       },
     },
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, Suspense, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Phone, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react";
@@ -12,7 +12,28 @@ import { useAuth } from "@/features/auth/use-auth";
 import { ApiError } from "@/lib/api/errors";
 import { useTranslation } from "@/lib/i18n/i18n-context";
 
-export default function LoginPage() {
+function LoginSkeleton() {
+  return (
+    <div className="max-w-md mx-auto space-y-6">
+      <div className="flex justify-center">
+        <div className="h-8 w-44 rounded-full bg-muted animate-pulse" />
+      </div>
+      <Card className="shadow-md border-border">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto mb-3 h-12 w-12 rounded-2xl bg-muted animate-pulse" />
+          <div className="h-6 w-36 bg-muted rounded mx-auto animate-pulse" />
+          <div className="h-4 w-52 bg-muted rounded mx-auto mt-2 animate-pulse" />
+        </CardHeader>
+        <CardContent className="pt-4 space-y-4">
+          <div className="h-11 w-full bg-muted rounded-xl animate-pulse" />
+          <div className="h-11 w-full bg-muted rounded-xl animate-pulse" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "";
@@ -207,5 +228,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginSkeleton />}>
+      <LoginContent />
+    </Suspense>
   );
 }

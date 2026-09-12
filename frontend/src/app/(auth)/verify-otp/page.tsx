@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, Suspense, type ClipboardEvent, type KeyboardEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { KeyRound, ArrowRight, RefreshCw, Edit3 } from "lucide-react";
@@ -14,12 +14,38 @@ import { cn } from "@/lib/utils";
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 60;
 
-export default function VerifyOtpPage() {
+function VerifyOtpSkeleton() {
+  return (
+    <Card className="max-w-md mx-auto shadow-md border-border">
+      <CardHeader className="text-center pb-2">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary animate-pulse">
+          <KeyRound className="h-6 w-6 opacity-40" />
+        </div>
+        <div className="h-7 w-52 bg-muted rounded-md mx-auto animate-pulse" />
+        <div className="h-4 w-64 bg-muted rounded-md mx-auto mt-2 animate-pulse" />
+      </CardHeader>
+      <CardContent className="pt-4 space-y-6">
+        <div className="flex justify-center gap-2 sm:gap-3">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="h-12 w-11 sm:h-14 sm:w-12 rounded-lg bg-muted/60 animate-pulse border border-border"
+            />
+          ))}
+        </div>
+        <div className="h-11 w-full bg-muted rounded-lg animate-pulse" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "";
 
-  const { pendingPhone, verifyOtp, requestOtp, user } = useAuth();
+  const { pendingPhone, setPendingPhone, verifyOtp, requestOtp, user } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [otpDigits, setOtpDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,12 +55,33 @@ export default function VerifyOtpPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const isNavigatingRef = useRef(false);
 
+  useEffect(() => {
+    setMounted(true);
+    if (!pendingPhone && typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem("kaamsetu_pending_phone");
+        if (stored) {
+          setPendingPhone(stored);
+        }
+      } catch {
+        // Ignore storage access errors
+      }
+    }
+  }, [pendingPhone, setPendingPhone]);
+
+  const effectivePhone =
+    pendingPhone ||
+    (typeof window !== "undefined"
+      ? sessionStorage.getItem("kaamsetu_pending_phone")
+      : null);
+
   // If user accesses /verify-otp directly without pending phone, redirect to /login
   useEffect(() => {
-    if (!pendingPhone && !user && !isNavigatingRef.current) {
+    if (!mounted) return;
+    if (!effectivePhone && !user && !isNavigatingRef.current) {
       router.replace("/login");
     }
-  }, [pendingPhone, user, router]);
+  }, [mounted, effectivePhone, user, router]);
 
   // Resend cooldown countdown
   useEffect(() => {
@@ -100,7 +147,7 @@ export default function VerifyOtpPage() {
   };
 
   const submitOtp = async (otpString: string) => {
-    if (!pendingPhone || isNavigatingRef.current) return;
+    if (!effectivePhone || isNavigatingRef.current) return;
 
     try {
       setIsLoading(true);
@@ -108,7 +155,7 @@ export default function VerifyOtpPage() {
       isNavigatingRef.current = true;
 
       const requestedRole = sessionStorage.getItem("kaamsetu_pending_role");
-      const verifiedUser = await verifyOtp(pendingPhone, otpString);
+      const verifiedUser = await verifyOtp(effectivePhone, otpString);
       sessionStorage.removeItem("kaamsetu_pending_role");
 
       // Check if redirect query param exists
@@ -140,12 +187,12 @@ export default function VerifyOtpPage() {
   };
 
   const handleResend = async () => {
-    if (countdown > 0 || !pendingPhone || isResending) return;
+    if (countdown > 0 || !effectivePhone || isResending) return;
 
     try {
       setIsResending(true);
       setError(null);
-      await requestOtp(pendingPhone);
+      await requestOtp(effectivePhone);
       setCountdown(RESEND_COOLDOWN_SECONDS);
       setOtpDigits(Array(OTP_LENGTH).fill(""));
       inputRefs.current[0]?.focus();
@@ -160,8 +207,8 @@ export default function VerifyOtpPage() {
     }
   };
 
-  if (!pendingPhone) {
-    return null;
+  if (!mounted || !effectivePhone) {
+    return <VerifyOtpSkeleton />;
   }
 
   const isComplete = otpDigits.every((d) => d.length === 1);
@@ -176,7 +223,7 @@ export default function VerifyOtpPage() {
           Verify Mobile Number
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Enter the 6-digit code sent to <span className="font-semibold text-foreground">{pendingPhone}</span>
+          Enter the 6-digit code sent to <span className="font-semibold text-foreground">{effectivePhone}</span>
         </CardDescription>
         <div className="pt-1">
           <Link
@@ -261,5 +308,13 @@ export default function VerifyOtpPage() {
         </Link>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense fallback={<VerifyOtpSkeleton />}>
+      <VerifyOtpContent />
+    </Suspense>
   );
 }
