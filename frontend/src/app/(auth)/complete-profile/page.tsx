@@ -30,6 +30,7 @@ function CompleteProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "";
+  const isEditMode = searchParams.get("edit") === "1";
 
   const { user, completeProfile, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
@@ -51,7 +52,7 @@ function CompleteProfileContent() {
       if (user.email) setEmail(user.email);
 
       // If user profile is already complete, redirect to appropriate dashboard
-      if (user.firstName && user.lastName && user.email) {
+      if (!isEditMode && user.firstName && user.lastName && user.email) {
         if (redirect) {
           router.replace(redirect);
         } else if (user.role === "WORKER") {
@@ -63,7 +64,7 @@ function CompleteProfileContent() {
         }
       }
     }
-  }, [user, isAuthenticated, isAuthLoading, router, redirect]);
+  }, [user, isAuthenticated, isAuthLoading, router, redirect, isEditMode]);
 
   const validate = (): string | null => {
     if (!firstName.trim()) return "First name is required";
@@ -97,7 +98,9 @@ function CompleteProfileContent() {
       });
 
       // Role-based redirect
-      if (redirect) {
+      if (isEditMode) {
+        router.replace(user?.role === "WORKER" ? "/worker/profile" : "/customer/profile");
+      } else if (redirect) {
         router.replace(redirect);
       } else if (updatedUser.role === "WORKER") {
         router.replace("/worker");
@@ -127,9 +130,9 @@ function CompleteProfileContent() {
 
   return (
     <AuthCard
-      title="Complete your profile"
-      subtitle="Provide your name and email to finish setting up your account."
-      backHref="/"
+      title={isEditMode ? "Edit your profile" : "Complete your profile"}
+      subtitle={isEditMode ? "Update the details shown across your KaamSetu account." : "Provide your name and email to finish setting up your account."}
+      backHref={isEditMode ? (user?.role === "WORKER" ? "/worker/profile" : "/customer/profile") : "/"}
     >
       {/* Verified Phone Badge */}
       {user?.phoneNumber && (
@@ -231,7 +234,7 @@ function CompleteProfileContent() {
           isLoading={isSubmitting}
           rightIcon={<ArrowRight className="h-4 w-4" />}
         >
-          Save & Continue to Dashboard
+          {isEditMode ? "Save profile" : "Save & Continue to Dashboard"}
         </Button>
       </form>
     </AuthCard>

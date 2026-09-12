@@ -84,7 +84,7 @@ export default function CustomerProfilePage() {
             </div>
 
             {/* Edit Button */}
-            <Button variant="outline" size="sm" className="w-full sm:w-auto rounded-xl gap-1.5 shrink-0">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto rounded-xl gap-1.5 shrink-0" onClick={() => router.push("/complete-profile?edit=1")}>
               <Edit3 className="h-3.5 w-3.5" />
               <span>Edit Profile</span>
             </Button>
