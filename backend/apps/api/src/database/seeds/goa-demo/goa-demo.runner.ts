@@ -8,8 +8,8 @@
  * Never prints credentials; prints the target database name only.
  */
 import { env, logger } from '../../../config/index.js';
-import { connectMongoDB, disconnectMongoDB } from '../../../mongodb.js';
-import { ensureIndexes } from '../../../indexes.js';
+import { connectMongoDB, disconnectMongoDB } from '../../mongodb.js';
+import { ensureIndexes } from '../../indexes.js';
 import { seedCategoriesAndSkills } from '../index.js';
 import {
   seedGoaDemo,
