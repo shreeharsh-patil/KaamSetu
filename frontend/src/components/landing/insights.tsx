@@ -8,30 +8,30 @@ import { SectionTitle } from "@/components/landing/section-title";
 const INSIGHTS = [
   {
     id: 1,
-    title: "How Geospatial Wave Dispatch Finds Your Nearest Pro in 120s",
+    title: "What to share when you book an electrician",
     excerpt:
-      "An in-depth breakdown of how our low-latency geospatial multi-ring dispatch engine matches active verified technicians within a 3km radius.",
-    image: "/images/bg-1.png",
-    date: "Marketplace Tech",
-    readTime: "4 min read",
+      "Mention the room, the issue, and whether there is any sparking or power loss so a verified electrician arrives prepared.",
+    image: "/services/electrician.webp",
+    date: "Booking guide",
+    readTime: "2 min read",
   },
   {
     id: 2,
-    title: "The Fair Wage Index: Why Technicians Earn 35% Higher Net Income",
+    title: "A quick guide to handling a plumbing leak",
     excerpt:
-      "How removing commission-heavy agencies empowers local electricians and plumbers with direct UPI escrow payments and instant payouts.",
-    image: "/images/bg-2.png",
-    date: "Worker Economics",
-    readTime: "5 min read",
+      "Turn off the nearest water supply if you can, take a clear photo, and describe where the leak is before booking a plumber.",
+    image: "/services/plumber.webp",
+    date: "Home care",
+    readTime: "3 min read",
   },
   {
     id: 3,
-    title: "Homeowner Safety Guide: OTP Handshake and Escrow Milestones",
+    title: "How KaamSetu keeps every service visit clear",
     excerpt:
-      "Everything you need to know about your payment security, doorstep verification, and the 30-day workmanship re-inspection guarantee.",
-    image: "/images/bg-3.png",
-    date: "Consumer Trust",
-    readTime: "3 min read",
+      "Review the request, choose a verified professional, and track the work from acceptance through completion in one place.",
+    image: "/services/handyman.webp",
+    date: "Service standards",
+    readTime: "2 min read",
   },
 ];
 
@@ -43,10 +43,10 @@ export function Insights() {
         <div className="flex items-center justify-between mb-12 md:mb-16">
           <div>
             <span className="text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-              Field Reports & Standards
+              Made for your home
             </span>
             <SectionTitle className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight mt-2">
-              Platform Insights
+              Helpful before you book
             </SectionTitle>
           </div>
           <Link
@@ -54,7 +54,7 @@ export function Insights() {
             className="hidden md:inline-flex items-center gap-2 text-sm font-semibold transition-colors"
             style={{ color: "#203eec" }}
           >
-            Explore Platform Docs
+            Book a service
             <ArrowUpRight className="w-4 h-4" />
           </Link>
         </div>
@@ -95,7 +95,7 @@ export function Insights() {
                 </div>
 
                 <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline">
-                  <span>Read full analysis</span>
+                  <span>Book this service</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </div>
               </article>

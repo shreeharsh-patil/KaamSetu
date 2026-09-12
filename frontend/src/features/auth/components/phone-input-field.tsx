@@ -47,7 +47,7 @@ export function PhoneInputField({
 
       <div
         className={cn(
-          "flex items-center h-12 w-full rounded-xl border bg-white dark:bg-slate-900 shadow-2xs transition-colors",
+          "flex items-center h-12 w-full rounded-none border bg-white dark:bg-slate-900 shadow-2xs transition-colors",
           "focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
           error
             ? "border-destructive focus-within:border-destructive focus-within:ring-destructive/20"
@@ -56,7 +56,7 @@ export function PhoneInputField({
         )}
       >
         {/* Country code prefix */}
-        <div className="flex items-center gap-1.5 px-3.5 border-r border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300 select-none bg-slate-50/50 dark:bg-slate-800/40 h-full rounded-l-xl">
+        <div className="flex items-center gap-1.5 px-3.5 border-r border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300 select-none bg-slate-50/50 dark:bg-slate-800/40 h-full">
           <span className="text-base" role="img" aria-label="India flag">🇮🇳</span>
           <span>+91</span>
         </div>
@@ -75,7 +75,8 @@ export function PhoneInputField({
           autoComplete="tel-national"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${inputId}-error` : `${inputId}-helper`}
-          className="flex-1 h-full px-3.5 text-sm sm:text-base font-medium tracking-wide bg-transparent outline-none placeholder:text-slate-400 placeholder:font-normal text-slate-900 dark:text-white"
+          style={{ border: 0, borderRadius: 0, outline: "none", boxShadow: "none" }}
+          className="flex-1 h-full min-w-0 px-3.5 text-sm sm:text-base font-medium tracking-wide bg-transparent focus:outline-none focus:ring-0 placeholder:text-slate-400 placeholder:font-normal text-slate-900 dark:text-white"
         />
       </div>
 
