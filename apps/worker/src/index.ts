@@ -57,6 +57,10 @@ export const aiQueue = new Queue(AI_QUEUE_NAME, { connection: redisConnection })
 const workers: Worker[] = [];
 
 // 4. Notification Job Worker
+// NOTE: the 'notifications' queue is owned and consumed by the API process
+// (src/modules/notifications/queue/notification.worker.ts), which performs real
+// provider dispatch and delivered/failed bookkeeping. A consumer here would
+// steal jobs with this stub and leave notifications stuck in PENDING forever.
 const notificationWorker = new Worker(
   NOTIFICATIONS_QUEUE_NAME,
   async (job: Job) => {
