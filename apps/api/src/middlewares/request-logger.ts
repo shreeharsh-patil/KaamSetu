@@ -25,12 +25,19 @@ export const requestLoggerMiddleware = pinoHttp({
   customErrorMessage(req: Request, res: Response, err: Error) {
     return `${req.method} ${req.url} failed with status ${res.statusCode}: ${err.message}`;
   },
-  customProps(req: Request) {
+  customAttributeKeys: {
+    responseTime: 'duration',
+  },
+  customProps(req: Request, res: Response) {
     return {
-      requestId: req.id,
+      requestId: req.id || (req.headers['x-request-id'] as string) || 'unknown',
+      route: req.route?.path || req.baseUrl || req.path,
+      method: req.method,
+      statusCode: res.statusCode,
+      userId: (req as Request & { user?: { id: string } }).user?.id || undefined,
     };
   },
   autoLogging: {
-    ignore: (req) => req.url === '/health',
+    ignore: (req) => req.url === '/health' || req.url === '/ready',
   },
 });

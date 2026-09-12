@@ -22,6 +22,7 @@
     "@kaamsetu/logger": "workspace:*",
     "@kaamsetu/types": "workspace:*",
     "@kaamsetu/validation": "workspace:*",
+    "@sentry/node": "^10.74.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.41.6",
     "compression": "^1.8.0",

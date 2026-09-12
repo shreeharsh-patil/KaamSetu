@@ -65,7 +65,7 @@ export class MatchingService {
     const excludedUserObjectIds = existingWorkerIds.map((id) => new Types.ObjectId(id));
 
     // 2. Query Worker Profiles near job location using 2dsphere index
-    const candidateDocs = await WorkerProfileModel.find({
+    const candidateQuery: Record<string, unknown> = {
       deletedAt: null,
       availabilityStatus: WorkerAvailability.AVAILABLE,
       userId: { $nin: excludedUserObjectIds },
@@ -78,7 +78,17 @@ export class MatchingService {
           $maxDistance: maxDistanceMeters,
         },
       },
-    })
+    };
+
+    const requiredSkillObjectIds = (job.requiredSkills || [])
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    if (requiredSkillObjectIds.length > 0) {
+      candidateQuery['skills.skillId'] = { $all: requiredSkillObjectIds };
+    }
+
+    const candidateDocs = await WorkerProfileModel.find(candidateQuery)
       .limit(100)
       .exec();
 

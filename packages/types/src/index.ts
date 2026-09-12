@@ -848,6 +848,7 @@ export interface NotificationJobData {
   title: string;
   body: string;
   data?: Record<string, unknown> | undefined;
+  requestId?: string | undefined;
 }
 
 export interface NewMessageSocketPayload {

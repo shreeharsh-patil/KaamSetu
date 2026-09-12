@@ -5,6 +5,8 @@ import type { NotificationJobData } from '@kaamsetu/types';
 import { NOTIFICATIONS_QUEUE_NAME } from './notification.queue.js';
 import { notificationProviderRegistry } from '../providers/provider.registry.js';
 import { notificationRepository } from '../notification.repository.js';
+import { metricsService } from '../../../observability/metrics.service.js';
+import { sentryService } from '../../../observability/sentry.service.js';
 
 export class NotificationWorker {
   private worker: Worker<NotificationJobData> | null = null;
@@ -21,15 +23,15 @@ export class NotificationWorker {
     this.worker = new Worker<NotificationJobData>(
       NOTIFICATIONS_QUEUE_NAME,
       async (job: Job<NotificationJobData>) => {
-        const { notificationId, channel } = job.data;
+        const { notificationId, channel, requestId } = job.data;
         logger.info(
-          { jobId: job.id, notificationId, channel, attempt: job.attemptsMade + 1 },
+          { jobId: job.id, notificationId, channel, requestId, attempt: job.attemptsMade + 1 },
           'Processing notification delivery job'
         );
 
         const notification = await notificationRepository.findById(notificationId);
         if (!notification) {
-          logger.warn({ notificationId }, 'Notification document not found for BullMQ job');
+          logger.warn({ notificationId, requestId }, 'Notification document not found for BullMQ job');
           return;
         }
 
@@ -37,11 +39,13 @@ export class NotificationWorker {
           const provider = notificationProviderRegistry.getProvider(channel);
           await provider.send(notification);
           await notificationRepository.markAsDelivered(notificationId);
-          logger.info({ notificationId, channel }, 'Notification delivered successfully');
+          metricsService.recordNotification('sent');
+          logger.info({ notificationId, channel, requestId }, 'Notification delivered successfully');
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : String(err);
+          metricsService.recordNotification('failed');
           logger.error(
-            { notificationId, channel, attempt: job.attemptsMade + 1, err: errorMsg },
+            { notificationId, channel, requestId, attempt: job.attemptsMade + 1, err: errorMsg },
             'Notification delivery failed, will retry if attempts remain'
           );
           await notificationRepository.markAsFailed(notificationId, errorMsg);
@@ -56,8 +60,13 @@ export class NotificationWorker {
     );
 
     this.worker.on('failed', (job, err) => {
+      metricsService.recordFailedBackgroundJob();
+      sentryService.captureException(err, {
+        requestId: job?.data?.requestId,
+        extra: { jobId: job?.id, attemptsMade: job?.attemptsMade },
+      });
       logger.error(
-        { jobId: job?.id, attemptsMade: job?.attemptsMade, err: err.message },
+        { jobId: job?.id, requestId: job?.data?.requestId, attemptsMade: job?.attemptsMade, err: err.message },
         'Notification job failed in BullMQ'
       );
     });

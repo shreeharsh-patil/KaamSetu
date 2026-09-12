@@ -5,8 +5,12 @@ import { connectMongoDB } from './database/mongodb.js';
 import { connectRedis } from './database/redis.js';
 import { realtimeGateway } from './realtime/index.js';
 import { setupGracefulShutdown } from './utils/graceful-shutdown.js';
+import { sentryService } from './observability/sentry.service.js';
 
 async function bootstrap(): Promise<void> {
+  // 0. Initialize Sentry error tracking
+  sentryService.init();
+
   logger.info(
     {
       version: APP_CONFIG.version,
@@ -54,6 +58,7 @@ async function bootstrap(): Promise<void> {
         url: `http://localhost:${env.PORT}`,
         healthCheck: `http://localhost:${env.PORT}/health`,
         readyCheck: `http://localhost:${env.PORT}/ready`,
+        metricsEndpoint: `http://localhost:${env.PORT}/metrics`,
         apiPrefix: env.API_PREFIX,
       },
       `🚀 ${APP_CONFIG.name} is running and listening on port ${env.PORT}`

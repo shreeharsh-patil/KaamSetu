@@ -31,6 +31,13 @@ const SENSITIVE_KEYS = [
   'accessKey',
   'sessionSecret',
   'privateKey',
+  'verificationDocument',
+  'documentUrl',
+  'documents',
+  'paymentSecret',
+  'clientSecret',
+  'razorpaySignature',
+  'webhookSecret',
 ];
 
 export function createLogger(options: CreateLoggerOptions = {}): Logger {
@@ -51,8 +58,11 @@ export function createLogger(options: CreateLoggerOptions = {}): Logger {
         key,
         `*.${key}`,
         `*.*.${key}`,
+        `*.*.*.${key}`,
         `req.headers.${key.toLowerCase()}`,
         `req.headers["${key.toLowerCase()}"]`,
+        `req.body.${key}`,
+        `req.body.${key.toLowerCase()}`,
       ]),
       censor: '[REDACTED]',
     },

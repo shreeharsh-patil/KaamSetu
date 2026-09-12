@@ -10,12 +10,16 @@ import { nosqlSanitizerMiddleware } from './nosql-sanitizer.js';
 import { hppMiddleware } from './hpp.js';
 import { requestTimeoutMiddleware } from './request-timeout.js';
 import { globalRateLimiter } from './rate-limiter.js';
+import { metricsMiddleware } from './metrics.middleware.js';
 
 export function applySecurityMiddlewares(app: Express): void {
   // 1. Request ID for traceability across all layers
   app.use(requestIdMiddleware);
 
-  // 2. HTTP Request Logger
+  // 2. High-precision Application Metrics Collection
+  app.use(metricsMiddleware());
+
+  // 3. HTTP Request Logger
   app.use(requestLoggerMiddleware);
 
   // 3. Robust Helmet Security Headers

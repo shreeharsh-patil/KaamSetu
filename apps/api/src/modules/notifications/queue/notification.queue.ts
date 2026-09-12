@@ -37,7 +37,7 @@ export class NotificationQueue {
     return this.queue;
   }
 
-  async enqueue(notification: INotificationEntity): Promise<string | undefined> {
+  async enqueue(notification: INotificationEntity, requestId?: string): Promise<string | undefined> {
     try {
       const q = this.getQueue();
       const job = await q.add(
@@ -50,6 +50,7 @@ export class NotificationQueue {
           title: notification.title,
           body: notification.body,
           data: notification.data,
+          requestId,
         }
       );
       return job.id;

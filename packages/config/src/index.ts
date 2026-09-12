@@ -80,6 +80,9 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(300),
   REQUEST_TIMEOUT_MS: z.coerce.number().default(30000),
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_ENVIRONMENT: z.string().default(process.env['NODE_ENV'] || 'development'),
+  METRICS_ENABLED: z.coerce.boolean().default(true),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

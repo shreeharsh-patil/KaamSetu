@@ -9,3 +9,4 @@ export * from './rate-limiter.js';
 export * from './nosql-sanitizer.js';
 export * from './hpp.js';
 export * from './request-timeout.js';
+export * from './metrics.middleware.js';

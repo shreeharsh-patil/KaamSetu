@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { AppError } from '../errors/app-error.js';
 import { logger, env } from '../config/index.js';
+import { sentryService } from '../observability/sentry.service.js';
 import type { ApiErrorResponse, ErrorDetails } from '@kaamsetu/types';
 
 export function errorHandlerMiddleware(
@@ -108,6 +109,14 @@ export function errorHandlerMiddleware(
       },
       `Internal server error handling request [${requestId}]`
     );
+
+    sentryService.captureException(err, {
+      requestId,
+      route: req.originalUrl,
+      method: req.method,
+      statusCode,
+      userId: (req as Request & { user?: { id: string } }).user?.id,
+    });
   } else {
     logger.warn(
       {
