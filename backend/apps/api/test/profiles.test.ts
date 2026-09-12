@@ -394,6 +394,15 @@ describe('Worker and Customer Profiles (Phase 3)', () => {
       const notFoundRes = await request(app).get('/api/v1/workers/65f1a2b3c4d5e6f7a8b9c0d1');
       expect(notFoundRes.status).toBe(404);
     });
+
+    it('GET /api/v1/workers/:workerId - should resolve the worker user ID exposed by job views', async () => {
+      const publicRes = await request(app).get(`/api/v1/workers/${workerUser.id}`);
+
+      expect(publicRes.status).toBe(200);
+      expect(publicRes.body.success).toBe(true);
+      expect(publicRes.body.data.id).toBeDefined();
+      expect(publicRes.body.data.displayName).toBe('Vikram Rajput');
+    });
   });
 
   describe('Customer Profile Endpoints', () => {

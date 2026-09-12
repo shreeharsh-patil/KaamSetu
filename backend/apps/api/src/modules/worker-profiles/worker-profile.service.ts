@@ -187,7 +187,12 @@ export class WorkerProfileService {
   }
 
   async getPublicProfile(workerId: string): Promise<IPublicWorkerProfile> {
-    const profile = await this.workerRepo.findById(workerId);
+    // Public worker URLs can originate from worker search (profile document ID)
+    // or an assigned job (worker user ID). Resolve both identifiers so a
+    // completed booking always opens the professional that performed it.
+    const profile =
+      (await this.workerRepo.findById(workerId)) ??
+      (await this.workerRepo.findByUserId(workerId));
     if (!profile) {
       throw new NotFoundError(`Worker with ID ${workerId} not found`);
     }

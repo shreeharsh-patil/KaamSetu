@@ -13,6 +13,16 @@ let inMemoryAccessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
 let onAuthFailureCallback: (() => void) | null = null;
 
+function getApiBaseUrl(): string {
+  // Production requests travel through the Vercel rewrite. This makes the
+  // browser see auth cookies as first-party even though the API runs on Render.
+  if (typeof window !== "undefined" && env.NODE_ENV === "production") {
+    return `${window.location.origin}/api/v1`;
+  }
+
+  return env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+}
+
 export function setAccessToken(token: string | null): void {
   inMemoryAccessToken = token;
 }
@@ -44,7 +54,7 @@ export async function apiClient<T>(
   // Build query parameters
   let url = endpoint.startsWith("http")
     ? endpoint
-    : `${env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+    : `${getApiBaseUrl()}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
@@ -72,7 +82,7 @@ export async function apiClient<T>(
     headers.set("Accept", "application/json");
   }
 
-  const apiOrigin = new URL(env.NEXT_PUBLIC_API_URL).origin;
+  const apiOrigin = new URL(getApiBaseUrl()).origin;
   const requestOrigin = new URL(url).origin;
   // Never leak bearer credentials to an arbitrary absolute URL.
   if (!skipAuth && requestOrigin === apiOrigin && inMemoryAccessToken && !headers.has("Authorization")) {
@@ -199,7 +209,7 @@ async function handleSilentTokenRefresh(): Promise<string | null> {
 
   refreshPromise = (async () => {
     try {
-      const refreshUrl = `${env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")}${API_ENDPOINTS.AUTH.REFRESH}`;
+      const refreshUrl = `${getApiBaseUrl()}${API_ENDPOINTS.AUTH.REFRESH}`;
       const response = await fetch(refreshUrl, {
         method: "POST",
         credentials: "include",
