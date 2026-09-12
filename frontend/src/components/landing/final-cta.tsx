@@ -30,7 +30,7 @@ export function FinalCTA() {
               href="/customer/jobs/new"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all hover:shadow-2xl relative overflow-hidden group"
               style={{
-                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
                 boxShadow: "0 8px 32px rgba(32, 62, 236, 0.4)",
               }}
             >
@@ -39,7 +39,7 @@ export function FinalCTA() {
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </span>
               {/* Glow overlay */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-gradient-to-r from-[#203eec] to-[#00d4ff]" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-gradient-to-r from-[#162044] to-[#203eec]" />
             </Link>
 
             <Link

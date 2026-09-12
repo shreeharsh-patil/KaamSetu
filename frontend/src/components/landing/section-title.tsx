@@ -33,7 +33,7 @@ export function SectionTitle({ children, className = "" }: SectionTitleProps) {
   return (
     <h2
       ref={titleRef}
-      className={`overflow-visible ${className} ${
+      className={`font-display overflow-visible ${className} ${
         isVisible ? "section-title-animate" : "opacity-0"
       }`}
     >

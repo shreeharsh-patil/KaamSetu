@@ -162,7 +162,7 @@ export function FeaturedServices() {
                           <div
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-white transition-all duration-200 group-hover:scale-105"
                             style={{
-                              background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                              background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
                             }}
                           >
                             <span>Book Now</span>

@@ -118,7 +118,7 @@ export function WorkerLeadBoard() {
             href="/worker"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all shadow-md hover:shadow-lg"
             style={{
-              background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+              background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
             }}
           >
             <span>Open Worker Dashboard</span>
@@ -199,7 +199,7 @@ export function WorkerLeadBoard() {
                   href="/worker"
                   className="px-4 py-2 rounded-full text-xs font-semibold text-white transition-transform hover:scale-105"
                   style={{
-                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                    background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
                   }}
                 >
                   Accept Lead

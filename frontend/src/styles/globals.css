@@ -270,8 +270,9 @@
   }
 }
 
+/* Kept for potential accent use, re-tuned to brand navy→amber */
 .ai-gradient-word {
-  background: linear-gradient(135deg, #ff006e 0%, #8b5cf6 33%, #203eec 66%, #00d4ff 100%);
+  background: linear-gradient(135deg, #162044 0%, #203eec 55%, #f59e0b 100%);
   background-size: 300% 300%;
   background-clip: text;
   -webkit-background-clip: text;
