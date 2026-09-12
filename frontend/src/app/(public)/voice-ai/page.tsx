@@ -13,6 +13,7 @@ import {
   Users,
   Briefcase,
   Play,
+  User,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -21,14 +22,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { VoiceRecorder } from "@/components/voice/voice-recorder";
 
 export default function VoiceAiPage() {
+  const [activeRole, setActiveRole] = useState<"customer" | "worker">("customer");
   const [parsedAnalysis, setParsedAnalysis] = useState<{
+    role: "customer" | "worker";
     category: string;
+    actionIntent: string;
     urgency: string;
     locality: string;
     summary: string;
+    targetUrl: string;
+    actionButtonText: string;
   } | null>(null);
 
-  const samplePrompts = [
+  const customerPrompts = [
     {
       lang: "Hindi (हिंदी)",
       label: "Plumbing Leak",
@@ -63,8 +69,83 @@ export default function VoiceAiPage() {
     },
   ];
 
+  const workerPrompts = [
+    {
+      lang: "Hindi (हिंदी)",
+      label: "Search Jobs Nearby",
+      text: "Bandra aur Andheri me geyser socket replacement ke urgent electrician kaam dikhao.",
+      category: "Electrical",
+      urgency: "URGENT",
+      locality: "Bandra & Andheri West",
+    },
+    {
+      lang: "Marathi (मराठी)",
+      label: "Worker Lead Search",
+      text: "मला दादर आणि माटुंगा भागातील पाईप लिकेज आणि प्लंबिंगची नवीन कामे दाखवा.",
+      category: "Plumbing",
+      urgency: "IMMEDIATE",
+      locality: "Dadar & Matunga",
+    },
+    {
+      lang: "Hinglish",
+      label: "Check Ledger / Earnings",
+      text: "Meri aaj ki total kamai aur completed jobs ka escrow payout status check karo.",
+      category: "Earnings & Ledger",
+      urgency: "INFO",
+      locality: "Mumbai Region",
+    },
+    {
+      lang: "Hindi (हिंदी)",
+      label: "Toggle Availability",
+      text: "Aaj ka kaam khatam ho gaya hai, abhi mujhe offline rest mode me mark karo.",
+      category: "Availability Status",
+      urgency: "STATUS",
+      locality: "Active Zone",
+    },
+  ];
+
   const handleApplyVoiceText = (text: string) => {
     const lower = text.toLowerCase();
+
+    if (activeRole === "worker") {
+      let category = "Electrical";
+      let actionIntent = "DISPATCH_LEAD_SEARCH";
+      let urgency = "STANDARD";
+      let targetUrl = `/worker?search=${encodeURIComponent(text)}`;
+      let actionButtonText = "Filter Worker Job Feed";
+
+      if (lower.includes("plumb") || lower.includes("प्लंबिंग") || lower.includes("पाईप") || lower.includes("pipe")) {
+        category = "Plumbing";
+      } else if (lower.includes("kamai") || lower.includes("earn") || lower.includes("payout") || lower.includes("ledger")) {
+        category = "Earnings";
+        actionIntent = "LEDGER_SUMMARY";
+        targetUrl = "/worker/earnings";
+        actionButtonText = "View Worker Earnings Ledger";
+      } else if (lower.includes("offline") || lower.includes("online") || lower.includes("available") || lower.includes("status")) {
+        category = "Status Control";
+        actionIntent = "TOGGLE_AVAILABILITY";
+        targetUrl = "/worker";
+        actionButtonText = "Update Status in Worker Radar";
+      }
+
+      if (lower.includes("urgent") || lower.includes("immediate") || lower.includes("jaldi")) {
+        urgency = "URGENT";
+      }
+
+      setParsedAnalysis({
+        role: "worker",
+        category,
+        actionIntent,
+        urgency,
+        locality: "Mumbai Hyperlocal Grid (15km radius)",
+        summary: text,
+        targetUrl,
+        actionButtonText,
+      });
+      return;
+    }
+
+    // Customer parsing
     let category = "Plumbing";
     let urgency = "STANDARD";
 
@@ -83,14 +164,18 @@ export default function VoiceAiPage() {
     }
 
     setParsedAnalysis({
+      role: "customer",
       category,
+      actionIntent: "CUSTOMER_SERVICE_REQUEST",
       urgency,
       locality: "Bandra West, Mumbai (400050)",
       summary: text,
+      targetUrl: `/customer/jobs/new?category=${category.toLowerCase()}`,
+      actionButtonText: `Create ${category} Job Request`,
     });
   };
 
-  const handleSelectSample = (sample: typeof samplePrompts[0]) => {
+  const handleSelectSample = (sample: { text: string }) => {
     handleApplyVoiceText(sample.text);
   };
 
@@ -101,7 +186,7 @@ export default function VoiceAiPage() {
         <div className="text-center max-w-3xl mx-auto space-y-6 mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold tracking-wide animate-pulse">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Next-Gen Hyperlocal Accessibility</span>
+            <span>Dual-Sided Voice AI for Workers & Customers</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.15]">
@@ -112,19 +197,18 @@ export default function VoiceAiPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            Zero typing required. Speak naturally in your native language or mother tongue. KaamSetu
-            understands regional slang, extracts trade requirements, and instantly pairs you with certified
-            tradespeople within minutes.
+            Zero typing required for both <strong>Customers</strong> and <strong>Skilled Workers</strong>. Speak
+            naturally in Hindi, Marathi, Hinglish, or English. Customers book jobs in seconds, while workers
+            discover leads, toggle availability, and check daily payouts completely hands-free.
           </p>
 
           {/* Supported Language Chips */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             {[
-              "हिंदी (Hindi)",
-              "मराठी (Marathi)",
-              "Hinglish",
-              "English",
-              "ગુજરાતી (Coming soon)",
+              "🇮🇳 Hindi (हिंदी)",
+              "🚩 Marathi (मराठी)",
+              "⚡ Hinglish (हिंग्लिश)",
+              "💬 Indian English",
             ].map((lang, idx) => (
               <Badge
                 key={idx}
@@ -139,20 +223,20 @@ export default function VoiceAiPage() {
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <Link href="/customer/jobs/new">
               <Button size="lg" className="rounded-2xl font-bold px-7 gap-2 shadow-lg shadow-primary/20">
-                <Mic className="h-5 w-5" /> Post Job Using Voice
+                <Mic className="h-5 w-5" /> Customer Voice Post
               </Button>
             </Link>
-            <Link href="/worker/onboarding">
+            <Link href="/worker">
               <Button size="lg" variant="outline" className="rounded-2xl font-bold px-7 gap-2">
-                <Briefcase className="h-5 w-5" /> Worker Voice Onboarding
+                <Briefcase className="h-5 w-5" /> Worker Voice Radar
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Live Interactive Playground Section */}
+        {/* Live Interactive Playground Section with Dual Role Mode */}
         <div className="max-w-4xl mx-auto mb-20">
-          <div className="rounded-3xl border border-primary/30 bg-gradient-to-b from-card via-card to-background p-6 sm:p-8 shadow-2xl space-y-8">
+          <div className="rounded-3xl border border-primary/30 bg-gradient-to-b from-card via-card to-background p-6 sm:p-8 shadow-2xl space-y-6">
             <div className="text-center space-y-2">
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs uppercase font-bold">
                 Interactive Live Demo
@@ -161,17 +245,51 @@ export default function VoiceAiPage() {
                 Experience the Voice AI Engine
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Speak directly through your microphone, or choose a pre-recorded Indian regional voice scenario below.
+                Select your perspective below, then speak into your microphone or click a simulated regional prompt.
               </p>
+            </div>
+
+            {/* Role Switcher in Playground */}
+            <div className="flex justify-center">
+              <div className="inline-flex p-1 rounded-2xl bg-muted border border-border text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRole("customer");
+                    setParsedAnalysis(null);
+                  }}
+                  className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 ${
+                    activeRole === "customer"
+                      ? "bg-background text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <User className="h-4 w-4" /> For Customers (ग्राहक सेवा)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRole("worker");
+                    setParsedAnalysis(null);
+                  }}
+                  className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 ${
+                    activeRole === "worker"
+                      ? "bg-primary text-white shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Briefcase className="h-4 w-4" /> For Workers (कारीगर काम)
+                </button>
+              </div>
             </div>
 
             {/* Pre-recorded prompt chips */}
             <div className="space-y-2">
               <span className="text-xs font-semibold text-muted-foreground block text-center">
-                Or click to test with simulated speech prompts:
+                Click a simulated {activeRole === "worker" ? "worker" : "customer"} scenario:
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {samplePrompts.map((p, i) => (
+                {(activeRole === "worker" ? workerPrompts : customerPrompts).map((p, i) => (
                   <button
                     key={i}
                     type="button"
@@ -198,51 +316,70 @@ export default function VoiceAiPage() {
             </div>
 
             {/* The live recorder component */}
-            <div className="max-w-xl mx-auto">
+            <div className="pt-2">
               <VoiceRecorder
                 onConfirmText={handleApplyVoiceText}
-                title="Voice Input Engine"
-                description="Tap to record your requirement in Hindi, Marathi, or English"
-                placeholderPrompt="Jaise: 'Bathroom ka tap leak ho raha hai aur paani beh raha hai'"
+                title={
+                  activeRole === "worker"
+                    ? "Speak as a Skilled Worker (कारीगर आवाज़)"
+                    : "Speak as a Customer (समस्या बोलें)"
+                }
+                description={
+                  activeRole === "worker"
+                    ? "Try commands like: 'Andheri me electrician kaam dikhao' or 'Meri aaj ki kamai batao'."
+                    : "Explain what requires repair in your native language. AI categorizes and dispatches instantly."
+                }
+                placeholderPrompt={
+                  activeRole === "worker"
+                    ? "उदा.: 'Bandra me wiring ke urgent kaam dikhao'"
+                    : "उदा.: 'Ghar me switchboard me spark ho raha hai aur light chali gayi'"
+                }
               />
             </div>
 
-            {/* AI Breakdown Card */}
+            {/* Parsed AI Result Card */}
             {parsedAnalysis && (
-              <Card className="border-emerald-500/30 bg-emerald-500/5 animate-in fade-in slide-in-from-bottom-3">
+              <Card className="border-primary/40 bg-primary/5 rounded-2xl animate-in fade-in slide-in-from-bottom-3">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                      <CheckCircle2 className="h-4 w-4" /> AI Intent Recognition Result
-                    </CardTitle>
-                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                      Confidence 98.4%
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base font-bold">
+                        AI Intent Decoded ({parsedAnalysis.role === "worker" ? "Worker Mode" : "Customer Mode"})
+                      </CardTitle>
+                    </div>
+                    <Badge variant="default" className="text-xs font-mono">
+                      100% Confidence
                     </Badge>
                   </div>
-                  <CardDescription className="text-xs">
-                    Here is how KaamSetu&apos;s Voice AI converts spoken speech into structured job parameters:
+                  <CardDescription className="text-xs text-muted-foreground italic pt-1">
+                    &ldquo;{parsedAnalysis.summary}&rdquo;
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-3 rounded-xl bg-background/80 border text-xs text-foreground italic">
-                    &ldquo;{parsedAnalysis.summary}&rdquo;
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                <CardContent className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
                       <span className="text-[10px] text-muted-foreground block font-medium uppercase">
-                        Matched Category
+                        Trade / Intent
                       </span>
-                      <span className="font-bold text-primary">{parsedAnalysis.category}</span>
+                      <span className="font-bold text-foreground">{parsedAnalysis.category}</span>
                     </div>
 
                     <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
                       <span className="text-[10px] text-muted-foreground block font-medium uppercase">
-                        Urgency Level
+                        Operation
+                      </span>
+                      <span className="font-bold text-foreground">{parsedAnalysis.actionIntent}</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
+                      <span className="text-[10px] text-muted-foreground block font-medium uppercase">
+                        Priority Tier
                       </span>
                       <span
                         className={`font-bold ${
-                          parsedAnalysis.urgency === "EMERGENCY"
+                          parsedAnalysis.urgency === "EMERGENCY" || parsedAnalysis.urgency === "IMMEDIATE"
                             ? "text-red-500"
                             : parsedAnalysis.urgency === "URGENT"
                             ? "text-amber-500"
@@ -255,18 +392,16 @@ export default function VoiceAiPage() {
 
                     <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
                       <span className="text-[10px] text-muted-foreground block font-medium uppercase">
-                        Dispatch Radius
+                        Geo Grid
                       </span>
-                      <span className="font-bold text-foreground">3.5 km</span>
+                      <span className="font-bold text-foreground">15 km Active</span>
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2">
-                    <Link
-                      href={`/customer/jobs/new?category=${parsedAnalysis.category.toLowerCase()}`}
-                    >
+                    <Link href={parsedAnalysis.targetUrl}>
                       <Button size="sm" className="rounded-xl font-bold gap-1 text-xs">
-                        Create Job with This Voice Input <ArrowRight className="h-3.5 w-3.5" />
+                        {parsedAnalysis.actionButtonText} <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
                   </div>
@@ -280,10 +415,10 @@ export default function VoiceAiPage() {
         <div className="mb-20 space-y-8">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground">
-              Why Voice AI Changes Everything
+              Why Dual-Sided Voice AI Changes Everything
             </h2>
             <p className="text-sm text-muted-foreground">
-              Designed specifically for the diversity, languages, and accessibility needs of Indian trade ecosystems.
+              Designed specifically for the diversity, languages, and literacy levels of Indian trade ecosystems.
             </p>
           </div>
 
@@ -302,7 +437,7 @@ export default function VoiceAiPage() {
               {
                 icon: Users,
                 title: "Empowering Skilled Workers",
-                desc: "Tradespeople can onboard, state their years of trade experience, and verify skills purely via spoken voice.",
+                desc: "Tradespeople can onboard, state their years of trade experience, listen to customer audio notes, and filter leads via voice.",
               },
               {
                 icon: ShieldCheck,
@@ -334,10 +469,10 @@ export default function VoiceAiPage() {
         <div className="mb-20 p-8 sm:p-12 rounded-3xl bg-secondary/40 border border-border space-y-8">
           <div className="text-center max-w-xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              How Voice Booking Works in 4 Steps
+              How Voice Booking & Worker Dispatch Works
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              From spoken word to a verified technician at your doorstep in under 30 minutes.
+              From customer spoken word to worker audio notification and verified completion.
             </p>
           </div>
 
@@ -345,23 +480,23 @@ export default function VoiceAiPage() {
             {[
               {
                 step: "01",
-                title: "Speak in Any Dialect",
-                desc: "Tap the microphone on your screen and explain your issue exactly like you'd speak to a neighbor.",
+                title: "Customer Speaks Requirement",
+                desc: "Customer speaks problem naturally. AI structures the trade category, tools required, and urgency tier.",
               },
               {
                 step: "02",
-                title: "AI Translates & Categorizes",
-                desc: "Our model structures your speech into trade category, problem severity, and tools required.",
+                title: "Audio Dispatch to Workers",
+                desc: "Nearby verified professionals receive instant notifications with audio memos playable directly on their device.",
               },
               {
                 step: "03",
-                title: "Hyperlocal Dispatch",
-                desc: "Nearby verified professionals receive instant notifications in their preferred language.",
+                title: "Worker Voice Acceptance",
+                desc: "Workers filter and accept jobs hands-free while on the road without manual mobile keyboard input.",
               },
               {
                 step: "04",
-                title: "OTP-Protected Service",
-                desc: "Worker arrives, solves the problem, and finishes the job with digital OTP verification.",
+                title: "Audio OTP Verification",
+                desc: "Worker arrives, completes the service, and verifies the job safely with voice-enabled OTP confirmation.",
               },
             ].map((s, idx) => (
               <div key={idx} className="space-y-2.5">
@@ -379,22 +514,22 @@ export default function VoiceAiPage() {
         <div className="rounded-3xl bg-gradient-to-r from-primary via-orange-600 to-amber-600 p-8 sm:p-12 text-white shadow-2xl text-center space-y-6">
           <div className="max-w-2xl mx-auto space-y-3">
             <h2 className="text-2xl sm:text-4xl font-extrabold">
-              Ready to experience effortless service booking?
+              Ready to experience effortless voice trade marketplace?
             </h2>
             <p className="text-white/90 text-sm sm:text-base">
-              Try posting your first job with voice in under 15 seconds. No account preparation required.
+              Try posting your first job or browsing worker leads with voice in under 15 seconds.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/customer/jobs/new">
               <Button size="lg" variant="secondary" className="rounded-2xl font-bold px-8 text-foreground gap-2">
-                <Mic className="h-5 w-5 text-primary" /> Try Voice Post Now
+                <Mic className="h-5 w-5 text-primary" /> Try Customer Voice
               </Button>
             </Link>
-            <Link href="/services">
-              <Button size="lg" variant="outline" className="rounded-2xl font-bold px-8 bg-transparent text-white border-white/40 hover:bg-white/10">
-                Explore All Services
+            <Link href="/worker">
+              <Button size="lg" variant="outline" className="rounded-2xl font-bold px-8 bg-transparent text-white border-white/40 hover:bg-white/10 gap-2">
+                <Briefcase className="h-5 w-5" /> Explore Worker Radar
               </Button>
             </Link>
           </div>

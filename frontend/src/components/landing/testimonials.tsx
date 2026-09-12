@@ -132,7 +132,7 @@ export function Testimonials() {
 
               <div className="mt-5 pt-4 border-t border-border/60 flex items-center gap-3">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
-                  <Image src={item.avatar} alt={item.author} fill className="object-cover" />
+                  <Image src={item.avatar} alt={item.author} fill sizes="40px" className="object-cover" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -177,7 +177,7 @@ export function Testimonials() {
 
               <div className="mt-5 pt-4 border-t border-border/60 flex items-center gap-3">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
-                  <Image src={item.avatar} alt={item.author} fill className="object-cover" />
+                  <Image src={item.avatar} alt={item.author} fill sizes="40px" className="object-cover" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">

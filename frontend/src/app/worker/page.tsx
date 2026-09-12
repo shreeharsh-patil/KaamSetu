@@ -11,6 +11,13 @@ import {
   IndianRupee,
   ChevronRight,
   Radio,
+  Mic,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  Filter,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -21,6 +28,7 @@ import { DistanceDisplay } from "@/components/shared/distance-display";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/i18n-context";
+import { VoiceRecorder } from "@/components/voice/voice-recorder";
 
 type AvailabilityStatus = "AVAILABLE" | "BUSY" | "OFFLINE";
 
@@ -28,6 +36,14 @@ export default function WorkerDashboardPage() {
   const { t } = useTranslation();
   const [availability, setAvailability] = useState<AvailabilityStatus>("AVAILABLE");
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+
+  // Voice AI Search & Command state
+  const [voiceSearchQuery, setVoiceSearchQuery] = useState<string>("");
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
+
+  // Customer Audio Note state
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   // Active Job State
   const activeJob = {
@@ -41,6 +57,7 @@ export default function WorkerDashboardPage() {
     distanceKm: 2.3,
     estimatedPrice: 450,
     startTime: "10:30 AM",
+    audioNoteText: "Bhaiya, AC chalate hi main switchboard me sparking aa rahi hai aur MCB trip ho raha hai, please jaldi aao.",
   };
 
   // Incoming Job Offers
@@ -65,6 +82,16 @@ export default function WorkerDashboardPage() {
       estimatedPrice: 500,
       expiresInSeconds: 280,
     },
+    {
+      id: "offer-203",
+      category: "Plumbing",
+      title: "Main Kitchen Pipe Leakage",
+      approximateArea: "Four Bungalows, Andheri",
+      distanceKm: 2.5,
+      urgency: "IMMEDIATE",
+      estimatedPrice: 400,
+      expiresInSeconds: 320,
+    },
   ]);
 
   const handleStatusChange = async (newStatus: AvailabilityStatus) => {
@@ -81,6 +108,75 @@ export default function WorkerDashboardPage() {
   const handleDeclineOffer = (offerId: string) => {
     setOffers((prev) => prev.filter((o) => o.id !== offerId));
   };
+
+  const handleVoiceCommandExtracted = (text: string) => {
+    const lower = text.toLowerCase();
+    setIsVoiceModalOpen(false);
+
+    if (lower.includes("online") || lower.includes("available") || lower.includes("chalu")) {
+      handleStatusChange("AVAILABLE");
+      setVoiceFeedback("Voice Command: Status changed to AVAILABLE (ऑनलाइन)");
+      return;
+    }
+
+    if (lower.includes("offline") || lower.includes("band") || lower.includes("break")) {
+      handleStatusChange("OFFLINE");
+      setVoiceFeedback("Voice Command: Status changed to OFFLINE (ऑफलाइन)");
+      return;
+    }
+
+    if (lower.includes("kamai") || lower.includes("earn") || lower.includes("paisa")) {
+      setVoiceFeedback("Voice Command: Navigating to earnings...");
+      window.location.href = "/worker/earnings";
+      return;
+    }
+
+    // Otherwise apply as job filter query
+    setVoiceSearchQuery(text);
+    setVoiceFeedback(`Voice Filter applied: "${text}"`);
+  };
+
+  // Play synthetic speech for customer voice note
+  const togglePlayCustomerAudio = () => {
+    if (isPlayingAudio) {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(activeJob.audioNoteText);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
+      setIsPlayingAudio(true);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      setIsPlayingAudio(true);
+      setTimeout(() => setIsPlayingAudio(false), 4000);
+    }
+  };
+
+  // Filtered offers by voice filter
+  const filteredOffers = offers.filter((o) => {
+    if (!voiceSearchQuery) return true;
+    const query = voiceSearchQuery.toLowerCase();
+    if (query.includes("urgent") || query.includes("immediate") || query.includes("jaldi")) {
+      return o.urgency === "IMMEDIATE";
+    }
+    if (query.includes("high") || query.includes("400") || query.includes("500") || query.includes("zyada")) {
+      return o.estimatedPrice >= 400;
+    }
+    return (
+      o.title.toLowerCase().includes(query) ||
+      o.approximateArea.toLowerCase().includes(query) ||
+      o.category.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="py-6 space-y-6">
@@ -138,7 +234,115 @@ export default function WorkerDashboardPage() {
           </div>
         </div>
 
-        {/* KaamBazaar Royal Navy Earnings Hero Card (Matching Screen 8) */}
+        {/* Worker Voice AI Command & Filter Center */}
+        <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-background p-4 bazaar-card-shadow space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-2xl bg-primary text-white flex items-center justify-center shadow-xs">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-sm text-foreground">
+                    Worker Voice AI Commander (कारीगर वॉइस असिस्टेंट)
+                  </h3>
+                  <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                    Hindi • Marathi • Hinglish
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Speak hands-free to filter nearby jobs, update availability, or check payouts.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              onClick={() => setIsVoiceModalOpen(true)}
+              className="rounded-xl font-bold gap-2 self-start sm:self-auto bg-primary text-white shadow-xs"
+            >
+              <Mic className="h-4 w-4" /> बोलकर खोजें (Voice Search)
+            </Button>
+          </div>
+
+          {/* Quick Filter Voice Chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
+              <Filter className="h-3 w-3" /> Quick filters:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setVoiceSearchQuery("");
+                setVoiceFeedback(null);
+              }}
+              className={cn(
+                "text-xs px-2.5 py-1 rounded-full border transition-all",
+                !voiceSearchQuery
+                  ? "bg-primary text-primary-foreground border-primary font-semibold"
+                  : "bg-background hover:bg-muted text-muted-foreground"
+              )}
+            >
+              All Leads (सब काम)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVoiceCommandExtracted("urgent")}
+              className={cn(
+                "text-xs px-2.5 py-1 rounded-full border transition-all",
+                voiceSearchQuery.includes("urgent")
+                  ? "bg-primary text-primary-foreground border-primary font-semibold"
+                  : "bg-background hover:bg-muted text-muted-foreground"
+              )}
+            >
+              ⚡ Urgent Leads Only (तुरंत वाले)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVoiceCommandExtracted("high payout")}
+              className={cn(
+                "text-xs px-2.5 py-1 rounded-full border transition-all",
+                voiceSearchQuery.includes("high")
+                  ? "bg-primary text-primary-foreground border-primary font-semibold"
+                  : "bg-background hover:bg-muted text-muted-foreground"
+              )}
+            >
+              💰 High Payout (&gt; ₹400)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVoiceCommandExtracted("Versova")}
+              className={cn(
+                "text-xs px-2.5 py-1 rounded-full border transition-all",
+                voiceSearchQuery.includes("Versova")
+                  ? "bg-primary text-primary-foreground border-primary font-semibold"
+                  : "bg-background hover:bg-muted text-muted-foreground"
+              )}
+            >
+              📍 Versova / Andheri
+            </button>
+          </div>
+
+          {voiceFeedback && (
+            <div className="flex items-center justify-between text-xs px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-foreground">
+              <span className="flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> {voiceFeedback}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setVoiceSearchQuery("");
+                  setVoiceFeedback(null);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* KaamBazaar Royal Navy Earnings Hero Card */}
         <div className="rounded-3xl hero-navy-card p-6 sm:p-8 shadow-lg border border-primary/20 text-white space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -206,7 +410,7 @@ export default function WorkerDashboardPage() {
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="pt-3 pb-3">
+            <CardContent className="pt-3 pb-3 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
                   <DistanceDisplay distanceKm={activeJob.distanceKm} />
@@ -214,6 +418,48 @@ export default function WorkerDashboardPage() {
                   <span className="text-muted-foreground">Expected start: {activeJob.startTime}</span>
                 </div>
                 <PriceDisplay amount={activeJob.estimatedPrice} label="Fare" className="font-bold" />
+              </div>
+
+              {/* Customer Voice Recording / Audio Note Player */}
+              <div className="rounded-xl bg-card border border-primary/20 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isPlayingAudio ? "destructive" : "secondary"}
+                    onClick={togglePlayCustomerAudio}
+                    className="h-8 w-8 rounded-full p-0 shrink-0"
+                    aria-label={isPlayingAudio ? "Pause Audio Note" : "Play Customer Audio Note"}
+                  >
+                    {isPlayingAudio ? (
+                      <VolumeX className="h-4 w-4" />
+                    ) : (
+                      <Volume2 className="h-4 w-4 text-primary" />
+                    )}
+                  </Button>
+                  <div className="text-xs">
+                    <div className="font-semibold text-foreground flex items-center gap-1.5">
+                      <span>Customer Voice Note (ग्राहक की आवाज़)</span>
+                      {isPlayingAudio && (
+                        <span className="text-[10px] text-primary animate-pulse font-mono font-bold">
+                          [Playing Audio...]
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground italic text-[11px] line-clamp-1">
+                      &ldquo;{activeJob.audioNoteText}&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={togglePlayCustomerAudio}
+                  className="text-xs text-primary hover:text-primary font-bold self-start sm:self-auto"
+                >
+                  {isPlayingAudio ? "Stop Audio" : "Listen to Note"}
+                </Button>
               </div>
             </CardContent>
 
@@ -246,9 +492,9 @@ export default function WorkerDashboardPage() {
             <div className="flex items-center gap-2">
               <BellRing className="h-4 w-4 text-primary" />
               <h2 className="text-lg font-bold text-foreground">Available Jobs Nearby</h2>
-              {offers.length > 0 && (
+              {filteredOffers.length > 0 && (
                 <Badge variant="default" className="text-[10px] py-0 px-2 font-bold rounded-full">
-                  {offers.length} New Leads
+                  {filteredOffers.length} {voiceSearchQuery ? "Matching" : "New"} Leads
                 </Badge>
               )}
             </div>
@@ -258,13 +504,30 @@ export default function WorkerDashboardPage() {
             </Link>
           </div>
 
-          {offers.length === 0 ? (
-            <Card className="p-8 text-center border-dashed rounded-2xl">
-              <p className="text-sm text-muted-foreground">No new leads right now. Keep your status set to Available.</p>
+          {filteredOffers.length === 0 ? (
+            <Card className="p-8 text-center border-dashed rounded-2xl space-y-2">
+              <p className="text-sm font-semibold text-foreground">
+                {voiceSearchQuery
+                  ? `No leads matched voice filter "${voiceSearchQuery}"`
+                  : "No new leads right now. Keep your status set to Available."}
+              </p>
+              {voiceSearchQuery && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setVoiceSearchQuery("");
+                    setVoiceFeedback(null);
+                  }}
+                  className="rounded-xl text-xs"
+                >
+                  Clear Voice Filter
+                </Button>
+              )}
             </Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              {offers.map((offer) => (
+              {filteredOffers.map((offer) => (
                 <Card key={offer.id} className="flex flex-col justify-between hover:border-primary/50 transition-all rounded-2xl bazaar-card-shadow">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between mb-1">
@@ -310,6 +573,35 @@ export default function WorkerDashboardPage() {
           )}
         </div>
       </Container>
+
+      {/* Inline Worker Voice AI Modal */}
+      {isVoiceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-card rounded-3xl border border-border shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Mic className="h-5 w-5 text-primary" />
+                <h3 className="font-bold text-sm text-foreground">Worker Voice AI Commander</h3>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsVoiceModalOpen(false)}
+                className="h-7 w-7 rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <VoiceRecorder
+              onConfirmText={handleVoiceCommandExtracted}
+              title="Speak Worker Command"
+              description="Speak in Hindi, Marathi, or English. You can filter jobs, toggle online/offline status, or ask for your earnings."
+              placeholderPrompt="Jaise: 'Andheri me electrician kaam dikhao' ya 'Mujhe online karo'"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -90,6 +90,19 @@ export async function apiClient<T>(
       credentials: "include", // propagate HttpOnly refresh cookie
       body: body instanceof FormData || typeof body === "string" ? body : body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
+    }).catch((fetchError) => {
+      // In development or when backend is offline, catch fetch network errors immediately to prevent browser unhandledRejection
+      const mock = handleOfflineMockResponse<T>(endpoint, fetchOptions.method || "GET", body);
+      if (mock !== null) {
+        return {
+          ok: true,
+          status: 200,
+          headers: new Headers({ "content-type": "application/json" }),
+          json: async () => ({ success: true, data: mock }),
+          text: async () => JSON.stringify({ success: true, data: mock }),
+        } as unknown as Response;
+      }
+      throw fetchError;
     });
 
     clearTimeout(timeoutId);
@@ -112,9 +125,9 @@ export async function apiClient<T>(
           headers,
           credentials: "include",
           body: body instanceof FormData || typeof body === "string" ? body : body ? JSON.stringify(body) : undefined,
-        });
+        }).catch(() => null);
 
-        if (retryResponse.ok) {
+        if (retryResponse && retryResponse.ok) {
           const retryData = await retryResponse.json();
           return (retryData.data ?? retryData) as T;
         }
