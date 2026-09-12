@@ -16,10 +16,10 @@ const STEPS: { status: JobStatus; label: string; icon: typeof Clock }[] = [
 ];
 
 const STATUS_ORDER: Record<string, number> = {
-  SEARCHING: 0,
-  WORKERS_FOUND: 0,
-  WAITING_FOR_ACCEPTANCE: 0,
-  WORKER_ASSIGNED: 1,
+  DRAFT: 0,
+  OPEN: 0,
+  MATCHING: 0,
+  OFFERED: 0,
   ACCEPTED: 1,
   EN_ROUTE: 2,
   ARRIVED: 3,

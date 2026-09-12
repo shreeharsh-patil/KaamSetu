@@ -15,9 +15,11 @@ import {
 import { Container } from "@/components/layout/container";
 import { AuthGuard } from "@/features/auth/components/auth-guard";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/use-auth";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const adminNav = [
     { href: "/admin", label: "Operations Overview", icon: LayoutDashboard },
@@ -25,11 +27,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/workers", label: "Tradespeople", icon: Briefcase },
     { href: "/admin/verifications", label: "KYC Verifications", icon: UserCheck },
     { href: "/admin/disputes", label: "Dispute Resolutions", icon: AlertOctagon },
-    { href: "/admin/audit", label: "Security & Audit Logs", icon: ShieldCheck },
+    ...(user?.role === "ADMIN" ? [{ href: "/admin/audit", label: "Security & Audit Logs", icon: ShieldCheck }] : []),
   ];
 
   return (
-    <AuthGuard requiredRole="admin" fallbackUrl="/login">
+    <AuthGuard allowedRoles={["ADMIN", "SUPPORT"]} fallbackUrl="/login">
       <div className="flex-1 flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
         {/* Admin Sidebar Navigation */}
         <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r bg-muted/20 p-4 shrink-0">

@@ -86,7 +86,7 @@ export function VoiceAssistantFAB() {
           category,
           title: text.slice(0, 50) + (text.length > 50 ? "..." : ""),
           description: text,
-          urgency: lower.includes("urgent") || lower.includes("jaldi") ? "URGENT" : "STANDARD",
+          urgency: lower.includes("urgent") || lower.includes("jaldi") ? "TODAY" : "FLEXIBLE",
         })
       );
     } catch {

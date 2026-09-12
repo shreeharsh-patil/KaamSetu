@@ -107,7 +107,9 @@ export default function VerifyOtpPage() {
       setError(null);
       isNavigatingRef.current = true;
 
+      const requestedRole = sessionStorage.getItem("kaamsetu_pending_role");
       const verifiedUser = await verifyOtp(pendingPhone, otpString);
+      sessionStorage.removeItem("kaamsetu_pending_role");
 
       // Check if redirect query param exists
       if (redirect) {
@@ -116,9 +118,11 @@ export default function VerifyOtpPage() {
       }
 
       // Role-based redirects per specification
-      if (verifiedUser.role === "worker") {
+      if (requestedRole === "worker" && verifiedUser.role === "CUSTOMER") {
+        router.replace("/worker/onboarding");
+      } else if (verifiedUser.role === "WORKER") {
         router.replace("/worker");
-      } else if (verifiedUser.role === "admin") {
+      } else if (verifiedUser.role === "ADMIN" || verifiedUser.role === "SUPPORT") {
         router.replace("/admin");
       } else {
         router.replace("/customer");
@@ -173,9 +177,6 @@ export default function VerifyOtpPage() {
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm">
           Enter the 6-digit code sent to <span className="font-semibold text-foreground">{pendingPhone}</span>
-          <span className="block mt-1 text-[11px] text-primary font-semibold">
-            (Demo verification code: <span className="font-mono font-bold">123456</span>)
-          </span>
         </CardDescription>
         <div className="pt-1">
           <Link
@@ -220,21 +221,6 @@ export default function VerifyOtpPage() {
               )}
             />
           ))}
-        </div>
-
-        {/* Demo OTP Autofill Pill */}
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              const demo = ["1", "2", "3", "4", "5", "6"];
-              setOtpDigits(demo);
-              submitOtp("123456");
-            }}
-            className="text-xs font-semibold text-primary hover:underline bg-primary/10 hover:bg-primary/15 px-3 py-1.5 rounded-full border border-primary/20 transition-colors cursor-pointer"
-          >
-            ⚡ Autofill Demo Code: 123456
-          </button>
         </div>
 
         <Button

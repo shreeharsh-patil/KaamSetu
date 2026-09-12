@@ -29,7 +29,7 @@ export default function AdminJobsMonitorPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {["", "SEARCHING", "IN_PROGRESS", "COMPLETED", "CANCELLED"].map((s) => (
+          {["", "OPEN", "MATCHING", "OFFERED", "IN_PROGRESS", "COMPLETED", "CANCELLED"].map((s) => (
             <Button
               key={s}
               variant={statusFilter === s ? "default" : "outline"}

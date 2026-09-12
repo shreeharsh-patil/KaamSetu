@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Send,
   MapPin,
-  Phone,
   CheckCheck,
   Check,
   Loader2,
@@ -106,13 +105,6 @@ export default function ChatConversationPage({
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" asChild>
-            <a href="tel:9876543210" aria-label="Call">
-              <Phone className="h-4 w-4 text-foreground" />
-            </a>
-          </Button>
-        </div>
       </div>
 
       {/* Messages Feed */}

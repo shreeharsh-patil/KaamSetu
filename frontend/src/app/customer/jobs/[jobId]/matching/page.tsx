@@ -42,9 +42,9 @@ export default function JobMatchingPage({
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       if (
-        status === "SEARCHING" ||
-        status === "WORKERS_FOUND" ||
-        status === "WAITING_FOR_ACCEPTANCE"
+        status === "OPEN" ||
+        status === "MATCHING" ||
+        status === "OFFERED"
       ) {
         return 3000;
       }
@@ -85,7 +85,6 @@ export default function JobMatchingPage({
   // If already assigned or progressing, redirect to active job view
   if (
     [
-      "WORKER_ASSIGNED",
       "ACCEPTED",
       "EN_ROUTE",
       "ARRIVED",
@@ -106,7 +105,7 @@ export default function JobMatchingPage({
             </p>
           </div>
           <Button asChild className="w-full">
-            <Link href={`/customer/jobs/${job._id}`}>
+            <Link href={`/customer/jobs/${job.id}`}>
               Proceed to Live Tracking <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -131,7 +130,7 @@ export default function JobMatchingPage({
 
         <CardContent className="space-y-6 py-6 text-center">
           {/* Radar animation based on state */}
-          {job.status === "SEARCHING" && (
+          {(job.status === "OPEN" || job.status === "MATCHING") && (
             <div className="space-y-4">
               <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-ping" />
@@ -149,7 +148,7 @@ export default function JobMatchingPage({
             </div>
           )}
 
-          {job.status === "WORKERS_FOUND" && (
+          {job.status === "OFFERED" && (
             <div className="space-y-4">
               <div className="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center mx-auto text-blue-600">
                 <Users className="h-10 w-10 animate-bounce" />
@@ -163,7 +162,7 @@ export default function JobMatchingPage({
             </div>
           )}
 
-          {job.status === "WAITING_FOR_ACCEPTANCE" && (
+          {job.status === "OFFERED" && (
             <div className="space-y-4">
               <div className="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-950 flex items-center justify-center mx-auto text-amber-600">
                 <Clock className="h-10 w-10 animate-pulse" />
@@ -177,7 +176,7 @@ export default function JobMatchingPage({
             </div>
           )}
 
-          {job.status === "NO_WORKERS" && (
+          {job.status === "EXPIRED" && (
             <div className="space-y-4">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <AlertCircle className="h-10 w-10 text-amber-500" />
@@ -209,7 +208,7 @@ export default function JobMatchingPage({
           <div className="p-4 rounded-xl bg-muted/40 border text-left text-xs space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Job Reference:</span>
-              <span className="font-mono font-medium">#{job._id.slice(-8)}</span>
+              <span className="font-mono font-medium">#{job.id.slice(-8)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Urgency:</span>
@@ -225,7 +224,7 @@ export default function JobMatchingPage({
         </CardContent>
 
         <CardFooter className="flex flex-col gap-2 pt-0">
-          {job.status === "NO_WORKERS" || job.status === "EXPIRED" ? (
+          {job.status === "EXPIRED" ? (
             <Button asChild className="w-full">
               <Link href="/customer/jobs/new">
                 <RotateCcw className="mr-2 h-4 w-4" /> Try Posting Again

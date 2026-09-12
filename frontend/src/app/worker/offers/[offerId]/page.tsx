@@ -42,7 +42,7 @@ export default function WorkerOfferDetailPage({
     mutationFn: () => jobsApi.acceptOffer(offerId),
     onSuccess: (data) => {
       // Direct to active job execution
-      router.push(`/worker/jobs/${data.jobId}`);
+      router.push(`/worker/jobs/${data.job.id}`);
     },
     onError: (err: unknown) => {
       if (err instanceof ApiError) {
@@ -98,7 +98,7 @@ export default function WorkerOfferDetailPage({
         </Button>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">Review Job Opportunity</h1>
-          <p className="text-xs text-muted-foreground">Offer ID: #{offer._id.slice(-8)}</p>
+          <p className="text-xs text-muted-foreground">Offer ID: #{offer.id.slice(-8)}</p>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function WorkerOfferDetailPage({
             </Badge>
           </div>
           <CardTitle className="text-xl font-bold">{offer.title}</CardTitle>
-          <CardDescription className="text-sm">{offer.preferredTiming}</CardDescription>
+          <CardDescription className="text-sm">{new Date(offer.preferredTime).toLocaleString()}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -164,7 +164,7 @@ export default function WorkerOfferDetailPage({
             <div className="p-3 rounded-lg border bg-card space-y-1">
               <span className="text-xs text-muted-foreground">Estimated Payout</span>
               <p className="font-bold text-base text-primary">
-                ₹{offer.estimatedPrice.min} - ₹{offer.estimatedPrice.max}
+                {offer.estimatedAmount ? `₹${offer.estimatedAmount}` : "To be agreed"}
               </p>
               <span className="text-[11px] text-muted-foreground block">Zero commission cut</span>
             </div>

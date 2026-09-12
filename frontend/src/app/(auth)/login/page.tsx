@@ -165,28 +165,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Social login divider */}
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/80" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">or continue with</span>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-11 rounded-xl text-xs font-semibold gap-2 border-border/80"
-            onClick={() => {
-              setPhoneNumber("9820011223");
-            }}
-          >
-            <span className="font-bold text-base">G</span>
-            <span>Google One Tap (Demo Autofill)</span>
-          </Button>
-
           <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
             <span>Verified security • No password required</span>

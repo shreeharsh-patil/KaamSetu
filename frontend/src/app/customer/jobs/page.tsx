@@ -20,7 +20,7 @@ export default function CustomerJobsListPage() {
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: QUERY_KEYS.JOBS.LIST({ role: "customer" }),
-    queryFn: () => jobsApi.getJobs({ role: "customer" }),
+    queryFn: () => jobsApi.getJobs(),
   });
 
   const filteredJobs = jobs?.filter((job) => {
@@ -113,14 +113,14 @@ export default function CustomerJobsListPage() {
       ) : (
         <div className="space-y-3">
           {filteredJobs.map((job) => {
-            const isMatching = job.status === "SEARCHING" || job.status === "WORKERS_FOUND";
+            const isMatching = job.status === "OPEN" || job.status === "MATCHING" || job.status === "OFFERED";
             const targetHref = isMatching
-              ? `/customer/jobs/${job._id}/matching`
-              : `/customer/jobs/${job._id}`;
+              ? `/customer/jobs/${job.id}/matching`
+              : `/customer/jobs/${job.id}`;
 
             return (
               <Link
-                key={job._id}
+                key={job.id}
                 href={targetHref}
                 className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-card hover:bg-muted/40 hover:border-primary/40 transition-all gap-4"
               >
@@ -131,7 +131,7 @@ export default function CustomerJobsListPage() {
                     </span>
                     <StatusBadge status={job.status as JobStatus} />
                     <span className="text-xs text-muted-foreground">
-                      ID: #{job._id.slice(-6)}
+                      ID: #{job.id.slice(-6)}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -152,12 +152,8 @@ export default function CustomerJobsListPage() {
 
                 <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
                   <div className="sm:text-right">
-                    {job.finalPrice ? (
-                      <PriceDisplay amount={job.finalPrice} className="font-bold text-base" />
-                    ) : job.estimatedPrice ? (
-                      <span className="text-xs font-medium text-muted-foreground">
-                        ₹{job.estimatedPrice.min} - ₹{job.estimatedPrice.max}
-                      </span>
+                    {job.estimatedPrice ? (
+                      <PriceDisplay amount={job.estimatedPrice} className="font-bold text-base" />
                     ) : (
                       <span className="text-xs text-muted-foreground">Pending Quote</span>
                     )}

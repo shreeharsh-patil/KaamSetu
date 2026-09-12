@@ -70,7 +70,7 @@ export default function WorkerOffersPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {pendingOffers.map((offer) => (
-            <Card key={offer._id} className="border-border hover:border-primary/40 transition-all flex flex-col justify-between">
+            <Card key={offer.id} className="border-border hover:border-primary/40 transition-all flex flex-col justify-between">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between gap-2">
                   <Badge variant="outline" className="text-[11px] uppercase font-semibold">
@@ -80,7 +80,7 @@ export default function WorkerOffersPage() {
                     <Badge variant="destructive" className="flex items-center gap-1">
                       <Flame className="h-3 w-3" /> Emergency
                     </Badge>
-                  ) : offer.urgency === "URGENT" ? (
+                  ) : offer.urgency === "TODAY" ? (
                     <Badge className="bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1">
                       <Clock className="h-3 w-3" /> Urgent
                     </Badge>
@@ -109,14 +109,14 @@ export default function WorkerOffersPage() {
                 <div className="flex items-center justify-between text-xs pt-1">
                   <span className="text-muted-foreground">Estimated Payout:</span>
                   <span className="font-bold text-base text-primary">
-                    ₹{offer.estimatedPrice.min} - ₹{offer.estimatedPrice.max}
+                    {offer.estimatedAmount ? `₹${offer.estimatedAmount}` : "To be agreed"}
                   </span>
                 </div>
               </CardContent>
 
               <CardFooter className="pt-0">
                 <Button asChild className="w-full">
-                  <Link href={`/worker/offers/${offer._id}`}>
+                  <Link href={`/worker/offers/${offer.id}`}>
                     Review & Accept Offer <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

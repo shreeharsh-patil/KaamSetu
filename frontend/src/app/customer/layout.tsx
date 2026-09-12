@@ -6,7 +6,7 @@ import { AuthGuard } from "@/features/auth/components/auth-guard";
 
 export default function CustomerLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard requiredRole="customer" fallbackUrl="/login">
+    <AuthGuard requiredRole="CUSTOMER" fallbackUrl="/login">
       <div className="flex-1 flex flex-col pb-20 md:pb-8">
         {/* Child Pages Content */}
         <div className="flex-1 flex flex-col">{children}</div>

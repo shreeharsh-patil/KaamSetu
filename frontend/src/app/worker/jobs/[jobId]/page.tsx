@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,9 +10,7 @@ import {
   Navigation,
   CheckCircle2,
   Car,
-  KeyRound,
   AlertTriangle,
-  Loader2,
   Receipt,
   MapPin,
   Sparkles,
@@ -21,10 +19,8 @@ import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { JobTimeline } from "@/components/shared/job-timeline";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { jobsApi } from "@/features/jobs/api";
 import { QUERY_KEYS } from "@/lib/api/query-keys";
 
@@ -36,11 +32,6 @@ export default function WorkerActiveJobPage({
   const { jobId } = use(params);
   const queryClient = useQueryClient();
 
-  const [otpModalOpen, setOtpModalOpen] = useState(false);
-  const [otpType, setOtpType] = useState<"start" | "complete">("start");
-  const [otpValue, setOtpValue] = useState("");
-  const [otpError, setOtpError] = useState<string | null>(null);
-
   const { data: job, isLoading, error } = useQuery({
     queryKey: QUERY_KEYS.JOBS.DETAIL(jobId),
     queryFn: () => jobsApi.getJobById(jobId),
@@ -48,23 +39,10 @@ export default function WorkerActiveJobPage({
   });
 
   const advanceMutation = useMutation({
-    mutationFn: (action: "start-travel" | "arrive" | "start-work" | "complete") =>
+    mutationFn: (action: "start-travel" | "arrive" | "start" | "complete") =>
       jobsApi.advanceJobState(jobId, action),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.JOBS.DETAIL(jobId) });
-    },
-  });
-
-  const verifyOtpMutation = useMutation({
-    mutationFn: () => jobsApi.verifyOtp(jobId, otpValue, otpType),
-    onSuccess: () => {
-      setOtpModalOpen(false);
-      setOtpValue("");
-      setOtpError(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.JOBS.DETAIL(jobId) });
-    },
-    onError: () => {
-      setOtpError("Invalid OTP. Please ask the customer for the correct 4-digit code.");
     },
   });
 
@@ -90,13 +68,6 @@ export default function WorkerActiveJobPage({
     );
   }
 
-  const handleOpenOtpModal = (type: "start" | "complete") => {
-    setOtpType(type);
-    setOtpValue("");
-    setOtpError(null);
-    setOtpModalOpen(true);
-  };
-
   const isCompleted = job.status === "COMPLETED";
 
   return (
@@ -114,7 +85,7 @@ export default function WorkerActiveJobPage({
               <h1 className="text-xl font-bold tracking-tight text-foreground">{job.title}</h1>
               <StatusBadge status={job.status} />
             </div>
-            <p className="text-xs text-muted-foreground">Reference #{job._id.slice(-8)}</p>
+            <p className="text-xs text-muted-foreground">Reference #{job.id.slice(-8)}</p>
           </div>
         </div>
       </div>
@@ -183,14 +154,15 @@ export default function WorkerActiveJobPage({
           {job.status === "ARRIVED" && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                Ask customer for their 4-digit <strong>Start OTP</strong> to verify identity and unlock work.
+                Confirm with the customer that work can begin, then start the job.
               </p>
               <Button
                 size="lg"
                 className="w-full"
-                onClick={() => handleOpenOtpModal("start")}
+                disabled={advanceMutation.isPending}
+                onClick={() => advanceMutation.mutate("start")}
               >
-                <KeyRound className="mr-2 h-5 w-5" /> Enter Start OTP & Begin Work
+                Begin Work
               </Button>
             </div>
           )}
@@ -198,14 +170,15 @@ export default function WorkerActiveJobPage({
           {job.status === "IN_PROGRESS" && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                Work in progress. Once you finish repairs, ask the customer to inspect and share the <strong>Completion OTP</strong>.
+                Work in progress. Complete only after the customer has inspected the work.
               </p>
               <Button
                 size="lg"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => handleOpenOtpModal("complete")}
+                disabled={advanceMutation.isPending}
+                onClick={() => advanceMutation.mutate("complete")}
               >
-                <CheckCircle2 className="mr-2 h-5 w-5" /> Complete Job with Customer OTP
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Complete Job
               </Button>
             </div>
           )}
@@ -220,7 +193,7 @@ export default function WorkerActiveJobPage({
                 Payment has been credited to your worker balance. You can record any material costs incurred.
               </p>
               <Button asChild variant="outline" className="w-full mt-2">
-                <Link href={`/worker/earnings?jobId=${job._id}`}>
+                <Link href={`/worker/earnings?jobId=${job.id}`}>
                   <Receipt className="mr-2 h-4 w-4" /> Log Job Expense / Materials
                 </Link>
               </Button>
@@ -245,12 +218,12 @@ export default function WorkerActiveJobPage({
             </div>
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm">
-                <a href={`tel:${job.customer.phone || "9876543210"}`}>
+                <a href={job.customer.phone ? `tel:${job.customer.phone}` : undefined} aria-disabled={!job.customer.phone}>
                   <Phone className="mr-1 h-3.5 w-3.5" /> Call
                 </a>
               </Button>
               <Button asChild size="sm">
-                <Link href={`/messages/${job._id}`}>
+                <Link href={`/messages/${job.id}`}>
                   <MessageSquare className="mr-1 h-3.5 w-3.5" /> Chat
                 </Link>
               </Button>
@@ -265,9 +238,6 @@ export default function WorkerActiveJobPage({
                 {job.location.addressLine || job.location.locality}, {job.location.city} -{" "}
                 {job.location.pincode}
               </p>
-              {job.location.landmark && (
-                <p className="text-[11px] text-muted-foreground">Landmark: {job.location.landmark}</p>
-              )}
             </div>
           </div>
 
@@ -280,49 +250,6 @@ export default function WorkerActiveJobPage({
         </CardContent>
       </Card>
 
-      {/* OTP Entry Dialog */}
-      <Dialog open={otpModalOpen} onOpenChange={setOtpModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {otpType === "start" ? "Verify Start OTP" : "Verify Completion OTP"}
-            </DialogTitle>
-            <DialogDescription>
-              Ask the customer for the 4-digit verification code shown on their screen.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-3">
-            <Input
-              type="text"
-              maxLength={6}
-              placeholder="Enter 4-digit OTP"
-              value={otpValue}
-              onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
-              className="text-center font-mono text-2xl tracking-widest h-14"
-            />
-            {otpError && <p className="text-xs text-destructive text-center">{otpError}</p>}
-          </div>
-
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setOtpModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={otpValue.length < 4 || verifyOtpMutation.isPending}
-              onClick={() => verifyOtpMutation.mutate()}
-            >
-              {verifyOtpMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...
-                </>
-              ) : (
-                "Verify Code"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Container>
   );
 }

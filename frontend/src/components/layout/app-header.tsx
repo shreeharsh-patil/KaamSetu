@@ -80,9 +80,9 @@ export function AppHeader() {
   ];
 
   const navLinks = isAuthenticated && user
-    ? user.role === "admin"
+    ? user.role === "ADMIN" || user.role === "SUPPORT"
       ? adminLinks
-      : user.role === "worker"
+      : user.role === "WORKER"
       ? workerLinks
       : customerLinks
     : guestLinks;
@@ -120,7 +120,7 @@ export function AppHeader() {
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive =
-                  link.href === `/${user?.role}` || link.href === "/admin"
+                  link.href === (user?.role === "WORKER" ? "/worker" : user?.role === "CUSTOMER" ? "/customer" : "/admin")
                     ? pathname === link.href
                     : pathname.startsWith(link.href);
                 return (
@@ -189,7 +189,7 @@ export function AppHeader() {
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2">
               <Link
-                href={user.role === "admin" ? "/admin" : `/${user.role}/profile`}
+                href={user.role === "ADMIN" || user.role === "SUPPORT" ? "/admin" : user.role === "WORKER" ? "/worker/profile" : "/customer/profile"}
                 className="hidden sm:flex items-center gap-1.5 bg-secondary px-3 py-1 rounded-full text-xs font-medium border border-border/60 hover:bg-muted transition-colors"
               >
                 <UserIcon className="h-3.5 w-3.5 text-primary" />
@@ -260,7 +260,7 @@ export function AppHeader() {
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive =
-                link.href === `/${user?.role}` || link.href === "/admin"
+                link.href === (user?.role === "WORKER" ? "/worker" : user?.role === "CUSTOMER" ? "/customer" : "/admin")
                   ? pathname === link.href
                   : pathname.startsWith(link.href);
 

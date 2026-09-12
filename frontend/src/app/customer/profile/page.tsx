@@ -180,7 +180,7 @@ export default function CustomerProfilePage() {
                 </div>
               </div>
               <Badge
-                variant={user.status === "active" ? "success" : user.status === "suspended" ? "destructive" : "warning"}
+                variant={user.status === "ACTIVE" ? "success" : user.status === "SUSPENDED" ? "destructive" : "warning"}
                 className="text-[10px] py-0 px-2 font-bold"
               >
                 {user.status}

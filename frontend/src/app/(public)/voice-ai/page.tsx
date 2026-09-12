@@ -42,7 +42,7 @@ export default function VoiceAiPage() {
       label: "Electrical Spark",
       text: "हॉलमधील मुख्य स्वीच बोर्डमधून ठिणग्या येत आहेत आणि लाईट बंद झाली आहे. वायरमन पाठवा.",
       category: "Electrical",
-      urgency: "URGENT",
+      urgency: "TODAY",
       locality: "Detected from GPS",
     },
     {
@@ -50,7 +50,7 @@ export default function VoiceAiPage() {
       label: "AC Water Dropping",
       text: "Bedroom ka split AC on karne par water drop ho raha hai aur cooling bilkul nahi ho rahi.",
       category: "Appliances",
-      urgency: "STANDARD",
+      urgency: "FLEXIBLE",
       locality: "Detected from GPS",
     },
     {
@@ -58,7 +58,7 @@ export default function VoiceAiPage() {
       label: "Carpenter Work",
       text: "Main door ka lock jam ho gaya hai aur chabi ghum nahi rahi. Carpenter ki zarurat hai.",
       category: "Carpentry",
-      urgency: "URGENT",
+      urgency: "TODAY",
       locality: "Detected from GPS",
     },
   ];
@@ -66,7 +66,7 @@ export default function VoiceAiPage() {
   const handleApplyVoiceText = (text: string) => {
     const lower = text.toLowerCase();
     let category = "Plumbing";
-    let urgency = "STANDARD";
+    let urgency = "FLEXIBLE";
 
     if (lower.includes("light") || lower.includes("स्वीच") || lower.includes("wire") || lower.includes("electric")) {
       category = "Electrical";
@@ -79,7 +79,7 @@ export default function VoiceAiPage() {
     if (lower.includes("emergency") || lower.includes("tut") || lower.includes("ठिणग्या")) {
       urgency = "EMERGENCY";
     } else if (lower.includes("jaldi") || lower.includes("urgent") || lower.includes("jam")) {
-      urgency = "URGENT";
+      urgency = "TODAY";
     }
 
     setParsedAnalysis({
@@ -244,7 +244,7 @@ export default function VoiceAiPage() {
                         className={`font-bold ${
                           parsedAnalysis.urgency === "EMERGENCY"
                             ? "text-red-500"
-                            : parsedAnalysis.urgency === "URGENT"
+                            : parsedAnalysis.urgency === "TODAY"
                             ? "text-amber-500"
                             : "text-blue-500"
                         }`}

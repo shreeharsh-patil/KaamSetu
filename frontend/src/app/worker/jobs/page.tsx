@@ -19,7 +19,7 @@ export default function WorkerJobsHistoryPage() {
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: QUERY_KEYS.JOBS.LIST({ role: "worker" }),
-    queryFn: () => jobsApi.getJobs({ role: "worker" }),
+    queryFn: () => jobsApi.getJobs({ status: "ASSIGNED" }),
   });
 
   const filteredJobs = jobs?.filter((job) => {
@@ -98,8 +98,8 @@ export default function WorkerJobsHistoryPage() {
         <div className="space-y-3">
           {filteredJobs.map((job) => (
             <Link
-              key={job._id}
-              href={`/worker/jobs/${job._id}`}
+              key={job.id}
+              href={`/worker/jobs/${job.id}`}
               className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-card hover:bg-muted/40 hover:border-primary/40 transition-all gap-4"
             >
               <div className="space-y-1.5 flex-1">
@@ -122,12 +122,8 @@ export default function WorkerJobsHistoryPage() {
 
               <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
                 <div className="sm:text-right">
-                  {job.finalPrice ? (
-                    <PriceDisplay amount={job.finalPrice} className="font-bold text-base" />
-                  ) : job.estimatedPrice ? (
-                    <span className="text-xs font-medium text-muted-foreground">
-                      ₹{job.estimatedPrice.min} - ₹{job.estimatedPrice.max}
-                    </span>
+                  {job.estimatedPrice ? (
+                    <PriceDisplay amount={job.estimatedPrice} className="font-bold text-base" />
                   ) : null}
                 </div>
                 <div className="p-2 rounded-full bg-muted/60 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">

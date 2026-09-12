@@ -26,20 +26,20 @@ export default function HomePage() {
 
   // Redirect admins to admin dashboard
   useEffect(() => {
-    if (isAuthenticated && user?.role === "admin") {
+    if (isAuthenticated && (user?.role === "ADMIN" || user?.role === "SUPPORT")) {
       router.replace("/admin");
     }
   }, [isAuthenticated, user, router]);
 
   // Set initial role view based on worker authentication
   useEffect(() => {
-    if (isAuthenticated && user?.role === "worker") {
+    if (isAuthenticated && user?.role === "WORKER") {
       setActiveRole("worker");
     }
   }, [isAuthenticated, user]);
 
   // Don't render while redirecting admins
-  if (isAuthenticated && user?.role === "admin") {
+  if (isAuthenticated && (user?.role === "ADMIN" || user?.role === "SUPPORT")) {
     return null;
   }
 

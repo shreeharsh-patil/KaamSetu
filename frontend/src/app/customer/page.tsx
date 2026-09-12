@@ -40,7 +40,7 @@ export default function CustomerHomePage() {
   const { t } = useTranslation();
   const { data: jobs, isLoading } = useQuery({
     queryKey: QUERY_KEYS.JOBS.LIST({ role: "customer" }),
-    queryFn: () => jobsApi.getJobs({ role: "customer" }),
+    queryFn: () => jobsApi.getJobs(),
   });
 
   const activeJobs = jobs?.filter(
@@ -79,7 +79,7 @@ export default function CustomerHomePage() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {activeJobs.slice(0, 2).map((job) => (
-              <Card key={job._id} className="border-primary/40 shadow-xs rounded-2xl overflow-hidden">
+              <Card key={job.id} className="border-primary/40 shadow-xs rounded-2xl overflow-hidden">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <StatusBadge status={job.status} />
@@ -110,9 +110,9 @@ export default function CustomerHomePage() {
                   <Button asChild variant="outline" size="sm" className="w-full rounded-xl font-semibold">
                     <Link
                       href={
-                        job.status === "SEARCHING" || job.status === "WORKERS_FOUND"
-                          ? `/customer/jobs/${job._id}/matching`
-                          : `/customer/jobs/${job._id}`
+                        job.status === "OPEN" || job.status === "MATCHING" || job.status === "OFFERED"
+                          ? `/customer/jobs/${job.id}/matching`
+                          : `/customer/jobs/${job.id}`
                       }
                     >
                       Track Job Progress <ArrowRight className="ml-2 h-4 w-4" />
@@ -221,8 +221,8 @@ export default function CustomerHomePage() {
           <div className="space-y-2">
             {jobs.slice(0, 5).map((job) => (
               <Link
-                key={job._id}
-                href={`/customer/jobs/${job._id}`}
+                key={job.id}
+                href={`/customer/jobs/${job.id}`}
                 className="flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-muted/40 transition-colors"
               >
                 <div className="space-y-1">
@@ -235,12 +235,8 @@ export default function CustomerHomePage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  {job.finalPrice ? (
-                    <PriceDisplay amount={job.finalPrice} className="font-semibold text-sm" />
-                  ) : job.estimatedPrice ? (
-                    <span className="text-xs text-muted-foreground">
-                      ₹{job.estimatedPrice.min} - ₹{job.estimatedPrice.max}
-                    </span>
+                  {job.estimatedPrice ? (
+                    <PriceDisplay amount={job.estimatedPrice} className="font-semibold text-sm" />
                   ) : (
                     <span className="text-xs text-muted-foreground">Custom Quote</span>
                   )}

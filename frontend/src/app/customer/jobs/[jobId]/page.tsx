@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   MapPin,
   Clock,
-  KeyRound,
   AlertTriangle,
   Star,
 } from "lucide-react";
@@ -89,7 +88,7 @@ export default function CustomerJobDetailPage({
         <div className="flex items-center gap-2">
           <StatusBadge status={job.status} />
           <span className="text-xs font-mono text-muted-foreground">
-            REF #{job._id.slice(-8).toUpperCase()}
+            REF #{job.id.slice(-8).toUpperCase()}
           </span>
         </div>
       </div>
@@ -105,7 +104,7 @@ export default function CustomerJobDetailPage({
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-md mx-auto">
             {isCompleted
-              ? "All work has been completed and verified with completion OTP."
+              ? "All work has been completed."
               : "Your service request has been assigned. Your professional is en route."}
           </p>
         </div>
@@ -115,47 +114,6 @@ export default function CustomerJobDetailPage({
       <Card className="p-4 rounded-2xl border-border/80 bazaar-card-shadow">
         <JobTimeline status={job.status} />
       </Card>
-
-      {/* Security OTP Verification Card (Matching Figma Screen 6) */}
-      {!isCompleted && !isCancelled && (
-        <Card className="border-primary/30 hero-navy-card text-white rounded-3xl p-5 sm:p-6 shadow-md">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <KeyRound className="h-5 w-5 text-emerald-400" />
-                <span className="font-extrabold text-sm sm:text-base text-white">
-                  {job.status === "ARRIVED" ? "Start Job OTP" : "Completion Escrow OTP"}
-                </span>
-              </div>
-              <Badge variant="success" className="text-[10px] py-0.5 px-2 font-bold">
-                Security Code
-              </Badge>
-            </div>
-
-            <p className="text-xs text-white/80 leading-relaxed">
-              {job.status === "ARRIVED"
-                ? "Share this Start OTP with the professional when they arrive at your location:"
-                : "Share this Completion OTP ONLY when all work is finished to your satisfaction:"}
-            </p>
-
-            {/* 4 Digit Box Display */}
-            <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-2">
-              {(job.status === "ARRIVED" ? ["5", "8", "2", "1"] : ["9", "4", "3", "6"]).map((digit, i) => (
-                <div
-                  key={i}
-                  className="flex h-14 w-12 sm:h-16 sm:w-14 items-center justify-center rounded-2xl bg-white text-[#162044] font-mono text-2xl sm:text-3xl font-extrabold shadow-sm border border-white/40"
-                >
-                  {digit}
-                </div>
-              ))}
-            </div>
-
-            <p className="text-[11px] text-white/70 text-center font-medium">
-              🔒 Do not share this OTP over the phone or before in-person inspection.
-            </p>
-          </div>
-        </Card>
-      )}
 
       {/* Assigned Professional Card */}
       {job.worker ? (
@@ -190,12 +148,12 @@ export default function CustomerJobDetailPage({
               {/* Call and Message buttons */}
               <div className="flex items-center gap-2">
                 <Button asChild variant="outline" size="icon">
-                  <a href={`tel:${job.worker.phone || "9876543210"}`} aria-label="Call Worker">
+                  <a href={job.worker.phone ? `tel:${job.worker.phone}` : undefined} aria-label="Call Worker" aria-disabled={!job.worker.phone}>
                     <Phone className="h-4 w-4 text-foreground" />
                   </a>
                 </Button>
                 <Button asChild size="icon">
-                  <Link href={`/messages/${job._id}`} aria-label="Chat with Worker">
+                  <Link href={`/messages/${job.id}`} aria-label="Chat with Worker">
                     <MessageSquare className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -242,9 +200,6 @@ export default function CustomerJobDetailPage({
                   {job.location.addressLine || job.location.locality}, {job.location.city} -{" "}
                   {job.location.pincode}
                 </p>
-                {job.location.landmark && (
-                  <p className="text-[11px] text-muted-foreground">Near {job.location.landmark}</p>
-                )}
               </div>
             </div>
 
@@ -253,7 +208,7 @@ export default function CustomerJobDetailPage({
               <div>
                 <span className="text-xs text-muted-foreground block">Requested Timing</span>
                 <p className="font-medium text-xs text-foreground capitalize">
-                  {job.timing.option.toLowerCase().replace("_", " ")}
+                  {new Date(job.preferredTime).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -262,12 +217,8 @@ export default function CustomerJobDetailPage({
           {/* Pricing summary */}
           <div className="border-t pt-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Payment Amount</span>
-            {job.finalPrice ? (
-              <PriceDisplay amount={job.finalPrice} className="font-bold text-lg text-primary" />
-            ) : job.estimatedPrice ? (
-              <span className="text-sm font-semibold text-foreground">
-                ₹{job.estimatedPrice.min} - ₹{job.estimatedPrice.max}
-              </span>
+            {job.estimatedPrice ? (
+              <PriceDisplay amount={job.estimatedPrice} className="font-bold text-lg text-primary" />
             ) : (
               <span className="text-xs text-muted-foreground">To be confirmed</span>
             )}
@@ -277,7 +228,7 @@ export default function CustomerJobDetailPage({
         <CardFooter className="flex flex-col gap-2 pt-0">
           {isCompleted ? (
             <Button asChild className="w-full" size="lg">
-              <Link href={`/workers/${job.worker?._id}?reviewJob=${job._id}`}>
+              <Link href={`/workers/${job.worker?.id}?reviewJob=${job.id}`}>
                 <Star className="mr-2 h-4 w-4 fill-primary-foreground" /> Rate & Review Professional
               </Link>
             </Button>
