@@ -65,7 +65,9 @@ export function createApiRouter(): Router {
   apiV1Router.use('/offers', offerRoutes);
 
   // Conversation endpoints under /api/v1 (e.g. /jobs/:jobId/conversation) (Phase 7)
+  // Also mounted at /conversations so GET /api/v1/conversations lists the user's conversations.
   apiV1Router.use('/', conversationRoutes);
+  apiV1Router.use('/conversations', conversationRoutes);
 
   // Message endpoints under /api/v1/conversations (Phase 7)
   apiV1Router.use('/conversations', messageRoutes);

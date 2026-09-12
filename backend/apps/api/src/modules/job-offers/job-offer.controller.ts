@@ -70,7 +70,7 @@ export async function acceptOffer(req: Request, res: Response): Promise<void> {
   res.status(200).json({
     success: true,
     data: {
-      offer: result.offer,
+      offer: await jobOfferService.toOfferView(result.offer),
       job: await jobViewService.toView(result.job, actor),
     },
   });
@@ -92,6 +92,6 @@ export async function rejectOffer(req: Request, res: Response): Promise<void> {
 
   res.status(200).json({
     success: true,
-    data: { offer: rejected },
+    data: { offer: await jobOfferService.toOfferView(rejected) },
   });
 }

@@ -191,6 +191,54 @@ describe('Messaging & Notifications (Phase 7)', () => {
     });
   });
 
+  describe('Conversations list (GET /api/v1/conversations)', () => {
+    it('should list conversations the user participates in with resolved names', async () => {
+      const res = await request(app)
+        .get('/api/v1/conversations')
+        .set('Authorization', `Bearer ${customerUser.token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data.conversations)).toBe(true);
+
+      const mine = res.body.data.conversations.find(
+        (c: { jobId: string }) => c.jobId === jobId
+      );
+      expect(mine).toBeDefined();
+      expect(mine.id).toBe(conversationId);
+      expect(mine.jobTitle).toBe('Refrigerator not cooling');
+      expect(mine.otherParticipant.id).toBe(workerUser.id);
+      expect(mine.otherParticipant.name).toBeTruthy();
+    });
+
+    it('should list from the worker side with the customer as other participant', async () => {
+      const res = await request(app)
+        .get('/api/v1/conversations')
+        .set('Authorization', `Bearer ${workerUser.token}`);
+
+      expect(res.status).toBe(200);
+      const mine = res.body.data.conversations.find(
+        (c: { jobId: string }) => c.jobId === jobId
+      );
+      expect(mine).toBeDefined();
+      expect(mine.otherParticipant.id).toBe(customerUser.id);
+    });
+
+    it('should return an empty list for a user with no conversations', async () => {
+      const res = await request(app)
+        .get('/api/v1/conversations')
+        .set('Authorization', `Bearer ${otherUser.token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.conversations).toEqual([]);
+    });
+
+    it('should require authentication', async () => {
+      const res = await request(app).get('/api/v1/conversations');
+      expect(res.status).toBe(401);
+    });
+  });
+
   describe('Messages (POST & GET /api/v1/conversations/:id/messages)', () => {
     it('should allow customer to post a TEXT message', async () => {
       const res = await request(app)

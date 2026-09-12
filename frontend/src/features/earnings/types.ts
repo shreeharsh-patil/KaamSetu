@@ -1,8 +1,9 @@
 export type ExpenseCategory =
-  | "TOOLS"
-  | "TRAVEL"
-  | "MATERIALS"
-  | "FOOD"
+  | "FUEL"
+  | "MATERIAL"
+  | "PARKING"
+  | "TOOL"
+  | "PLATFORM_FEE"
   | "OTHER";
 
 export type EarningsPeriod = "TODAY" | "WEEK" | "MONTH" | "CUSTOM";
@@ -12,6 +13,7 @@ export interface ExpenseItem {
   jobId?: string;
   jobTitle?: string;
   category: ExpenseCategory;
+  /** Rupees — the API layer converts from the backend's integer paise. */
   amount: number;
   note: string;
   receiptUrl?: string;
@@ -26,19 +28,25 @@ export interface EarningsSummary {
   jobsCompleted: number;
   hoursWorked: number;
   earningsPerHour: number;
-  recentTransactions: Array<{
-    id: string;
-    jobId: string;
-    jobTitle: string;
-    customerName: string;
-    amount: number;
-    completedAt: string;
-  }>;
+  recentTransactions: EarningsJobItem[];
+}
+
+/** One completed job's financials (rupees, converted from backend paise). */
+export interface EarningsJobItem {
+  id: string;
+  jobTitle: string;
+  customerName?: string;
+  amount: number;
+  expenses: number;
+  netEarnings: number;
+  durationHours: number;
+  completedAt: string;
 }
 
 export interface CreateExpenseInput {
   jobId?: string;
   category: ExpenseCategory;
+  /** Rupees — converted to paise at the API boundary. */
   amount: number;
   note: string;
   receiptUrl?: string;

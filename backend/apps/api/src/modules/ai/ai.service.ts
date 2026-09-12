@@ -164,9 +164,11 @@ export class AIService {
     jobDescription: string,
     candidates: Array<{ workerId: string; name: string; skills: string[]; distanceKm: number; rating: number; completedJobs: number }>
   ) {
-    const provider = this.getProvider();
-    if ('explainBestMatches' in provider && typeof (provider as any).explainBestMatches === 'function') {
-      return (provider as any).explainBestMatches(jobDescription, candidates);
+    const provider = this.getProvider() as unknown as {
+      explainBestMatches?: (desc: string, cand: typeof candidates) => unknown;
+    };
+    if (typeof provider.explainBestMatches === 'function') {
+      return provider.explainBestMatches(jobDescription, candidates);
     }
     return candidates.map((c, i) => ({
       workerId: c.workerId,

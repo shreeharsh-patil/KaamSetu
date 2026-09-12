@@ -106,8 +106,8 @@ function WorkerProfileContent({ workerId }: { workerId: string }) {
         )}
       </div>
 
-      {/* Profile Avatar & Hero Information (Matching Figma Screen 4) */}
-      <Card className="rounded-3xl p-6 text-center space-y-4 bazaar-card-shadow">
+      {/* Profile Avatar & Hero Information */}
+      <Card className="rounded-xl p-6 text-center space-y-4 border border-border/80 shadow-xs">
         <div className="flex flex-col items-center">
           <div className="relative">
             <Avatar className="h-24 w-24 border-4 border-primary/20 shrink-0 shadow-sm">

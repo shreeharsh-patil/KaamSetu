@@ -5,7 +5,7 @@ export type JobStatus =
 export type JobUrgency = "FLEXIBLE" | "TODAY" | "EMERGENCY";
 export type JobTimingOption = "ASAP" | "TODAY" | "TOMORROW" | "SCHEDULED";
 
-export interface ServiceCategory { id: string; name: string; slug: string; description?: string | null; icon?: string | null }
+export interface ServiceCategory { id: string; name: string; slug: string; description?: string | null; icon?: string | null; active?: boolean }
 export interface ServiceSkill { id: string; name: string; slug: string; categoryId: string }
 export interface JobImage { key: string; width?: number; height?: number; mimeType?: string }
 
@@ -77,7 +77,7 @@ export interface Job {
 }
 
 export interface ApiJobOfferView {
-  id: string; jobId: string; distanceKm: number; matchScore: number;
+  id: string; jobId: string; workerId?: string; distanceKm: number; matchScore: number;
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED" | "WITHDRAWN";
   expiresAt: string; createdAt: string;
   job: { category: ServiceCategory; title: string; description?: string | null; urgency: JobUrgency; approximateLocality: string; preferredTime: string; estimatedAmount?: number | null };

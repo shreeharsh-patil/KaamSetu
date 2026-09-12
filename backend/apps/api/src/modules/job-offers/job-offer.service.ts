@@ -60,6 +60,7 @@ export class JobOfferService {
     return {
       id: offer.id,
       jobId: offer.jobId,
+      workerId: offer.workerId,
       distanceKm: offer.distanceKm,
       matchScore: offer.matchScore,
       scoreBreakdown: offer.scoreBreakdown,
@@ -95,6 +96,10 @@ export class JobOfferService {
     user: { id: string; role: UserRole }
   ): Promise<IJobOfferView> {
     const offer = await this.getOfferById(offerId, user);
+    return this.toWorkerView(offer);
+  }
+
+  async toOfferView(offer: IJobOfferEntity): Promise<IJobOfferView> {
     return this.toWorkerView(offer);
   }
 

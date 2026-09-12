@@ -92,7 +92,7 @@ export function BrandLogo({ height = 40, className, ...props }: BrandLogoProps) 
         strokeLinecap="round"
       />
 
-      {/* Wordmark: Hunar */}
+      {/* Wordmark: KaamSetu */}
       <text
         x="56"
         y="27"
@@ -102,10 +102,10 @@ export function BrandLogo({ height = 40, className, ...props }: BrandLogoProps) 
         fill="currentColor"
         letterSpacing="-0.4"
       >
-        Hunar
+        KaamSetu
       </text>
 
-      {/* Subtitle: Hyperlocal Bazaar */}
+      {/* Subtitle: Hyperlocal Services */}
       <text
         x="57"
         y="40"
@@ -115,7 +115,7 @@ export function BrandLogo({ height = 40, className, ...props }: BrandLogoProps) 
         fill="#64748B"
         letterSpacing="1.1"
       >
-        HYPERLOCAL BAZAAR
+        HYPERLOCAL SERVICES
       </text>
     </svg>
   );

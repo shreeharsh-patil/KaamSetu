@@ -1,8 +1,8 @@
 export const siteConfig = {
-  name: "Hunar",
-  title: "Hunar | Hyperlocal Bazaar",
+  name: "KaamSetu",
+  title: "KaamSetu | Hyperlocal Marketplace",
   description:
-    "India's voice-first hyperlocal platform connecting skilled professionals—electricians, plumbers, carpenters, technicians—with verified customers.",
+    "India's voice-first hyperlocal marketplace connecting skilled professionals—electricians, plumbers, carpenters, technicians—with verified customers.",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ogImage: "/og-image.png",
   locale: "en-IN",

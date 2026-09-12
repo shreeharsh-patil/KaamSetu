@@ -21,10 +21,13 @@ import { useAuth } from "@/features/auth/auth-context";
 
 export default function ChatConversationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ conversationId: string }>;
+  searchParams: Promise<{ job?: string }>;
 }) {
-  const { conversationId } = use(params);
+  const { conversationId: routeId } = use(params);
+  const { job: jobParam } = use(searchParams);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -32,18 +35,52 @@ export default function ChatConversationPage({
   const [inputText, setInputText] = useState("");
   const [isSendingLocation, setIsSendingLocation] = useState(false);
 
-  const { data: messages = [], isLoading, error } = useQuery({
-    queryKey: ["messages", conversationId],
-    queryFn: () => messagingApi.getMessages(conversationId),
+  // Links may carry a jobId (/?job=) or a conversation id in the path.
+  // A conversation id is a 24-hex string; anything else is treated as a jobId.
+  const looksLikeObjectId = /^[0-9a-fA-F]{24}$/.test(routeId);
+  const jobId = !looksLikeObjectId ? routeId : jobParam ?? null;
+
+  // Resolve the effective conversation id (job -> conversation when needed).
+  const {
+    data: resolvedId,
+    error: resolveError,
+    isLoading: isResolving,
+  } = useQuery({
+    queryKey: ["conversation-resolve", jobId ?? routeId],
+    queryFn: () =>
+      jobId ? messagingApi.resolveConversationForJob(jobId) : Promise.resolve(routeId),
+    staleTime: 60 * 1000,
+  });
+
+  const {
+    data: messages = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["messages", resolvedId],
+    queryFn: () => messagingApi.getMessages(resolvedId!),
+    enabled: Boolean(resolvedId),
     refetchInterval: 3000,
   });
 
+  // Mark incoming messages as read when the conversation opens/updates.
+  useEffect(() => {
+    if (resolvedId && messages.length > 0) {
+      messagingApi.markAsRead(resolvedId).catch(() => {
+        // Non-critical — ignore failures
+      });
+    }
+  }, [resolvedId, messages.length]);
+
   const sendMutation = useMutation({
     mutationFn: (payload: { content: string; type?: string; mediaUrl?: string }) =>
-      messagingApi.sendMessage(conversationId, payload),
+      messagingApi.sendMessage(resolvedId!, payload),
     onSuccess: () => {
       setInputText("");
-      queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+      queryClient.invalidateQueries({ queryKey: ["messages", resolvedId] });
+    },
+    onError: () => {
+      // Input text is intentionally preserved so the user can retry.
     },
   });
 
@@ -53,11 +90,11 @@ export default function ChatConversationPage({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages.length]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || sendMutation.isPending) return;
+    if (!inputText.trim() || sendMutation.isPending || !resolvedId) return;
     sendMutation.mutate({
       content: inputText.trim(),
       type: "TEXT",
@@ -65,7 +102,7 @@ export default function ChatConversationPage({
   };
 
   const handleShareLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation || !resolvedId) return;
     setIsSendingLocation(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -82,6 +119,8 @@ export default function ChatConversationPage({
   };
 
   const currentUserId = user?.id;
+
+  const loading = isResolving || isLoading;
 
   return (
     <Container className="py-4 max-w-2xl flex flex-col h-[calc(100vh-80px)]">
@@ -100,7 +139,9 @@ export default function ChatConversationPage({
             </Avatar>
             <div>
               <h2 className="text-sm font-bold text-foreground leading-none">Job Chat</h2>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Reference #{conversationId.slice(-8)}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Reference #{(jobId ?? routeId).slice(-8)}
+              </p>
             </div>
           </div>
         </div>
@@ -109,13 +150,18 @@ export default function ChatConversationPage({
 
       {/* Messages Feed */}
       <div className="flex-1 overflow-y-auto py-4 space-y-3">
-        {isLoading ? (
+        {loading ? (
           <div className="flex justify-center items-center h-full">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : error ? (
-          <div className="text-center py-12 text-destructive text-sm flex items-center justify-center gap-2">
-            <AlertCircle className="h-4 w-4" /> Failed to load messages.
+        ) : resolveError || error ? (
+          <div className="text-center py-12 text-destructive text-sm flex flex-col items-center justify-center gap-2">
+            <span className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" /> Failed to load conversation.
+            </span>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground text-xs space-y-1">
@@ -192,6 +238,14 @@ export default function ChatConversationPage({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Send-failure banner (input text preserved for retry) */}
+      {sendMutation.isError && (
+        <div className="pb-2 flex items-center gap-2 text-xs text-destructive">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>Message not sent. Check your connection and try again.</span>
+        </div>
+      )}
+
       {/* Message Input Box */}
       <form onSubmit={handleSend} className="pt-2 border-t flex items-center gap-2 shrink-0">
         <Button
@@ -199,7 +253,7 @@ export default function ChatConversationPage({
           variant="outline"
           size="icon"
           onClick={handleShareLocation}
-          disabled={isSendingLocation || sendMutation.isPending}
+          disabled={isSendingLocation || sendMutation.isPending || !resolvedId}
           title="Share Location"
         >
           {isSendingLocation ? (
@@ -213,11 +267,15 @@ export default function ChatConversationPage({
           placeholder="Type your message..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          disabled={sendMutation.isPending}
+          disabled={sendMutation.isPending || !resolvedId}
           className="flex-1"
         />
 
-        <Button type="submit" disabled={!inputText.trim() || sendMutation.isPending} size="icon">
+        <Button
+          type="submit"
+          disabled={!inputText.trim() || sendMutation.isPending || !resolvedId}
+          size="icon"
+        >
           {sendMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

@@ -1,4 +1,41 @@
 /**
+ * Converts rupees (number or string representation) into positive integer paise.
+ * Throws an Error if the input is not a positive finite number or has more than 2 decimal places.
+ */
+export function rupeesToPaise(rupees: number | string): number {
+  const normalized = typeof rupees === "string" ? rupees.trim() : rupees;
+  const num = typeof normalized === "string" ? Number(normalized) : normalized;
+
+  if (typeof num !== "number" || Number.isNaN(num) || !Number.isFinite(num)) {
+    throw new Error("Invalid rupee amount: must be a finite number");
+  }
+
+  if (num <= 0) {
+    throw new Error("Amount must be greater than 0");
+  }
+
+  // Check decimal precision (no fractional paise allowed, max 2 decimals)
+  const str = String(normalized);
+  const parts = str.split(".");
+  const decimalPart = parts[1];
+  if (decimalPart && decimalPart.length > 2) {
+    throw new Error("Maximum 2 decimal places allowed (sub-paise not permitted)");
+  }
+
+  return Math.round(num * 100);
+}
+
+/**
+ * Converts integer paise to rupees (floating decimal).
+ */
+export function paiseToRupees(paise: number): number {
+  if (typeof paise !== "number" || Number.isNaN(paise) || !Number.isFinite(paise)) {
+    return 0;
+  }
+  return paise / 100;
+}
+
+/**
  * Formats an amount in integer currency (or decimal) into a locale-aware Indian Rupee representation.
  * Backend totals are always authoritative.
  *
@@ -20,3 +57,11 @@ export function formatMoney(
     minimumFractionDigits: 0,
   }).format(value);
 }
+
+/**
+ * Helper to format directly from integer paise.
+ */
+export function formatMoneyFromPaise(paise: number, currency: string = "INR"): string {
+  return formatMoney(paise, currency, true);
+}
+

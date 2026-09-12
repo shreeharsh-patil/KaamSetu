@@ -1,66 +1,56 @@
-"use client";
-
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Zap, Users } from "lucide-react";
+import { ArrowRight, UserPlus, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
 
 export function FinalCTA() {
   return (
-    <section id="book-now" className="py-20 md:py-28 border-t border-border/60 relative overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="absolute inset-0 bg-radial from-blue-500/10 via-transparent to-transparent pointer-events-none -z-10" />
-
+    <section id="book-now" className="py-20 md:py-24 border-t border-border/60 bg-secondary/30">
       <div className="max-w-[1280px] mx-auto px-6 md:px-12">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-6">
-            <Zap className="w-3.5 h-3.5" />
-            15-Minute Hyperlocal Network
-          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#203eec]/10 text-[#203eec] dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-6">
+            Get Started Today
+          </span>
 
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-balance leading-tight">
-            Have a home emergency? Get it resolved today.
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground text-balance leading-tight">
+            Ready to get quality work done?
           </h2>
 
-          <p className="mt-6 text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
-            Join thousands of homeowners and verified technicians who use KaamSetu every day
-            for rapid, trusted, escrow-protected home repairs.
+          <p className="mt-4 text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
+            Book local electricians, plumbers, carpenters, and technicians nearby, or enroll as a verified worker partner to grow your trade.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
             <Link
               href="/customer/jobs/new"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all hover:shadow-2xl relative overflow-hidden group"
-              style={{
-                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
-                boxShadow: "0 8px 32px rgba(32, 62, 236, 0.4)",
-              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-[#162044] hover:bg-[#203eec] dark:bg-blue-600 dark:hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
             >
-              <span className="relative z-10 inline-flex items-center gap-2">
-                Book a Verified Technician
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </span>
-              {/* Glow overlay */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-gradient-to-r from-[#162044] to-[#203eec]" />
+              Book a Service
+              <ArrowRight className="w-4 h-4" />
             </Link>
 
             <Link
               href="/worker"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-foreground bg-background hover:bg-secondary border border-border rounded-lg transition-colors"
             >
-              <Users className="w-4 h-4" />
-              Join as Worker Partner
+              <UserPlus className="w-4 h-4" />
+              Register as Worker
             </Link>
           </div>
 
-          {/* Micro trust guarantees */}
           <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-xs text-muted-foreground font-medium">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              Zero Upfront Commission
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              Verified Technician Profiles
             </span>
             <span>•</span>
-            <span>100% Escrow Protection</span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-[#203eec] dark:text-blue-400" />
+              Fast Local Dispatch
+            </span>
             <span>•</span>
-            <span>Aadhaar Verified Trades</span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              Transparent Job History
+            </span>
           </div>
         </div>
       </div>

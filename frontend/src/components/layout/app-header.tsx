@@ -128,10 +128,10 @@ export function AppHeader() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "sticky top-0 z-50 transition-all duration-200",
         isScrolled || !isHomePage
-          ? "bg-background/80 backdrop-blur-md border-b border-border shadow-xs"
-          : "bg-transparent"
+          ? "bg-background/95 backdrop-blur-md border-b border-border shadow-xs"
+          : "bg-background/80 backdrop-blur-sm border-b border-border/40"
       )}
     >
       <div className="max-w-[1280px] mx-auto px-6 md:px-12">
@@ -144,7 +144,7 @@ export function AppHeader() {
             <span
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs transition-transform group-hover:scale-105"
               style={{
-                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
               }}
             >
               <Hammer className="h-4 w-4" />
@@ -154,7 +154,7 @@ export function AppHeader() {
                 KaamSetu
               </span>
               <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase -mt-0.5">
-                Blue-Collar Protocol
+                Hyperlocal Marketplace
               </span>
             </div>
           </Link>

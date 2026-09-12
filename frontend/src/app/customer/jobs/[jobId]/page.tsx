@@ -111,13 +111,13 @@ export default function CustomerJobDetailPage({
       </div>
 
       {/* Progress Timeline Stepper */}
-      <Card className="p-4 rounded-2xl border-border/80 bazaar-card-shadow">
+      <Card className="p-4 rounded-xl border-border/80 shadow-xs">
         <JobTimeline status={job.status} />
       </Card>
 
       {/* Assigned Professional Card */}
       {job.worker ? (
-        <Card className="rounded-2xl border-border/80 bazaar-card-shadow">
+        <Card className="rounded-xl border-border/80 shadow-xs">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold">Assigned Professional</CardTitle>
           </CardHeader>

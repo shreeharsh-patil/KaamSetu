@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/money/format-money";
 import { adminApi } from "@/features/admin/api";
 
+import type { ResolveDisputePayload } from "@/features/admin/types";
+
 export default function AdminDisputesPage() {
   const queryClient = useQueryClient();
 
@@ -20,11 +22,11 @@ export default function AdminDisputesPage() {
   const resolveMutation = useMutation({
     mutationFn: ({
       id,
-      resolution,
+      payload,
     }: {
       id: string;
-      resolution: "REFUND_CUSTOMER" | "RELEASE_TO_WORKER" | "SPLIT";
-    }) => adminApi.resolveDispute(id, resolution, "Mediated by admin"),
+      payload: ResolveDisputePayload;
+    }) => adminApi.resolveDispute(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "disputes"] });
     },
@@ -97,7 +99,15 @@ export default function AdminDisputesPage() {
                     variant="outline"
                     disabled={resolveMutation.isPending}
                     onClick={() =>
-                      resolveMutation.mutate({ id: d.id, resolution: "REFUND_CUSTOMER" })
+                      resolveMutation.mutate({
+                        id: d.id,
+                        payload: {
+                          status: "RESOLVED",
+                          summary: "Dispute resolved with full refund issued to customer",
+                          refundPaise: Math.round(d.amount * 100),
+                          actionTaken: "REFUND_CUSTOMER",
+                        },
+                      })
                     }
                   >
                     Refund Customer
@@ -106,7 +116,15 @@ export default function AdminDisputesPage() {
                     size="sm"
                     disabled={resolveMutation.isPending}
                     onClick={() =>
-                      resolveMutation.mutate({ id: d.id, resolution: "RELEASE_TO_WORKER" })
+                      resolveMutation.mutate({
+                        id: d.id,
+                        payload: {
+                          status: "RESOLVED",
+                          summary: "Dispute resolved with payment release to worker",
+                          refundPaise: 0,
+                          actionTaken: "RELEASE_TO_WORKER",
+                        },
+                      })
                     }
                   >
                     Release to Worker

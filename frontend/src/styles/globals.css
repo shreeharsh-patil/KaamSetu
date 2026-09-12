@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Base surfaces - KaamBazaar Clean Slate */
+    /* Base surfaces - KaamSetu Clean Slate */
     --background: 215 28% 97%;
     --foreground: 222 47% 11%;
 
@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: KaamBazaar Deep Royal Navy & Action Indigo */
+    /* Primary: KaamSetu Deep Royal Navy & Action Indigo */
     --primary: 226 68% 34%;
     --primary-foreground: 210 40% 98%;
     --primary-hover: 226 72% 26%;
@@ -105,30 +105,8 @@ html {
 }
 
 @layer base {
-  /* Globally hide scrollbars across all browsers while preserving smooth scrolling */
-  html,
-  body {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-  }
-
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Edge, Opera */
-    width: 0;
-    height: 0;
-  }
-
   * {
     @apply border-border;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-  }
-
-  *::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Edge, Opera */
-    width: 0;
-    height: 0;
   }
 
   body {
@@ -229,13 +207,7 @@ html {
   z-index: -1;
 }
 
-/* Brand-tinted orb: pulls the multicolor portfolio asset into the
-   navy/indigo family so the hero stays on-palette. */
-.orb-brand {
-  filter: saturate(0.85) hue-rotate(38deg) brightness(1.02);
-}
-
-/* KaamBazaar Specific Design Utilities */
+/* KaamSetu Specific Design Utilities */
 .hero-navy-card {
   background: linear-gradient(135deg, #162044 0%, #1e2e6b 60%, #172454 100%);
   color: #ffffff;
@@ -249,13 +221,13 @@ html {
   box-shadow: 0 12px 28px -6px rgba(22, 32, 68, 0.25);
 }
 
-.bazaar-card-shadow {
+.kaamsetu-card-shadow {
   box-shadow: 0 2px 14px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
 }
 
-.bazaar-pill-tab {
+.kaamsetu-tab {
   background-color: #f1f5f9;
-  border-radius: 9999px;
+  border-radius: 8px;
 }
 
 /* Portfolio Animation Utilities */

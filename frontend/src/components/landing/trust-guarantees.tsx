@@ -1,85 +1,84 @@
-"use client";
-
-import { ArrowUpRight } from "lucide-react";
-import Link from "next/link";
+import { ShieldCheck, UserCheck, Star, Clock, Lock } from "lucide-react";
 import { SectionTitle } from "@/components/landing/section-title";
 
-const GUARANTEES = [
+const TRUST_PILLARS = [
   {
-    title: "100% Aadhaar & Police Verified Technicians",
-    organization: "DigiLocker & Govt DB Identity Verification",
-    badge: "Verified Trust",
-    link: "/customer/jobs/new",
+    title: "Secure Account Authentication",
+    description: "Passwordless OTP authentication ensures verified customer and worker identity on every login.",
+    tag: "Security",
+    icon: Lock,
   },
   {
-    title: "Automated Escrow Milestone Ledger",
-    organization: "Funds securely held and released only with your 4-digit OTP",
-    badge: "Zero Fraud",
-    link: "/customer/jobs/new",
+    title: "Trade Credential & Document Verification",
+    description: "Technicians submit government ID and trade certification records for administrative review.",
+    tag: "Verification",
+    icon: UserCheck,
   },
   {
-    title: "Standardized Upfront Rate Cards",
-    organization: "Pre-agreed transparent pricing without unfair on-site surprises",
-    badge: "Fair Price",
-    link: "/customer/jobs/new",
+    title: "Real Reviews from Completed Work",
+    description: "Ratings and feedback can only be submitted after a verified, completed service assignment.",
+    tag: "Accountability",
+    icon: Star,
   },
   {
-    title: "Geospatial Multi-Ring Wave Dispatch",
-    organization: "Dispatches nearest available pros for rapid <15m doorstep arrival",
-    badge: "Under 15m",
-    link: "/customer/jobs/new",
+    title: "Transparent Job Lifecycle Tracking",
+    description: "Monitor real progress states from assignment and travel through arrival and task completion.",
+    tag: "Visibility",
+    icon: Clock,
   },
   {
-    title: "30-Day Workmanship Warranty Coverage",
-    organization: "Complete re-inspection protection on plumbing, wiring and appliance repairs",
-    badge: "Guaranteed",
-    link: "/customer/jobs/new",
+    title: "Strict Location & Contact Privacy",
+    description: "Personal contact details and exact addresses are shielded until a job offer is accepted.",
+    tag: "Privacy",
+    icon: ShieldCheck,
   },
 ];
 
 export function TrustGuarantees() {
   return (
-    <section id="guarantees" className="py-20 md:py-24 border-t border-border/60">
+    <section id="trust" className="py-16 md:py-24 border-t border-border/60">
       <div className="max-w-[1280px] mx-auto px-6 md:px-12">
         {/* Section Header */}
-        <div className="mb-12 md:mb-16">
-          <span className="text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-            Safety & Standards
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="text-xs font-semibold uppercase tracking-widest text-[#203eec] dark:text-blue-400">
+            Trust & Safety
           </span>
-          <SectionTitle className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight mt-2">
-            The 5 Ironclad Guarantees
+          <SectionTitle className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight mt-2 text-balance">
+            Built on Real Safeguards
           </SectionTitle>
+          <p className="mt-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
+            Our platform design protects both homeowners and skilled technicians at every step.
+          </p>
         </div>
 
-        {/* Guarantees List */}
-        <div className="flex flex-col gap-4">
-          {GUARANTEES.map((item, index) => (
-            <Link
-              key={index}
-              href={item.link}
-              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-7 border border-border rounded-2xl md:rounded-3xl bg-card/60 backdrop-blur-sm hover:bg-secondary/60 transition-all duration-200 hover:border-foreground/20 hover:shadow-lg"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 flex-1">
-                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 w-max">
-                  {item.badge}
-                </span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg sm:text-xl md:text-2xl text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {item.title}
+        {/* Pillars Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {TRUST_PILLARS.map((pillar) => {
+            const Icon = pillar.icon;
+            return (
+              <div
+                key={pillar.title}
+                className="p-6 rounded-xl border border-border/80 bg-card hover:border-border transition-colors flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground">
+                      {pillar.tag}
+                    </span>
+                    <div className="w-9 h-9 rounded-lg bg-[#203eec]/10 text-[#203eec] dark:text-blue-400 flex items-center justify-center">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    {pillar.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">{item.organization}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {pillar.description}
+                  </p>
                 </div>
               </div>
-
-              <div className="mt-4 sm:mt-0 flex items-center justify-end w-full sm:w-auto">
-                <ArrowUpRight
-                  className="w-7 h-7 sm:w-8 sm:h-8 text-muted-foreground transition-all duration-200 group-hover:translate-x-1 group-hover:-translate-y-1"
-                  strokeWidth={1.75}
-                  style={{ color: "#203eec" }}
-                />
-              </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

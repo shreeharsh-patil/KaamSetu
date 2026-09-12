@@ -28,7 +28,7 @@ export default function WorkerEarningsPage() {
 
   const [expenseForm, setExpenseForm] = useState({
     amount: "",
-    category: "MATERIALS" as ExpenseCategory,
+    category: "MATERIAL" as ExpenseCategory,
     note: "",
     jobId: "",
   });
@@ -43,6 +43,11 @@ export default function WorkerEarningsPage() {
     queryFn: () => earningsApi.getExpenses(),
   });
 
+  const { data: earningsJobs = [] } = useQuery({
+    queryKey: ["worker", "earnings", "jobs"],
+    queryFn: () => earningsApi.getEarningsJobs(),
+  });
+
   const createExpenseMutation = useMutation({
     mutationFn: () =>
       earningsApi.createExpense({
@@ -53,7 +58,7 @@ export default function WorkerEarningsPage() {
       }),
     onSuccess: () => {
       setExpenseModalOpen(false);
-      setExpenseForm({ amount: "", category: "MATERIALS", note: "", jobId: "" });
+      setExpenseForm({ amount: "", category: "MATERIAL", note: "", jobId: "" });
       queryClient.invalidateQueries({ queryKey: ["worker", "expenses"] });
       queryClient.invalidateQueries({ queryKey: ["worker", "earnings"] });
     },
@@ -155,12 +160,12 @@ export default function WorkerEarningsPage() {
             <CardDescription className="text-xs">Direct customer payouts credited</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {!summary?.recentTransactions || summary.recentTransactions.length === 0 ? (
+            {earningsJobs.length === 0 ? (
               <p className="text-xs text-muted-foreground py-6 text-center">
-                No completed jobs recorded in this period.
+                No completed jobs recorded yet.
               </p>
             ) : (
-              summary.recentTransactions.map((tx) => (
+              earningsJobs.slice(0, 8).map((tx) => (
                 <div
                   key={tx.id}
                   className="flex items-center justify-between p-3 rounded-lg border bg-muted/20"
@@ -168,7 +173,7 @@ export default function WorkerEarningsPage() {
                   <div>
                     <h4 className="font-semibold text-xs text-foreground">{tx.jobTitle}</h4>
                     <p className="text-[11px] text-muted-foreground">
-                      Customer: {tx.customerName}
+                      {tx.durationHours.toFixed(1)} hrs on site
                     </p>
                   </div>
                   <div className="text-right">
@@ -279,10 +284,11 @@ export default function WorkerEarningsPage() {
                   }))
                 }
               >
-                <option value="MATERIALS">Materials & Spare Parts</option>
-                <option value="TOOLS">Tools & Equipment</option>
-                <option value="TRAVEL">Travel / Petrol</option>
-                <option value="FOOD">Food / Lunch</option>
+                <option value="MATERIAL">Materials & Spare Parts</option>
+                <option value="TOOL">Tools & Equipment</option>
+                <option value="FUEL">Travel / Petrol</option>
+                <option value="PARKING">Parking / Tolls</option>
+                <option value="PLATFORM_FEE">Platform Fee</option>
                 <option value="OTHER">Other Expense</option>
               </Select>
             </div>

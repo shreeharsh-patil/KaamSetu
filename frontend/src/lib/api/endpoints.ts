@@ -9,7 +9,6 @@ export const API_ENDPOINTS = {
   },
   USERS: {
     ME: "/me",
-    UPDATE_PROFILE: "/users/profile",
   },
   CATEGORIES: {
     LIST: "/categories",
@@ -20,11 +19,7 @@ export const API_ENDPOINTS = {
     LIST: "/jobs",
     CREATE: "/jobs",
     DETAIL: (id: string) => `/jobs/${id}`,
-    MATCHING: (id: string) => `/jobs/${id}/matching`,
-    OFFERS: (jobId: string) => `/jobs/${jobId}/offers`,
-    STATUS: (id: string) => `/jobs/${id}/status`,
     CANCEL: (id: string) => `/jobs/${id}/cancel`,
-    ACCEPT: (id: string) => `/jobs/${id}/accept`,
     START_TRAVEL: (id: string) => `/jobs/${id}/start-travel`,
     ARRIVE: (id: string) => `/jobs/${id}/arrive`,
     START: (id: string) => `/jobs/${id}/start`,
@@ -48,12 +43,18 @@ export const API_ENDPOINTS = {
     COMPLETE: "/uploads/complete",
     DELETE: (id: string) => `/uploads/${id}`,
   },
+  CONVERSATIONS: {
+    LIST: "/conversations",
+    FOR_JOB: (jobId: string) => `/jobs/${jobId}/conversation`,
+    MARK_READ: (conversationId: string) => `/conversations/${conversationId}/read`,
+  },
   MESSAGES: {
     LIST: (conversationId: string) => `/conversations/${conversationId}/messages`,
     SEND: (conversationId: string) => `/conversations/${conversationId}/messages`,
   },
   EARNINGS: {
     SUMMARY: "/earnings/summary",
+    JOBS: "/earnings/jobs",
     EXPENSES: "/expenses",
     CREATE_EXPENSE: "/expenses",
     DELETE_EXPENSE: (id: string) => `/expenses/${id}`,
@@ -89,7 +90,6 @@ export const API_ENDPOINTS = {
     EXTRACT_PROFILE: "/ai/extract-profile",
     SIMPLIFY_DESCRIPTION: "/ai/simplify-description",
     TRANSLATE: "/ai/translate",
-    BEST_MATCH: "/ai/matching/best-match",
     STATUS: "/ai/status",
   },
 } as const;

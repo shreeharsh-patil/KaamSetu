@@ -11,7 +11,7 @@ export async function transcribeAudio(req: Request, res: Response): Promise<void
   const result = await speechService.speechToText(
     validated.audio,
     validated.mimeType,
-    { hintText: validated.hintText, language: validated.language } as unknown as any
+    { hintText: validated.hintText, language: validated.language }
   );
 
   res.status(200).json({

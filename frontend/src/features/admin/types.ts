@@ -10,8 +10,9 @@ export interface AdminStats {
 
 export interface AdminUser {
   id: string;
-  phone: string;
-  name: string;
+  phoneNumber: string;
+  phone?: string;
+  name?: string;
   role: "CUSTOMER" | "WORKER" | "ADMIN" | "SUPPORT";
   status: "ACTIVE" | "SUSPENDED";
   createdAt: string;
@@ -21,12 +22,13 @@ export interface AdminWorker {
   id: string;
   userId: string;
   name: string;
-  phone: string;
-  category: string;
+  phone?: string;
+  category?: string;
   skills: string[];
-  verificationStatus: "PENDING" | "APPROVED" | "REJECTED";
-  isSuspended: boolean;
-  locality: string;
+  verificationStatus: "PENDING" | "VERIFIED" | "APPROVED" | "REJECTED" | "UNVERIFIED";
+  availabilityStatus?: "AVAILABLE" | "BUSY" | "OFFLINE";
+  isSuspended?: boolean;
+  locality?: string;
   createdAt: string;
 }
 
@@ -63,8 +65,15 @@ export interface AdminDispute {
   respondentName: string;
   amount: number;
   reason: string;
-  status: "OPEN" | "RESOLVED" | "CLOSED";
+  status: "OPEN" | "RESOLVED" | "REJECTED" | "CLOSED";
   createdAt: string;
+}
+
+export interface ResolveDisputePayload {
+  status: "RESOLVED" | "REJECTED";
+  summary: string;
+  refundPaise?: number;
+  actionTaken?: string;
 }
 
 export interface AdminAuditLog {

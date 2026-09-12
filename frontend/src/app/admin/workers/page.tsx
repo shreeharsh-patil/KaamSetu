@@ -109,7 +109,7 @@ export default function AdminWorkersPage() {
                       <Badge
                         variant="outline"
                         className={
-                          w.verificationStatus === "APPROVED"
+                          w.verificationStatus === "VERIFIED" || w.verificationStatus === "APPROVED"
                             ? "bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px]"
                             : w.verificationStatus === "PENDING"
                             ? "bg-amber-50 text-amber-700 border-amber-300 text-[10px]"

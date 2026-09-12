@@ -7,23 +7,13 @@ import {
   ArrowRight,
   ShieldCheck,
   Zap,
-  Wrench,
-  Hammer,
   Search,
   CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 
 interface HeroProps {
   onSearch?: (query: string) => void;
 }
-
-const QUICK_TRADES = [
-  { id: "electrical", label: "Electrician", icon: Zap, count: "48 online" },
-  { id: "plumbing", label: "Plumbing", icon: Wrench, count: "62 online" },
-  { id: "carpentry", label: "Carpentry", icon: Hammer, count: "31 online" },
-  { id: "appliances", label: "AC Repair", icon: Sparkles, count: "29 online" },
-];
 
 /** One word of the headline, revealed on load. */
 function RevealWord({
@@ -100,14 +90,7 @@ export function Hero({ onSearch }: HeroProps) {
 
       <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-12 md:py-20 w-full">
         <div className="max-w-4xl">
-          {/* Single quiet proof line — what the platform actually is */}
-          <p className="flex items-center gap-2 text-sm sm:text-base font-medium text-muted-foreground mb-6">
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            Verified local electricians, plumbers &amp; carpenters
-          </p>
+
 
           {/* Headline — one promise, one stroke. The amber marker line draws
               once beneath "Skilled hands", the way tradespeople mark work. */}
@@ -118,15 +101,15 @@ export function Hero({ onSearch }: HeroProps) {
             </span>
             <RevealWord word="at" delay={0.12} />
             <RevealWord word="your" delay={0.18} />
-            <RevealWord word="doorstep" delay={0.24} />
-            <RevealWord word="in" delay={0.3} />
-            <RevealWord word="15" delay={0.36} className="numeric" />
-            <RevealWord word="minutes." delay={0.42} />
+            <RevealWord word="doorstep," delay={0.24} />
+            <RevealWord word="fast" delay={0.3} />
+            <RevealWord word="and" delay={0.36} />
+            <RevealWord word="verified." delay={0.42} />
           </h1>
 
           <p className="mt-7 max-w-xl leading-relaxed text-base sm:text-lg text-muted-foreground">
-            Post the job, get matched to the nearest verified pro in about 15
-            minutes, and pay through escrow only when the work is done.
+            Post your requirement, get matched with verified local tradespeople,
+            and approve payment only when the job is completed to your satisfaction.
           </p>
 
           {/* Interactive Search Bar */}
@@ -156,24 +139,7 @@ export function Hero({ onSearch }: HeroProps) {
             </Link>
           </form>
 
-          {/* Quick Trade Badges */}
-          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
-            <span className="text-muted-foreground font-medium mr-1">Popular:</span>
-            {QUICK_TRADES.map((trade) => {
-              const Icon = trade.icon;
-              return (
-                <Link
-                  key={trade.id}
-                  href={`/customer/jobs/new?trade=${trade.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/80 hover:bg-secondary border border-border/70 text-foreground transition-all duration-150 hover:-translate-y-0.5"
-                >
-                  <Icon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                  <span className="font-medium">{trade.label}</span>
-                  <span className="text-[10px] text-muted-foreground ml-0.5 numeric">({trade.count})</span>
-                </Link>
-              );
-            })}
-          </div>
+
 
           {/* Primary & Secondary Dual CTAs */}
           <div className="flex flex-wrap items-center gap-4 mt-8">
@@ -241,12 +207,12 @@ export function Hero({ onSearch }: HeroProps) {
                 <Zap className="w-6 h-6" />
               </div>
               <div>
-                <div className="font-display text-2xl font-bold numeric">15 Mins</div>
+                <div className="font-display text-2xl font-bold">Fast Match</div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Geospatial Dispatch Wave
+                  Proximity Dispatch
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Multi-ring geo-fencing alerts the nearest 5 verified technicians simultaneously.
+                  Geospatial matching alerts available verified technicians nearest to your location.
                 </p>
               </div>
             </div>
@@ -257,12 +223,12 @@ export function Hero({ onSearch }: HeroProps) {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <div className="font-display text-2xl font-bold">Zero Fraud</div>
+                <div className="font-display text-2xl font-bold">Verified ID</div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Aadhaar &amp; Police Verified
+                  Identity &amp; Skills Verified
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Every technician undergoes biometric Aadhaar verification and skill benchmarking.
+                  Every technician undergoes government ID verification and skill evaluation before taking jobs.
                 </p>
               </div>
             </div>
@@ -273,12 +239,12 @@ export function Hero({ onSearch }: HeroProps) {
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
-                <div className="font-display text-2xl font-bold numeric">100% Escrow</div>
+                <div className="font-display text-2xl font-bold">Secure OTP</div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Direct Bank UPI Payouts
+                  Authorized Payment Release
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Customer funds stay safe in escrow until completion OTP is exchanged at your doorstep.
+                  Payment is authorized and ledger-recorded only after you share the completion OTP.
                 </p>
               </div>
             </div>

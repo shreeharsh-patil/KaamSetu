@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Hammer, ShieldCheck, Phone, Mail, ArrowUpRight, Heart } from "lucide-react";
+import { Hammer, ShieldCheck, Mail, ArrowUpRight, Heart } from "lucide-react";
 
 const socialLinks = [
   { href: "https://twitter.com", label: "Twitter", icon: "𝕏" },
@@ -28,6 +29,9 @@ const workerLinks = [
 ];
 
 export function AppFooter() {
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
   return (
     <footer className="border-t border-border bg-card/50 backdrop-blur-xs text-sm">
       <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-16 md:py-20">
@@ -35,7 +39,7 @@ export function AppFooter() {
           {/* Column 1: Brand & Mission */}
           <div className="md:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2.5 font-semibold text-lg tracking-tight">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#203eec] text-white shadow-xs">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
                 <Hammer className="h-4 w-4" />
               </span>
               <span className="font-sans font-bold text-xl">KaamSetu</span>
@@ -51,7 +55,7 @@ export function AppFooter() {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-[#203eec]/10 hover:text-[#203eec] transition-all"
+                  className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-primary/10 hover:text-primary transition-all"
                   aria-label={item.label}
                 >
                   {item.icon}
@@ -61,14 +65,10 @@ export function AppFooter() {
 
             <div className="mt-6 flex flex-col gap-1.5 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#203eec]" />
+                <Mail className="w-3.5 h-3.5 text-primary" />
                 <a href="mailto:support@kaamsetu.in" className="hover:underline text-foreground">
                   support@kaamsetu.in
                 </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#00d4ff]" />
-                <span>Toll-Free Helpline: 1800-KAAM-SETU</span>
               </div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export function AppFooter() {
                     className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 group"
                   >
                     <span>{link.label}</span>
-                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#203eec]" />
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                   </Link>
                 </li>
               ))}
@@ -106,7 +106,7 @@ export function AppFooter() {
                     className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 group"
                   >
                     <span>{link.label}</span>
-                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#203eec]" />
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                   </Link>
                 </li>
               ))}
@@ -116,39 +116,43 @@ export function AppFooter() {
           {/* Column 4: Trust & Newsletter */}
           <div>
             <h4 className="text-sm font-semibold tracking-wide uppercase text-foreground mb-4">
-              Instant Updates
+              Service Updates
             </h4>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Get monthly rate card updates, home maintenance checklists, and seasonal service discounts.
+              Get monthly rate card benchmarks, maintenance safety tips, and local trade announcements.
             </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Thank you for subscribing to KaamSetu updates!");
-              }}
-              className="flex flex-col gap-2.5"
-            >
-              <input
-                type="email"
-                required
-                placeholder="Enter your email"
-                className="px-4 py-2.5 text-xs bg-secondary rounded-xl border border-border focus:ring-2 focus:ring-[#203eec] outline-none transition-all"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2.5 text-xs font-semibold text-white rounded-xl transition-all relative overflow-hidden"
-                style={{
-                  background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                  boxShadow: "0 4px 15px rgba(32, 62, 236, 0.25)",
+            {subscribed ? (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                Thank you for subscribing to KaamSetu updates!
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (email) setSubscribed(true);
                 }}
+                className="flex flex-col gap-2.5"
               >
-                Subscribe to Updates
-              </button>
-            </form>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="px-4 py-2.5 text-xs bg-secondary rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-foreground"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 text-xs font-semibold text-white rounded-xl bg-primary hover:bg-primary/90 transition-all shadow-xs"
+                >
+                  Subscribe to Updates
+                </button>
+              </form>
+            )}
 
             <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>Govt. of India DPIIT Recognized</span>
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              <span>Community Governed & Verified Trades</span>
             </div>
           </div>
         </div>

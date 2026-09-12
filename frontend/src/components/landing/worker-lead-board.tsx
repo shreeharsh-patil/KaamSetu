@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MapPin, Clock, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { SectionTitle } from "@/components/landing/section-title";
 
 const WORKER_CATEGORIES = [
@@ -14,84 +14,64 @@ const WORKER_CATEGORIES = [
   { id: "painting", label: "Painting" },
 ];
 
-const JOB_LEADS = [
+const TRADE_OPPORTUNITIES = [
   {
-    id: "lead-101",
-    title: "Tripping Main Circuit Breaker & Sparking",
+    id: "trade-electrical",
+    title: "Electrical Maintenance & Repair",
     category: "electrical",
     categoryLabel: "Electrical",
-    area: "Andheri West, Mumbai",
-    distanceKm: 1.8,
-    payoutMin: 450,
-    payoutMax: 600,
-    urgency: "IMMEDIATE",
-    postedAt: "3 mins ago",
-    customer: "Anand V.",
-    description: "Main MCB switch is tripping repeatedly whenever AC is turned on. Need immediate diagnosis.",
+    description: "Short circuits, wiring replacements, switchboards, MCB repairs, and inverter setups.",
+    fareBenchmark: "₹350 - ₹850 / task",
+    averageDuration: "1 - 2 hours",
+    skills: ["Circuit Diagnostics", "Wiring", "Switchgear"],
   },
   {
-    id: "lead-102",
-    title: "Kitchen Sink Waste Pipe Burst & Leaking",
+    id: "trade-plumbing",
+    title: "Plumbing & Sanitary Installations",
     category: "plumbing",
     categoryLabel: "Plumbing",
-    area: "Lokhandwala Complex, Mumbai",
-    distanceKm: 2.3,
-    payoutMin: 350,
-    payoutMax: 500,
-    urgency: "TODAY",
-    postedAt: "8 mins ago",
-    customer: "Sneha P.",
-    description: "Flexible PVC pipe under kitchen sink has cracked. Water spreading across cabinet floor.",
+    description: "Leak repairs, pipe replacement, tap & flush tank fittings, drainage clearing.",
+    fareBenchmark: "₹300 - ₹750 / task",
+    averageDuration: "45 - 90 mins",
+    skills: ["Pipe Fitting", "Drain Clearing", "Pressure Testing"],
   },
   {
-    id: "lead-103",
-    title: "Ceiling Fan Regulator Sparking & Speed Issue",
-    category: "electrical",
-    categoryLabel: "Electrical",
-    area: "Versova Metro, Mumbai",
-    distanceKm: 2.9,
-    payoutMin: 300,
-    payoutMax: 450,
-    urgency: "TODAY",
-    postedAt: "19 mins ago",
-    customer: "Vikram S.",
-    description: "Switchboard knob is sparking when turned. Fan runs only on maximum speed 5.",
-  },
-  {
-    id: "lead-104",
-    title: "Main Wooden Door Latch & Lock Jammed",
+    id: "trade-carpentry",
+    title: "Carpentry & Furniture Assembly",
     category: "carpentry",
     categoryLabel: "Carpentry",
-    area: "Bandra West, Mumbai",
-    distanceKm: 3.4,
-    payoutMin: 500,
-    payoutMax: 750,
-    urgency: "TODAY",
-    postedAt: "32 mins ago",
-    customer: "Rahul M.",
-    description: "Godrej mortise lock cylinder is sticking and latch does not retract smoothly.",
+    description: "Door lock fixing, hinge adjustment, custom cabinetry repair, modular furniture setup.",
+    fareBenchmark: "₹450 - ₹1,200 / task",
+    averageDuration: "1 - 3 hours",
+    skills: ["Lock Fitting", "Joinery", "Laminate Repair"],
   },
   {
-    id: "lead-105",
-    title: "Split AC Indoor Water Dripping on Sofa",
+    id: "trade-appliances",
+    title: "Appliance Repair & Servicing",
     category: "appliances",
     categoryLabel: "Appliances",
-    area: "Juhu Scheme, Mumbai",
-    distanceKm: 4.1,
-    payoutMin: 800,
-    payoutMax: 1200,
-    urgency: "TODAY",
-    postedAt: "45 mins ago",
-    customer: "Pooja D.",
-    description: "1.5 ton inverter AC drain tray overflowing inside room. Needs drain pipe unclog and filter clean.",
+    description: "AC filter cleaning, refrigerator gas recharge, washing machine motor repair.",
+    fareBenchmark: "₹600 - ₹1,800 / task",
+    averageDuration: "1 - 2 hours",
+    skills: ["Cooling Systems", "Motor Repair", "PCB Inspection"],
+  },
+  {
+    id: "trade-painting",
+    title: "Painting & Wall Touchups",
+    category: "painting",
+    categoryLabel: "Painting",
+    description: "Waterproofing patchup, single-room repaints, moisture sealing, exterior touchups.",
+    fareBenchmark: "₹800 - ₹2,500 / task",
+    averageDuration: "Half day / full day",
+    skills: ["Surface Prep", "Waterproofing", "Roll Painting"],
   },
 ];
 
 export function WorkerLeadBoard() {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const filteredLeads = JOB_LEADS.filter((lead) => {
-    return selectedCategory === "all" || lead.category === selectedCategory;
+  const filteredOpportunities = TRADE_OPPORTUNITIES.filter((item) => {
+    return selectedCategory === "all" || item.category === selectedCategory;
   });
 
   return (
@@ -99,18 +79,18 @@ export function WorkerLeadBoard() {
       <div className="max-w-[1280px] mx-auto px-6 md:px-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
-              Live Dispatch Wave Feed
+              Direct Work Opportunities
             </div>
             <SectionTitle className="text-3xl sm:text-4xl font-semibold tracking-tight">
-              Nearby Open Job Leads
+              Earn With Every Verified Job
             </SectionTitle>
             <p className="text-muted-foreground text-sm mt-2">
-              Verified local service calls ready for instant acceptance. Direct bank escrow payout.
+              Fair rate benchmarks, transparent platform fees, and authorized ledger payouts upon completion.
             </p>
           </div>
 
@@ -143,55 +123,47 @@ export function WorkerLeadBoard() {
           ))}
         </div>
 
-        {/* Leads Grid */}
+        {/* Trade Opportunities Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLeads.map((job) => (
+          {filteredOpportunities.map((trade) => (
             <article
-              key={job.id}
+              key={trade.id}
               className="p-6 rounded-2xl md:rounded-3xl border border-border bg-card hover:border-foreground/20 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    {job.categoryLabel}
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                    {trade.categoryLabel}
                   </span>
-                  <span
-                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                      job.urgency === "IMMEDIATE"
-                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    }`}
-                  >
-                    {job.urgency}
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    {trade.averageDuration}
                   </span>
                 </div>
 
                 <h3 className="font-semibold text-lg text-foreground mb-2 leading-snug">
-                  {job.title}
+                  {trade.title}
                 </h3>
                 <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-                  {job.description}
+                  {trade.description}
                 </p>
 
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    <span>
-                      {job.area} ({job.distanceKm} km away)
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {trade.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="px-2 py-0.5 rounded-md bg-muted text-[11px] text-muted-foreground"
+                    >
+                      {skill}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-muted-foreground/70" />
-                    <span>Posted {job.postedAt}</span>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border/70 flex items-center justify-between">
+              <div className="mt-4 pt-4 border-t border-border/70 flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] text-muted-foreground block">Payout Range</span>
+                  <span className="text-[11px] text-muted-foreground block">Typical Fare Benchmark</span>
                   <span className="text-base font-bold text-foreground">
-                    ₹{job.payoutMin} - ₹{job.payoutMax}
+                    {trade.fareBenchmark}
                   </span>
                 </div>
 
@@ -202,7 +174,7 @@ export function WorkerLeadBoard() {
                     background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
                   }}
                 >
-                  Accept Lead
+                  View Offers
                 </Link>
               </div>
             </article>

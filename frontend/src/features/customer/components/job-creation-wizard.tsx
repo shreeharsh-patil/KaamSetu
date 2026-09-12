@@ -300,7 +300,7 @@ export function JobCreationWizard() {
 
       {/* Step 2: Title & Description & Urgency */}
       {step === 2 && (
-        <Card className="rounded-3xl bazaar-card-shadow">
+        <Card className="rounded-xl shadow-xs border border-border/80">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -622,7 +622,7 @@ export function JobCreationWizard() {
 
       {/* Step 6: Review & Publish */}
       {step === 6 && (
-        <Card className="rounded-3xl bazaar-card-shadow">
+        <Card className="rounded-xl shadow-xs border border-border/80">
           <CardHeader>
             <CardTitle>Review & Publish Request</CardTitle>
             <CardDescription>

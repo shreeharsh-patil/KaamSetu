@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRecorder } from "@/components/voice/voice-recorder";
+import { writeJobDraft } from "@/features/customer/draft-storage";
 
 interface RecognizedIntent {
   query: string;
@@ -79,19 +80,12 @@ export function VoiceAssistantFAB() {
     }
 
     // Save extracted text to draft for job wizard to pick up
-    try {
-      sessionStorage.setItem(
-        "kaamsetu_job_draft_v1",
-        JSON.stringify({
-          category,
-          title: text.slice(0, 50) + (text.length > 50 ? "..." : ""),
-          description: text,
-          urgency: lower.includes("urgent") || lower.includes("jaldi") ? "TODAY" : "FLEXIBLE",
-        })
-      );
-    } catch {
-      // ignore
-    }
+    writeJobDraft({
+      category,
+      title: text.slice(0, 50) + (text.length > 50 ? "..." : ""),
+      description: text,
+      urgency: lower.includes("urgent") || lower.includes("jaldi") ? "TODAY" : "FLEXIBLE",
+    });
 
     setLastIntent({
       query: text,
@@ -102,7 +96,7 @@ export function VoiceAssistantFAB() {
     });
   };
 
-  const handleApplyShortcut = (sc: typeof quickShortcuts[0]) => {
+  const handleApplyShortcut = (sc: (typeof quickShortcuts)[0]) => {
     handleVoiceExtracted(sc.query);
   };
 

@@ -649,6 +649,7 @@ export interface IJobOfferEntity {
 export interface IJobOfferView {
   id: string;
   jobId: string;
+  workerId?: string;
   distanceKm: number;
   matchScore: number;
   scoreBreakdown: ScoreBreakdown;
