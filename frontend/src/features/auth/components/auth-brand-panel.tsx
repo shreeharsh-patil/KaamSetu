@@ -6,7 +6,7 @@ import { CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 
 export function AuthBrandPanel() {
   return (
-    <div className="hidden lg:flex flex-col justify-between p-10 xl:p-14 bg-[#102a4c] text-white rounded-3xl relative overflow-hidden h-full min-h-[640px]">
+    <div style={{ backgroundColor: "#102a4c", color: "#ffffff" }} className="hidden lg:flex flex-col justify-between p-10 xl:p-14 rounded-3xl relative overflow-hidden h-full min-h-[640px]">
       {/* Subtle background ambient gradient */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -40,7 +40,7 @@ export function AuthBrandPanel() {
 
       {/* Center: Real KaamSetu Service Cards */}
       <div className="relative z-10 my-8 space-y-3 max-w-md">
-        <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#183b68] border border-white/15 shadow-lg">
+        <div style={{ backgroundColor: "#183b68" }} className="flex items-center gap-3.5 p-3 rounded-2xl border border-white/15 shadow-lg">
           <div className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border border-white/10">
             <Image
               src="/services/electrician.webp"
@@ -60,7 +60,7 @@ export function AuthBrandPanel() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#183b68] border border-white/15 shadow-lg">
+        <div style={{ backgroundColor: "#183b68" }} className="flex items-center gap-3.5 p-3 rounded-2xl border border-white/15 shadow-lg">
           <div className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border border-white/10">
             <Image
               src="/services/plumber.webp"
@@ -80,7 +80,7 @@ export function AuthBrandPanel() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#183b68] border border-white/15 shadow-lg">
+        <div style={{ backgroundColor: "#183b68" }} className="flex items-center gap-3.5 p-3 rounded-2xl border border-white/15 shadow-lg">
           <div className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border border-white/10">
             <Image
               src="/services/carpenter.webp"
