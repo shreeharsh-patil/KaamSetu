@@ -31,7 +31,7 @@ COPY apps/worker/package.json ./apps/worker/
 RUN pnpm install --frozen-lockfile
 
 # Copy source code and TypeScript configurations
-COPY tsconfig.json ./
+COPY tsconfig.base.json ./
 COPY packages/ ./packages/
 COPY apps/ ./apps/
 
