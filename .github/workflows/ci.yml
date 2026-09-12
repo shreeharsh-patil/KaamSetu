@@ -86,7 +86,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 🔨 2. Pre-build shared packages (required for typecheck)
-        run: pnpm --filter @kaamsetu/types --filter @kaamsetu/logger build
+        run: pnpm --filter @kaamsetu/types --filter @kaamsetu/logger --filter @kaamsetu/config --filter @kaamsetu/validation build
 
       - name: 🔍 3. Run linter
         run: pnpm lint
