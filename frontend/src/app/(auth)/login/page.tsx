@@ -3,7 +3,7 @@
 import { useState, Suspense, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Phone, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Phone, Mail, ArrowRight, ShieldCheck, ArrowLeft, UserPlus } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,29 +40,45 @@ function LoginContent() {
 
   const { t } = useTranslation();
   const { requestOtp } = useAuth();
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState<"customer" | "worker">("customer");
 
-  // Validate Indian mobile numbers: 10 digits starting with 6, 7, 8, or 9
-  const validatePhone = (num: string): string | null => {
-    const cleaned = num.replace(/\D/g, "");
-    if (!cleaned) return "Mobile number is required";
-    if (cleaned.length !== 10) return "Please enter a valid 10-digit mobile number";
-    if (!/^[6-9]/.test(cleaned)) return "Indian mobile numbers must start with 6, 7, 8, or 9";
+  const isEmail = identifier.includes("@");
+
+  const validateInput = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "Please enter your mobile number or email address";
+    }
+
+    if (trimmed.includes("@")) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmed)) {
+        return "Please enter a valid email address";
+      }
+      return null;
+    }
+
+    const cleaned = trimmed.replace(/\D/g, "");
+    if (cleaned.length !== 10) {
+      return "Please enter a valid 10-digit mobile number or email address";
+    }
+    if (!/^[6-9]/.test(cleaned)) {
+      return "Indian mobile numbers must start with 6, 7, 8, or 9";
+    }
     return null;
   };
 
-  const handlePhoneChange = (val: string) => {
-    // Only permit digits up to 10 characters
-    const cleaned = val.replace(/\D/g, "").slice(0, 10);
-    setPhoneNumber(cleaned);
+  const handleInputChange = (val: string) => {
+    setIdentifier(val);
     if (error) setError(null);
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const validationError = validatePhone(phoneNumber);
+    const validationError = validateInput(identifier);
     if (validationError) {
       setError(validationError);
       return;
@@ -72,16 +88,22 @@ function LoginContent() {
       setIsLoading(true);
       setError(null);
 
-      // Backend requires full E.164 format: +91XXXXXXXXXX
-      const formattedPhone = `+91${phoneNumber}`;
-      await requestOtp(formattedPhone, role);
+      const trimmed = identifier.trim();
+      let targetIdentifier = trimmed;
+
+      if (!trimmed.includes("@")) {
+        const cleaned = trimmed.replace(/\D/g, "");
+        targetIdentifier = `+91${cleaned}`;
+      }
+
+      await requestOtp(targetIdentifier, role);
 
       const targetUrl = `/verify-otp${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
       router.push(targetUrl);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.isRateLimited()) {
-          setError("Too many attempts. Please wait a minute before requesting another OTP.");
+          setError("Too many attempts. Please wait before requesting another OTP.");
         } else {
           setError(err.message || "Failed to send verification code. Please try again.");
         }
@@ -92,8 +114,6 @@ function LoginContent() {
       setIsLoading(false);
     }
   };
-
-  const [role, setRole] = useState<"customer" | "worker">("customer");
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -128,13 +148,13 @@ function LoginContent() {
       <Card className="shadow-sm border-border/80 rounded-3xl p-2 sm:p-4">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Phone className="h-6 w-6" />
+            {isEmail ? <Mail className="h-6 w-6" /> : <Phone className="h-6 w-6" />}
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
             {t("nav.login", "Sign In")}
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm">
-            Enter your 10-digit mobile number to get started.
+            Enter your mobile number or email to receive a secure login OTP.
           </CardDescription>
         </CardHeader>
 
@@ -148,31 +168,36 @@ function LoginContent() {
 
             <div className="space-y-1.5">
               <label
-                htmlFor="phone-input"
-                className="text-xs font-semibold text-foreground"
+                htmlFor="identifier-input"
+                className="text-xs font-semibold text-foreground flex items-center justify-between"
               >
-                Phone Number
+                <span>Mobile Number or Email</span>
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  {isEmail ? "Email login" : "SMS OTP login"}
+                </span>
               </label>
+
               <div className="flex gap-2">
-                <div className="flex h-11 items-center justify-center rounded-xl border border-input bg-muted px-3.5 text-sm font-bold text-foreground select-none">
-                  +91
-                </div>
+                {!isEmail && (
+                  <div className="flex h-11 items-center justify-center rounded-xl border border-input bg-muted px-3.5 text-sm font-bold text-foreground select-none">
+                    +91
+                  </div>
+                )}
                 <Input
-                  id="phone-input"
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={10}
-                  placeholder="98765 43210"
-                  value={phoneNumber}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  id="identifier-input"
+                  type={isEmail ? "email" : "text"}
+                  placeholder={isEmail ? "you@example.com" : "98765 43210 or email"}
+                  value={identifier}
+                  onChange={(e) => handleInputChange(e.target.value)}
                   autoFocus
                   disabled={isLoading}
                   className="text-base tracking-wide rounded-xl font-medium"
                 />
               </div>
               <p className="text-[11px] text-muted-foreground">
-                We will send an OTP verification code via SMS.
+                {isEmail
+                  ? "We will send an OTP to the mobile number registered with this email."
+                  : "We will send a 6-digit OTP verification code via SMS."}
               </p>
             </div>
 
@@ -186,9 +211,23 @@ function LoginContent() {
             </Button>
           </form>
 
-          <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          {/* Link to Sign Up */}
+          <div className="mt-4 pt-4 border-t border-border/60 text-center">
+            <p className="text-xs text-muted-foreground">
+              Don&apos;t have an account yet?{" "}
+              <Link
+                href={`/signup${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
+                className="font-bold text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Sign Up
+              </Link>
+            </p>
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>Verified security • No password required</span>
+            <span>Verified security • Passwordless login</span>
           </div>
         </CardContent>
 
@@ -201,7 +240,7 @@ function LoginContent() {
         </CardFooter>
       </Card>
 
-      {/* 3 Trust Cards Underneath (Matching Screen 1) */}
+      {/* 3 Trust Cards Underneath */}
       <div className="grid grid-cols-3 gap-2.5 pt-2">
         <div className="p-3 rounded-2xl border border-border/70 bg-card text-center space-y-1 shadow-2xs">
           <div className="flex justify-center text-primary">

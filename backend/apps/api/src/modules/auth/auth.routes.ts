@@ -2,6 +2,9 @@ import { Router } from 'express';
 import {
   requestOtp,
   verifyOtp,
+  signupRequestOtp,
+  signupVerifyOtp,
+  completeProfile,
   refresh,
   logout,
   logoutAll,
@@ -16,6 +19,9 @@ const router: Router = Router();
 
 router.post('/request-otp', authRateLimiter, asyncHandler(requestOtp));
 router.post('/verify-otp', authRateLimiter, asyncHandler(verifyOtp));
+router.post('/signup/request-otp', authRateLimiter, asyncHandler(signupRequestOtp));
+router.post('/signup/verify-otp', authRateLimiter, asyncHandler(signupVerifyOtp));
+router.post('/complete-profile', authenticate(), asyncHandler(completeProfile));
 router.post('/refresh', authRateLimiter, asyncHandler(refresh));
 router.post('/logout', asyncHandler(logout));
 router.post('/logout-all', authenticate(), asyncHandler(logoutAll));

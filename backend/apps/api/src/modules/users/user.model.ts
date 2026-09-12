@@ -5,6 +5,9 @@ export interface IUserDocument extends Document {
   _id: Types.ObjectId;
   phoneNumber: string;
   phoneVerified: boolean;
+  phoneVerifiedAt?: Date | null;
+  firstName?: string | null;
+  lastName?: string | null;
   role: UserRole;
   status: UserStatus;
   email?: string | null;
@@ -28,6 +31,20 @@ export const userSchema = new Schema<IUserDocument>(
     phoneVerified: {
       type: Boolean,
       default: false,
+    },
+    phoneVerifiedAt: {
+      type: Date,
+      default: null,
+    },
+    firstName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+      default: null,
     },
     role: {
       type: String,
@@ -87,10 +104,20 @@ userSchema.index(
 );
 
 export function mapUserDocumentToEntity(doc: IUserDocument): IUserEntity {
+  const firstName = doc.firstName ?? null;
+  const lastName = doc.lastName ?? null;
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || doc.phoneNumber;
+  const requiresProfileCompletion = !firstName || !lastName || !doc.email;
+
   return {
     id: doc._id.toString(),
     phoneNumber: doc.phoneNumber,
+    phone: doc.phoneNumber,
     phoneVerified: doc.phoneVerified,
+    phoneVerifiedAt: doc.phoneVerifiedAt ?? null,
+    firstName,
+    lastName,
+    fullName,
     role: doc.role,
     status: doc.status,
     email: doc.email ?? null,
@@ -98,6 +125,7 @@ export function mapUserDocumentToEntity(doc: IUserDocument): IUserEntity {
     preferredLanguage: doc.preferredLanguage,
     profilePhotoUrl: doc.profilePhotoUrl ?? null,
     lastLoginAt: doc.lastLoginAt ?? null,
+    requiresProfileCompletion,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     deletedAt: doc.deletedAt ?? null,

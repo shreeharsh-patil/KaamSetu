@@ -11,10 +11,15 @@ import {
 import {
   UserRole,
   UserStatus,
+  IUserEntity,
   RequestOtpResponse,
   VerifyOtpResponse,
+  SignupRequestOtpInput,
+  CompleteProfileInput,
 } from '@kaamsetu/types';
 import {
+  ConflictError,
+  NotFoundError,
   ForbiddenError,
   UnauthorizedError,
 } from '../../errors/index.js';
@@ -27,6 +32,13 @@ export interface AuthMetadata {
   deviceName?: string | null;
 }
 
+function maskPhoneNumber(phone: string): string {
+  if (phone.length <= 4) return phone;
+  const last4 = phone.slice(-4);
+  const prefix = phone.slice(0, 3);
+  return `${prefix}${'*'.repeat(Math.max(4, phone.length - 7))}${last4}`;
+}
+
 export class AuthService {
   constructor(
     private readonly userRepo: IUserRepository = userRepository,
@@ -34,12 +46,122 @@ export class AuthService {
     private readonly otpSvc: OTPService = otpService
   ) {}
 
-  async requestOtp(phoneNumber: string, ipAddress = '127.0.0.1'): Promise<RequestOtpResponse> {
-    const result = await this.otpSvc.requestOTP(phoneNumber, ipAddress);
+  async requestOtp(
+    identifier: string,
+    ipAddress = '127.0.0.1'
+  ): Promise<RequestOtpResponse> {
+    const raw = identifier.trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+
+    let targetPhone: string;
+    let isEmailLookup = false;
+
+    if (isEmail) {
+      const user = await this.userRepo.findByEmail(raw.toLowerCase());
+      if (!user) {
+        throw new NotFoundError('No account found with this email address. Please sign up first.');
+      }
+      if (user.status === UserStatus.SUSPENDED) {
+        throw new ForbiddenError('Your account has been suspended. Please contact customer support.');
+      }
+      if (user.status === UserStatus.DELETED || user.deletedAt) {
+        throw new ForbiddenError('This account has been deactivated.');
+      }
+      targetPhone = user.phoneNumber;
+      isEmailLookup = true;
+    } else {
+      targetPhone = normalizePhoneNumber(raw);
+    }
+
+    const result = await this.otpSvc.requestOTP(targetPhone, ipAddress);
+
+    return {
+      message: isEmailLookup
+        ? `OTP sent to registered phone number (${maskPhoneNumber(targetPhone)})`
+        : 'OTP sent successfully',
+      cooldownSeconds: result.cooldownSeconds,
+      phone: targetPhone,
+      devHint: result.devHint,
+    };
+  }
+
+  async signupRequestOtp(
+    input: SignupRequestOtpInput,
+    ipAddress = '127.0.0.1'
+  ): Promise<RequestOtpResponse> {
+    const normalizedPhone = normalizePhoneNumber(input.phone);
+    const normalizedEmail = input.email.toLowerCase().trim();
+
+    const existingPhone = await this.userRepo.findByPhone(normalizedPhone, true);
+    if (existingPhone) {
+      throw new ConflictError('An account with this phone number already exists. Please log in.');
+    }
+
+    const existingEmail = await this.userRepo.findByEmail(normalizedEmail);
+    if (existingEmail) {
+      throw new ConflictError('An account with this email address already exists. Please log in.');
+    }
+
+    await this.otpSvc.setPendingRegistration(normalizedPhone, {
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      role: input.role,
+    });
+
+    const result = await this.otpSvc.requestOTP(normalizedPhone, ipAddress);
+
     return {
       message: 'OTP sent successfully',
       cooldownSeconds: result.cooldownSeconds,
+      phone: normalizedPhone,
+      devHint: result.devHint,
     };
+  }
+
+  async signupVerifyOtp(
+    phoneNumber: string,
+    otp: string,
+    metadata: AuthMetadata = {}
+  ): Promise<VerifyOtpResponse & { refreshToken: string }> {
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
+
+    await this.otpSvc.verifyOTP(normalizedPhone, otp);
+
+    const pending = await this.otpSvc.getPendingRegistration(normalizedPhone);
+
+    let user = await this.userRepo.findByPhone(normalizedPhone, true);
+    if (user) {
+      const updateData: Record<string, unknown> = {
+        phoneVerified: true,
+        phoneVerifiedAt: new Date(),
+        lastLoginAt: new Date(),
+      };
+      if (pending?.firstName && !user.firstName) updateData['firstName'] = pending.firstName;
+      if (pending?.lastName && !user.lastName) updateData['lastName'] = pending.lastName;
+      if (pending?.email && !user.email) updateData['email'] = pending.email;
+
+      const updated = await this.userRepo.update(user.id, updateData);
+      if (updated) user = updated;
+    } else {
+      user = await this.userRepo.create({
+        phoneNumber: normalizedPhone,
+        firstName: pending?.firstName ?? null,
+        lastName: pending?.lastName ?? null,
+        email: pending?.email ?? null,
+        role: pending?.role === UserRole.WORKER ? UserRole.WORKER : UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        phoneVerified: true,
+        phoneVerifiedAt: new Date(),
+        preferredLanguage: 'en',
+      });
+      logger.info({ userId: user.id }, 'New user registered via signup OTP');
+    }
+
+    await this.otpSvc.delPendingRegistration(normalizedPhone);
+
+    return this.createSessionAndTokens(user, metadata);
   }
 
   async verifyOtp(
@@ -68,6 +190,7 @@ export class AuthService {
       // Mark phone verified and update lastLoginAt
       const updated = await this.userRepo.update(user.id, {
         phoneVerified: true,
+        phoneVerifiedAt: user.phoneVerifiedAt ?? new Date(),
         lastLoginAt: new Date(),
       });
       if (updated) {
@@ -80,11 +203,48 @@ export class AuthService {
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
         phoneVerified: true,
+        phoneVerifiedAt: new Date(),
         preferredLanguage: 'en',
       });
       logger.info({ userId: user.id }, 'New user registered via phone OTP');
     }
 
+    return this.createSessionAndTokens(user, metadata);
+  }
+
+  async completeProfile(
+    userId: string,
+    input: CompleteProfileInput
+  ): Promise<IUserEntity> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const normalizedEmail = input.email.toLowerCase().trim();
+    const existingWithEmail = await this.userRepo.findByEmail(normalizedEmail);
+    if (existingWithEmail && existingWithEmail.id !== userId) {
+      throw new ConflictError('This email address is already in use by another account');
+    }
+
+    const updated = await this.userRepo.update(userId, {
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      email: normalizedEmail,
+    });
+
+    if (!updated) {
+      throw new NotFoundError('Failed to update user profile');
+    }
+
+    logger.info({ userId }, 'User completed profile');
+    return updated;
+  }
+
+  private async createSessionAndTokens(
+    user: IUserEntity,
+    metadata: AuthMetadata = {}
+  ): Promise<VerifyOtpResponse & { refreshToken: string }> {
     // 3. Create Session with rotating token family
     const familyId = randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -122,6 +282,7 @@ export class AuthService {
       user,
       accessToken,
       refreshToken,
+      requiresProfileCompletion: user.requiresProfileCompletion,
     };
   }
 

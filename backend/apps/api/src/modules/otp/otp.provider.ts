@@ -1,4 +1,5 @@
 import { logger, env } from '../../config/index.js';
+import { InternalServerError } from '../../errors/index.js';
 
 export interface IOTPProvider {
   sendOTP(phoneNumber: string, otp: string): Promise<boolean>;
@@ -15,7 +16,7 @@ export class DevOTPProvider implements IOTPProvider {
   async sendOTP(phoneNumber: string, otp: string): Promise<boolean> {
     DevOTPProvider.lastSentOtpByPhone.set(phoneNumber, otp);
 
-    if (env.NODE_ENV === 'development') {
+    if (env.NODE_ENV === 'development' || env.AUTH_MOCK_OTP_ENABLED) {
       logger.info(
         {
           phoneNumber,
@@ -38,6 +39,11 @@ export class DevOTPProvider implements IOTPProvider {
 }
 
 export function getOTPProvider(): IOTPProvider {
-  // Can be expanded with TwilioOTPProvider, MSG91OTPProvider, etc.
-  return new DevOTPProvider();
+  const isMockAllowed = env.AUTH_MOCK_OTP_ENABLED || env.NODE_ENV !== 'production';
+  if (isMockAllowed) {
+    return new DevOTPProvider();
+  }
+
+  // Pluggable SMS provider interface for production (MSG91, Twilio, AWS SNS, Fast2SMS)
+  throw new InternalServerError('SMS provider is not configured for production environment');
 }

@@ -11,11 +11,19 @@ export interface OTPState {
   expiresAt: number;
 }
 
+export interface PendingRegistration {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role?: string;
+}
+
 const OTP_TTL_SECONDS = 300; // 5 minutes
 const OTP_COOLDOWN_SECONDS = 60; // 60 seconds
-const MAX_ATTEMPTS = 3;
-const MAX_REQUESTS_PER_PHONE_PER_HOUR = 5;
-const MAX_REQUESTS_PER_IP_PER_HOUR = 25;
+const MAX_ATTEMPTS = 3; // 3 attempts
+const MAX_REQUESTS_PER_PHONE_PER_HOUR = 10;
+const MAX_REQUESTS_PER_IP_PER_HOUR = 50;
 
 export class OTPService {
   // Fallback in-memory store when Redis is unavailable (e.g. local offline test runs)
@@ -107,7 +115,7 @@ export class OTPService {
   async requestOTP(
     phoneNumber: string,
     ipAddress = '127.0.0.1'
-  ): Promise<{ cooldownSeconds: number }> {
+  ): Promise<{ cooldownSeconds: number; devHint?: string }> {
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
     // 1. Rate limiting per IP
@@ -132,11 +140,11 @@ export class OTPService {
     }
 
     // Keep local development and tests easy to exercise, but never use a
-    // predictable OTP in production.
-    const otp =
-      env.NODE_ENV === 'production'
-        ? randomInt(100000, 1000000).toString()
-        : '123456';
+    // predictable OTP in production unless explicitly enabled.
+    const isMockEnabled = env.AUTH_MOCK_OTP_ENABLED ?? (env.NODE_ENV !== 'production');
+    const otp = isMockEnabled
+      ? (env.AUTH_MOCK_OTP || '123456')
+      : randomInt(100000, 1000000).toString();
     const codeHash = this.hashOTP(otp);
 
     const state: OTPState = {
@@ -158,7 +166,10 @@ export class OTPService {
       'OTP generated and dispatched successfully'
     );
 
-    return { cooldownSeconds: OTP_COOLDOWN_SECONDS };
+    return {
+      cooldownSeconds: OTP_COOLDOWN_SECONDS,
+      devHint: isMockEnabled ? `Development OTP is ${otp}` : undefined,
+    };
   }
 
   /**
@@ -213,6 +224,39 @@ export class OTPService {
     );
 
     return true;
+  }
+
+  async setPendingRegistration(phone: string, data: PendingRegistration, ttlSeconds = 600): Promise<void> {
+    const normalizedPhone = normalizePhoneNumber(phone);
+    await this.set(`otp:pending_reg:${normalizedPhone}`, JSON.stringify(data), ttlSeconds);
+  }
+
+  async getPendingRegistration(phone: string): Promise<PendingRegistration | null> {
+    const normalizedPhone = normalizePhoneNumber(phone);
+    const raw = await this.get(`otp:pending_reg:${normalizedPhone}`);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  async delPendingRegistration(phone: string): Promise<void> {
+    const normalizedPhone = normalizePhoneNumber(phone);
+    await this.del(`otp:pending_reg:${normalizedPhone}`);
+  }
+
+  async clearForTest(phone?: string): Promise<void> {
+    if (phone) {
+      const normalizedPhone = normalizePhoneNumber(phone);
+      await this.del(`otp:state:${normalizedPhone}`);
+      await this.del(`otp:cooldown:${normalizedPhone}`);
+      await this.del(`otp:pending_reg:${normalizedPhone}`);
+      await this.del(`otp:ratelimit:phone:${normalizedPhone}`);
+    } else {
+      this.memoryStore.clear();
+    }
   }
 }
 

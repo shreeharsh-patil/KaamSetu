@@ -31,6 +31,7 @@ export interface IJobDocument extends Document {
   status: string;
   assignedWorkerId?: Types.ObjectId | null;
   images: JobImage[];
+  matchingExpiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
@@ -116,6 +117,10 @@ const jobSchema = new Schema(
       ref: 'User',
       default: null,
     },
+    matchingExpiresAt: {
+      type: Date,
+      default: null,
+    },
     images: [
       {
         key: { type: String, required: true, trim: true },
@@ -172,6 +177,7 @@ export function toJobEntity(doc: IJobDocument): IJobEntity {
       height: img.height ?? undefined,
       mimeType: img.mimeType ?? undefined,
     })),
+    matchingExpiresAt: doc.matchingExpiresAt ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

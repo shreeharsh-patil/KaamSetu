@@ -5,6 +5,9 @@ import { verifyRefreshToken } from './token.util.js';
 import {
   requestOtpSchema,
   verifyOtpSchema,
+  signupRequestOtpSchema,
+  signupVerifyOtpSchema,
+  completeProfileSchema,
   refreshTokenSchema,
 } from '@kaamsetu/validation';
 import { UnauthorizedError } from '../../errors/index.js';
@@ -26,10 +29,15 @@ export async function requestOtp(req: Request, res: Response): Promise<void> {
   const parsed = requestOtpSchema.parse(req.body);
   const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '127.0.0.1';
 
-  const result = await authService.requestOtp(parsed.phone, ip);
+  const identifier = parsed.identifier || parsed.phone!;
+  const result = await authService.requestOtp(identifier, ip);
   res.status(200).json({
     success: true,
     data: result,
+    message: result.message,
+    cooldownSeconds: result.cooldownSeconds,
+    phone: result.phone,
+    devHint: result.devHint,
   });
 }
 
@@ -52,7 +60,70 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     data: {
       user: result.user,
       accessToken: result.accessToken,
+      requiresProfileCompletion: result.requiresProfileCompletion,
     },
+    user: result.user,
+    accessToken: result.accessToken,
+    requiresProfileCompletion: result.requiresProfileCompletion,
+  });
+}
+
+export async function signupRequestOtp(req: Request, res: Response): Promise<void> {
+  const parsed = signupRequestOtpSchema.parse(req.body);
+  const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '127.0.0.1';
+
+  const result = await authService.signupRequestOtp(parsed, ip);
+  res.status(200).json({
+    success: true,
+    data: result,
+    message: result.message,
+    cooldownSeconds: result.cooldownSeconds,
+    phone: result.phone,
+    devHint: result.devHint,
+  });
+}
+
+export async function signupVerifyOtp(req: Request, res: Response): Promise<void> {
+  const parsed = signupVerifyOtpSchema.parse(req.body);
+  const ip = req.ip || (req.headers['x-forwarded-for'] as string) || '127.0.0.1';
+  const userAgent = req.headers['user-agent'];
+
+  const result = await authService.signupVerifyOtp(parsed.phone, parsed.otp, {
+    ipAddress: ip,
+    userAgent,
+    deviceName: parsed.deviceName,
+  });
+
+  // Set rotating Refresh Token in HttpOnly cookie
+  res.cookie(REFRESH_COOKIE_NAME, result.refreshToken, getCookieOptions());
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user: result.user,
+      accessToken: result.accessToken,
+      requiresProfileCompletion: false,
+    },
+    user: result.user,
+    accessToken: result.accessToken,
+    requiresProfileCompletion: false,
+  });
+}
+
+export async function completeProfile(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new UnauthorizedError('Authentication required');
+  }
+
+  const parsed = completeProfileSchema.parse(req.body);
+  const updatedUser = await authService.completeProfile(req.user.id, parsed);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user: updatedUser,
+    },
+    user: updatedUser,
   });
 }
 

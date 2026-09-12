@@ -11,7 +11,13 @@ import {
 import { apiClient, setAccessToken, setOnAuthFailure } from "@/lib/api/client";
 import { syncSocketAuth, disconnectSocket } from "@/lib/socket/socket-client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import type { User, RequestOtpResponse, VerifyOtpResponse } from "./types";
+import type {
+  User,
+  RequestOtpResponse,
+  VerifyOtpResponse,
+  SignupRequestOtpPayload,
+  CompleteProfilePayload,
+} from "./types";
 
 interface AuthContextType {
   user: User | null;
@@ -20,8 +26,11 @@ interface AuthContextType {
   isLoading: boolean;
   pendingPhone: string | null;
   setPendingPhone: (phone: string | null) => void;
-  requestOtp: (phone: string, rolePreference?: "customer" | "worker") => Promise<RequestOtpResponse>;
+  requestOtp: (identifier: string, rolePreference?: "customer" | "worker") => Promise<RequestOtpResponse>;
   verifyOtp: (phone: string, otp: string) => Promise<User>;
+  signupRequestOtp: (payload: SignupRequestOtpPayload) => Promise<RequestOtpResponse>;
+  signupVerifyOtp: (phone: string, otp: string) => Promise<User>;
+  completeProfile: (payload: CompleteProfilePayload) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -122,8 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [handleUpdateToken]);
 
   const requestOtp = useCallback(
-    async (phone: string, rolePreference?: "customer" | "worker"): Promise<RequestOtpResponse> => {
-      setPendingPhone(phone);
+    async (identifier: string, rolePreference?: "customer" | "worker"): Promise<RequestOtpResponse> => {
+      const trimmed = identifier.trim();
+      const isEmail = trimmed.includes("@");
       if (rolePreference && typeof window !== "undefined") {
         sessionStorage.setItem("kaamsetu_pending_role", rolePreference);
       }
@@ -131,10 +141,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         API_ENDPOINTS.AUTH.REQUEST_OTP,
         {
           method: "POST",
-          body: { phone },
+          body: isEmail ? { identifier: trimmed } : { phone: trimmed },
           skipAuth: true,
         }
       );
+      if (res.phone) {
+        setPendingPhone(res.phone);
+      } else if (!isEmail) {
+        setPendingPhone(trimmed);
+      }
       return res;
     },
     [setPendingPhone]
@@ -164,6 +179,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return res.user;
     },
     [handleUpdateToken, setPendingPhone]
+  );
+
+  const signupRequestOtp = useCallback(
+    async (payload: SignupRequestOtpPayload): Promise<RequestOtpResponse> => {
+      setPendingPhone(payload.phone);
+      const res = await apiClient<RequestOtpResponse>(
+        API_ENDPOINTS.AUTH.SIGNUP_REQUEST_OTP,
+        {
+          method: "POST",
+          body: payload,
+          skipAuth: true,
+        }
+      );
+      return res;
+    },
+    [setPendingPhone]
+  );
+
+  const signupVerifyOtp = useCallback(
+    async (phone: string, otp: string): Promise<User> => {
+      const res = await apiClient<VerifyOtpResponse>(
+        API_ENDPOINTS.AUTH.SIGNUP_VERIFY_OTP,
+        {
+          method: "POST",
+          body: {
+            phone,
+            otp,
+            deviceName:
+              typeof navigator !== "undefined"
+                ? navigator.userAgent.slice(0, 100)
+                : "web-client",
+          },
+          skipAuth: true,
+        }
+      );
+
+      handleUpdateToken(res.accessToken);
+      setUser(res.user);
+      setPendingPhone(null);
+      return res.user;
+    },
+    [handleUpdateToken, setPendingPhone]
+  );
+
+  const completeProfile = useCallback(
+    async (payload: CompleteProfilePayload): Promise<User> => {
+      const res = await apiClient<{ user: User }>(
+        API_ENDPOINTS.AUTH.COMPLETE_PROFILE,
+        {
+          method: "POST",
+          body: payload,
+        }
+      );
+
+      setUser(res.user);
+      return res.user;
+    },
+    []
   );
 
   const logout = useCallback(async () => {
@@ -196,6 +269,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPendingPhone,
         requestOtp,
         verifyOtp,
+        signupRequestOtp,
+        signupVerifyOtp,
+        completeProfile,
         logout,
         refreshUser,
       }}

@@ -2,6 +2,9 @@ export const API_ENDPOINTS = {
   AUTH: {
     REQUEST_OTP: "/auth/request-otp",
     VERIFY_OTP: "/auth/verify-otp",
+    SIGNUP_REQUEST_OTP: "/auth/signup/request-otp",
+    SIGNUP_VERIFY_OTP: "/auth/signup/verify-otp",
+    COMPLETE_PROFILE: "/auth/complete-profile",
     REFRESH: "/auth/refresh",
     LOGOUT: "/auth/logout",
     LOGOUT_ALL: "/auth/logout-all",

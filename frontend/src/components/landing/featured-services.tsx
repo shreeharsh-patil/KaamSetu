@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   Wrench,
@@ -25,6 +26,7 @@ const CATEGORY_META: Record<
     badge: string;
     rateBenchmark: string;
     commonTasks: string[];
+    imageUrl: string;
   }
 > = {
   plumbing: {
@@ -33,6 +35,7 @@ const CATEGORY_META: Record<
     badge: "Plumbing",
     rateBenchmark: "₹349",
     commonTasks: ["Pipe Burst", "Drain Jetting", "Tap Repair", "Sanitary Fit"],
+    imageUrl: "/services/plumber.webp",
   },
   electrical: {
     icon: Zap,
@@ -40,6 +43,7 @@ const CATEGORY_META: Record<
     badge: "Electrical",
     rateBenchmark: "₹299",
     commonTasks: ["Tripping MCB", "Inverter Setup", "Concealed Wiring", "Switchboard"],
+    imageUrl: "/services/electrician.webp",
   },
   carpentry: {
     icon: Hammer,
@@ -47,6 +51,7 @@ const CATEGORY_META: Record<
     badge: "Carpentry",
     rateBenchmark: "₹399",
     commonTasks: ["Lock Repair", "Hinges", "Door Alignment", "Furniture Assembly"],
+    imageUrl: "/services/carpenter.webp",
   },
   painting: {
     icon: Paintbrush,
@@ -54,6 +59,7 @@ const CATEGORY_META: Record<
     badge: "Painting",
     rateBenchmark: "₹499",
     commonTasks: ["Waterproofing", "Wall Putty", "Interior Emulsion", "Texture Finish"],
+    imageUrl: "/services/painter.webp",
   },
   cleaning: {
     icon: Sparkles,
@@ -61,6 +67,7 @@ const CATEGORY_META: Record<
     badge: "Cleaning",
     rateBenchmark: "₹449",
     commonTasks: ["Deep Cleaning", "Kitchen Degrease", "Bathroom Descaling", "Floor Polish"],
+    imageUrl: "/services/cleaner.webp",
   },
   appliances: {
     icon: Tv,
@@ -68,6 +75,7 @@ const CATEGORY_META: Record<
     badge: "Appliances",
     rateBenchmark: "₹499",
     commonTasks: ["AC Jet Wash", "Gas Refill", "PCB Diagnosis", "Motor Servicing"],
+    imageUrl: "/services/appliance-repair.webp",
   },
   masonry: {
     icon: Building2,
@@ -75,6 +83,7 @@ const CATEGORY_META: Record<
     badge: "Masonry",
     rateBenchmark: "₹549",
     commonTasks: ["Tile Laying", "Plaster Patch", "Waterproofing", "Brickwork"],
+    imageUrl: "/services/default-service.webp",
   },
 };
 
@@ -127,17 +136,16 @@ export function FeaturedServices() {
         <div className="relative space-y-6">
           {activeCategories.map((category, index) => {
             const slugKey = category.slug.toLowerCase();
+            const metaKey = ({ electrician: "electrical", "ac-repair": "appliances", "appliance-repair": "appliances", "home-cleaning": "cleaning" } as Record<string, string>)[slugKey] ?? slugKey;
             const meta =
-              CATEGORY_META[slugKey] ||
-              Object.entries(CATEGORY_META).find(([key]) => slugKey.includes(key))?.[1] || {
-                icon: Wrench,
+              CATEGORY_META[metaKey] ||
+              Object.entries(CATEGORY_META).find(([key]) => metaKey.includes(key))?.[1] || {
+              icon: Wrench,
                 summary: `Professional ${category.name.toLowerCase()} services dispatched to verified local technicians.`,
                 badge: category.name,
                 rateBenchmark: "₹299",
-                commonTasks: ["Diagnostics", "Repair", "Replacement"],
+                commonTasks: ["Diagnostics", "Repair", "Replacement"], imageUrl: "/services/default-service.webp",
               };
-
-            const Icon = meta.icon;
 
             return (
               <div
@@ -150,10 +158,10 @@ export function FeaturedServices() {
               >
                 <article className="overflow-hidden rounded-2xl md:rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:border-[#203eec]/40 p-6 md:p-8">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    {/* Left: Icon & Details */}
+                    {/* Left: service image & details */}
                     <div className="flex items-start gap-5 flex-1">
-                      <div className="w-12 h-12 rounded-xl bg-[#203eec]/10 text-[#203eec] dark:text-blue-400 flex items-center justify-center shrink-0 mt-1">
-                        <Icon className="w-6 h-6" />
+                      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-2xl sm:w-[150px] sm:aspect-auto sm:h-[132px] md:h-[150px] md:w-[170px]">
+                        <Image src={meta.imageUrl} alt={`${category.name} professional at work`} fill sizes="(max-width: 640px) 100vw, (max-width: 768px) 150px, 170px" className="object-cover object-center" />
                       </div>
 
                       <div className="flex-1 min-w-0">

@@ -744,10 +744,45 @@ export const synthesizeSpeechInputSchema = z.object({
 });
 export type SynthesizeSpeechInputDto = z.infer<typeof synthesizeSpeechInputSchema>;
 
-// ---------------- Authentication Schemas (Phase 2) ----------------
-export const requestOtpSchema = z.object({
+// ---------------- Authentication Schemas (Phase 2 & Upgraded Auth) ----------------
+export const requestOtpSchema = z
+  .object({
+    phone: phoneSchema.optional(),
+    identifier: z.string().min(3).max(100).optional(),
+  })
+  .refine((data) => Boolean(data.phone || data.identifier), {
+    message: 'Either phone or identifier must be provided',
+  })
+  .transform((data) => {
+    const raw = (data.identifier || data.phone || '').trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+    if (isEmail) {
+      return {
+        type: 'email' as const,
+        identifier: raw.toLowerCase(),
+        email: raw.toLowerCase(),
+        phone: undefined,
+      };
+    }
+    const clean = raw.replace(/\D/g, '');
+    const normalizedPhone = clean.length === 10 ? `+91${clean}` : raw.startsWith('+') ? raw : `+${raw}`;
+    return {
+      type: 'phone' as const,
+      identifier: normalizedPhone,
+      phone: normalizedPhone,
+      email: undefined,
+    };
+  });
+export type RequestOtpInputDto = z.infer<typeof requestOtpSchema>;
+
+export const signupRequestOtpSchema = z.object({
+  firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name must be under 50 characters'),
+  lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name must be under 50 characters'),
+  email: z.string().trim().email('Invalid email address').max(100).toLowerCase(),
   phone: phoneSchema,
+  role: z.enum(['CUSTOMER', 'WORKER']).optional().default('CUSTOMER'),
 });
+export type SignupRequestOtpInputDto = z.infer<typeof signupRequestOtpSchema>;
 
 export const verifyOtpSchema = z.object({
   phone: phoneSchema,
@@ -756,10 +791,26 @@ export const verifyOtpSchema = z.object({
   // long User-Agent strings cannot block OTP verification.
   deviceName: z.string().transform((value) => value.trim().slice(0, 100)).optional(),
 });
+export type VerifyOtpInputDto = z.infer<typeof verifyOtpSchema>;
+
+export const signupVerifyOtpSchema = z.object({
+  phone: phoneSchema,
+  otp: z.string().regex(/^\d{6}$/, 'OTP must be a 6-digit numeric code'),
+  deviceName: z.string().transform((value) => value.trim().slice(0, 100)).optional(),
+});
+export type SignupVerifyOtpInputDto = z.infer<typeof signupVerifyOtpSchema>;
+
+export const completeProfileSchema = z.object({
+  firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name must be under 50 characters'),
+  lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name must be under 50 characters'),
+  email: z.string().trim().email('Invalid email address').max(100).toLowerCase(),
+});
+export type CompleteProfileInputDto = z.infer<typeof completeProfileSchema>;
 
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(10, 'Refresh token is required').optional(),
 });
+export type RefreshTokenInputDto = z.infer<typeof refreshTokenSchema>;
 
 // ---------------- Admin & Immutable Audit Schemas (Phase 12) ----------------
 

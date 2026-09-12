@@ -42,3 +42,5 @@ Thumbs.db
 !.vscode/extensions.json
 
 ai-product-portfolio/
+frontend/*.png
+!frontend/public/**

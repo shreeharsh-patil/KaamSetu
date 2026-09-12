@@ -37,7 +37,10 @@ export function SidebarAccount({ collapsed, onNavigate }: SidebarAccountProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const displayName = user?.fullName?.trim() || "Account";
+  const displayName =
+    user?.fullName?.trim() ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    "Account";
   const maskedPhone = user ? maskPhone(user.phoneNumber) : "";
 
   // Close on outside click / Escape.

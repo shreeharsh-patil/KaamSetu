@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   applicationName: siteConfig.name,
   manifest: "/site.webmanifest",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/icon.png",
+    apple: "/icon.png",
   },
   openGraph: {
     type: "website",

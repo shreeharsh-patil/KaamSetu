@@ -55,6 +55,10 @@ export class ApiError extends Error {
     return this.status === 429;
   }
 
+  public isConflict(): boolean {
+    return this.status === 409 || this.code === "CONFLICT";
+  }
+
   public isNetworkError(): boolean {
     return this.status === 0;
   }

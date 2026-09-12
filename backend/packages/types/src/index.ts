@@ -84,13 +84,19 @@ export interface IUserEntity {
   id: string;
   role: UserRole;
   phoneNumber: string;
+  phone?: string;
   phoneVerified: boolean;
+  phoneVerifiedAt?: Date | null | undefined;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  fullName?: string | undefined;
   email?: string | null | undefined;
   emailVerified: boolean;
   preferredLanguage: string;
   status: UserStatus;
   profilePhotoUrl?: string | null | undefined;
   lastLoginAt?: Date | null | undefined;
+  requiresProfileCompletion?: boolean | undefined;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null | undefined;
@@ -100,6 +106,9 @@ export interface ICreateUserInput {
   role?: UserRole | undefined;
   phoneNumber: string;
   phoneVerified?: boolean | undefined;
+  phoneVerifiedAt?: Date | null | undefined;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
   email?: string | null | undefined;
   emailVerified?: boolean | undefined;
   preferredLanguage?: string | undefined;
@@ -111,6 +120,9 @@ export interface IUpdateUserInput {
   role?: UserRole | undefined;
   phoneNumber?: string | undefined;
   phoneVerified?: boolean | undefined;
+  phoneVerifiedAt?: Date | null | undefined;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
   email?: string | null | undefined;
   emailVerified?: boolean | undefined;
   preferredLanguage?: string | undefined;
@@ -508,6 +520,7 @@ export interface IJobEntity {
   status: JobStatus;
   assignedWorkerId?: string | null | undefined;
   images: JobImage[];
+  matchingExpiresAt?: Date | null | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -689,9 +702,34 @@ export interface MatchingWeights {
 
 export interface MatchingConfig {
   weights: MatchingWeights;
-  waveSize: number;             // default 3
-  offerExpiryMinutes: number;   // default 5
-  maxSearchRadiusKm: number;    // default 30
+  waveSize: number;                   // default 3
+  offerExpirySeconds?: number;        // default 30
+  offerExpiryMinutes: number;         // default 0.5 (30s)
+  totalMatchingTimeoutSeconds?: number; // default 90
+  maxSearchRadiusKm: number;          // default 50
+}
+
+export type MatchingOutcome =
+  | 'OFFERS_DISPATCHED'
+  | 'NO_ELIGIBLE_WORKERS'
+  | 'ALL_ELIGIBLE_WORKERS_EXHAUSTED'
+  | 'JOB_TERMINAL_OR_ASSIGNED'
+  | 'EXPIRED';
+
+export interface JobMatchingStatusDto {
+  jobId: string;
+  status: JobStatus;
+  matching: {
+    startedAt?: string | null;
+    expiresAt?: string | null;
+    remainingSeconds?: number;
+    candidatesFound: number;
+    offersSent: number;
+    pendingOffers: number;
+    currentWave: number;
+    maxWaves: number;
+  };
+  outcomeReason: string | null;
 }
 
 export interface ListJobOffersFilters {
@@ -799,11 +837,36 @@ export interface AuthTokens {
 export interface RequestOtpResponse {
   message: string;
   cooldownSeconds: number;
+  phone?: string | undefined;
+  requiresProfileCompletion?: boolean | undefined;
+  devHint?: string | undefined;
 }
 
 export interface VerifyOtpResponse {
   user: IUserEntity;
   accessToken: string;
+  refreshToken?: string | undefined;
+  requiresProfileCompletion?: boolean | undefined;
+}
+
+export interface SignupRequestOtpInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role?: UserRole | 'CUSTOMER' | 'WORKER' | undefined;
+}
+
+export interface SignupVerifyOtpInput {
+  phone: string;
+  otp: string;
+  deviceName?: string | undefined;
+}
+
+export interface CompleteProfileInput {
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 export interface RefreshTokenResponse {

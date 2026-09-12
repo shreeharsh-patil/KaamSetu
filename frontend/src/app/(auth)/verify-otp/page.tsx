@@ -158,6 +158,12 @@ function VerifyOtpContent() {
       const verifiedUser = await verifyOtp(effectivePhone, otpString);
       sessionStorage.removeItem("kaamsetu_pending_role");
 
+      // Redirect legacy users with incomplete profile to /complete-profile
+      if (verifiedUser.requiresProfileCompletion) {
+        router.replace(`/complete-profile${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`);
+        return;
+      }
+
       // Check if redirect query param exists
       if (redirect) {
         router.replace(redirect);
@@ -241,6 +247,12 @@ function VerifyOtpContent() {
           <Alert variant="destructive" className="text-xs">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+
+        {process.env.NODE_ENV !== "production" && (
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-2 text-center text-xs text-amber-700 dark:text-amber-300 font-medium">
+            Development OTP: <span className="font-mono font-bold">123456</span>
+          </div>
         )}
 
         {/* 6-box OTP input field */}

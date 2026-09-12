@@ -23,7 +23,7 @@ export interface IJobRepository {
   updateStatus(
     id: string,
     newStatus: JobStatus,
-    extra?: { assignedWorkerId?: string | null },
+    extra?: { assignedWorkerId?: string | null; matchingExpiresAt?: Date | null },
     session?: ClientSession
   ): Promise<IJobEntity | null>;
   listJobsWithCursor(filters: ListJobsFilters): Promise<CursorPage<IJobEntity>>;
@@ -140,7 +140,7 @@ export class MongoJobRepository implements IJobRepository {
   async updateStatus(
     id: string,
     newStatus: JobStatus,
-    extra?: { assignedWorkerId?: string | null },
+    extra?: { assignedWorkerId?: string | null; matchingExpiresAt?: Date | null },
     session?: ClientSession
   ): Promise<IJobEntity | null> {
     if (!Types.ObjectId.isValid(id)) {
@@ -155,6 +155,10 @@ export class MongoJobRepository implements IJobRepository {
       setFields['assignedWorkerId'] = extra.assignedWorkerId
         ? new Types.ObjectId(extra.assignedWorkerId)
         : null;
+    }
+
+    if (extra?.matchingExpiresAt !== undefined) {
+      setFields['matchingExpiresAt'] = extra.matchingExpiresAt;
     }
 
     const updated = await JobModel.findOneAndUpdate(

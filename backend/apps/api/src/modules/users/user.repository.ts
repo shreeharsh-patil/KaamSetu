@@ -7,6 +7,7 @@ export interface IUserRepository {
   findById(id: string, includeDeleted?: boolean): Promise<IUserEntity | null>;
   findByPhone(phoneNumber: string, includeDeleted?: boolean): Promise<IUserEntity | null>;
   findByEmail(email: string): Promise<IUserEntity | null>;
+  findByIdentifier(identifier: string): Promise<IUserEntity | null>;
   create(data: ICreateUserInput, session?: ClientSession | null): Promise<IUserEntity>;
   update(id: string, data: IUpdateUserInput, session?: ClientSession | null): Promise<IUserEntity | null>;
   softDelete(id: string, session?: ClientSession | null): Promise<boolean>;
@@ -45,6 +46,20 @@ export class UserRepository implements IUserRepository {
     return doc ? mapUserDocumentToEntity(doc) : null;
   }
 
+  async findByIdentifier(identifier: string): Promise<IUserEntity | null> {
+    const raw = identifier.trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+    if (isEmail) {
+      return this.findByEmail(raw);
+    }
+    try {
+      const normalized = normalizePhoneNumber(raw);
+      return this.findByPhone(normalized);
+    } catch {
+      return this.findByPhone(raw);
+    }
+  }
+
   async create(data: ICreateUserInput, session?: ClientSession | null): Promise<IUserEntity> {
     const normalizedPhone = normalizePhoneNumber(data.phoneNumber);
 
@@ -53,6 +68,9 @@ export class UserRepository implements IUserRepository {
       role: data.role,
       status: data.status,
       phoneVerified: data.phoneVerified,
+      phoneVerifiedAt: data.phoneVerifiedAt ?? (data.phoneVerified ? new Date() : null),
+      firstName: data.firstName ? data.firstName.trim() : null,
+      lastName: data.lastName ? data.lastName.trim() : null,
       emailVerified: data.emailVerified,
       preferredLanguage: data.preferredLanguage,
       profilePhotoUrl: data.profilePhotoUrl,
@@ -78,6 +96,15 @@ export class UserRepository implements IUserRepository {
     }
     if (data.email !== undefined) {
       updateData['email'] = data.email ? data.email.toLowerCase().trim() : null;
+    }
+    if (data.firstName !== undefined) {
+      updateData['firstName'] = data.firstName ? data.firstName.trim() : null;
+    }
+    if (data.lastName !== undefined) {
+      updateData['lastName'] = data.lastName ? data.lastName.trim() : null;
+    }
+    if (data.phoneVerifiedAt !== undefined) {
+      updateData['phoneVerifiedAt'] = data.phoneVerifiedAt;
     }
 
     const doc = await UserModel.findOneAndUpdate(
