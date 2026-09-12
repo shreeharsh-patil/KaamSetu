@@ -255,7 +255,7 @@ export interface IWorkerProfileEntity {
   skillIds?: string[] | undefined;
   skills: IWorkerSkillItem[];
   languages: string[];
-  serviceLocation: IGeoPoint;
+  serviceLocation?: IGeoPoint | undefined;
   serviceArea?: {
     type: 'Point';
     coordinates: [number, number];
@@ -265,6 +265,7 @@ export interface IWorkerProfileEntity {
     pincode?: string | null | undefined;
   } | undefined;
   serviceRadiusKm: number;
+  onboardingComplete: boolean;
   availabilityStatus: WorkerAvailability;
   isAvailable?: boolean | undefined;
   pricing: IWorkerPricing;
@@ -301,6 +302,7 @@ export interface ICreateWorkerProfileInput {
     pincode?: string | null | undefined;
   } | undefined;
   serviceRadiusKm?: number | undefined;
+  onboardingComplete?: boolean | undefined;
   availabilityStatus?: WorkerAvailability | undefined;
   pricing?: IWorkerPricing | undefined;
   hourlyRate?: number | null | undefined;
@@ -319,6 +321,7 @@ export interface IUpdateWorkerProfileInput {
   serviceLocation?: IGeoPoint | undefined;
   serviceArea?: Partial<IWorkerProfileEntity['serviceArea']> | undefined;
   serviceRadiusKm?: number | undefined;
+  onboardingComplete?: boolean | undefined;
   availabilityStatus?: WorkerAvailability | undefined;
   pricing?: IWorkerPricing | undefined;
   portfolio?: IWorkerPortfolioItem[] | undefined;
@@ -344,7 +347,11 @@ export interface IPublicWorkerProfile {
     verified: boolean;
   }>;
   languages: string[];
-  serviceLocation: IGeoPoint;
+  serviceArea: {
+    city?: string | null | undefined;
+    pincode?: string | null | undefined;
+    radiusKm: number;
+  };
   serviceRadiusKm: number;
   availabilityStatus: WorkerAvailability;
   pricing: IWorkerPricing;
@@ -355,6 +362,26 @@ export interface IPublicWorkerProfile {
   };
   verificationStatus: WorkerVerificationStatus;
   createdAt: Date;
+}
+
+export interface IWorkerEnrollmentInput {
+  displayName: string;
+  primaryCategoryId: string;
+  skills: Array<{
+    skillId: string;
+    experienceYears: number;
+    level: SkillLevel;
+  }>;
+  bio?: string | null | undefined;
+  languages: string[];
+  serviceLocation: IGeoPoint;
+  serviceArea: {
+    city: string;
+    pincode: string;
+  };
+  serviceRadiusKm: number;
+  pricing: IWorkerPricing;
+  availabilityStatus: WorkerAvailability;
 }
 
 // ---------------- Customer Profile Types (Phase 3) ----------------
@@ -485,6 +512,29 @@ export interface IJobEntity {
   updatedAt: Date;
 }
 
+/** Explicit API read model; components do not depend on Mongoose documents. */
+export interface IJobView extends IJobEntity {
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  customer: {
+    id: string;
+    displayName: string;
+    phoneNumber?: string | undefined;
+  };
+  assignedWorker?: {
+    id: string;
+    displayName: string;
+    phoneNumber?: string | undefined;
+    profilePhotoUrl?: string | null | undefined;
+    rating: IAggregateRating;
+    skills: string[];
+    verificationStatus: WorkerVerificationStatus;
+  } | null | undefined;
+}
+
 export interface ICreateJobInput {
   customerId: string;
   categoryId: string;
@@ -593,6 +643,27 @@ export interface IJobOfferEntity {
   respondedAt?: Date | null | undefined;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Worker-facing offer DTO. Exact job coordinates, street address, and customer data are omitted. */
+export interface IJobOfferView {
+  id: string;
+  jobId: string;
+  distanceKm: number;
+  matchScore: number;
+  scoreBreakdown: ScoreBreakdown;
+  status: JobOfferStatus;
+  expiresAt: Date;
+  createdAt: Date;
+  job: {
+    category: { id: string; name: string; slug: string };
+    title: string;
+    description?: string | null | undefined;
+    urgency: JobUrgency;
+    approximateLocality: string;
+    preferredTime: Date;
+    estimatedAmount?: number | null | undefined;
+  };
 }
 
 export interface ICreateJobOfferInput {

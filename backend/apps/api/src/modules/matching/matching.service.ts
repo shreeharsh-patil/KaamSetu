@@ -120,7 +120,11 @@ export class MatchingService {
       }
 
       // Filter: Distance must be within worker's own declared service radius
-      const workerCoords = worker.serviceLocation.coordinates;
+      const serviceLocation = worker.serviceLocation;
+      if (!serviceLocation?.coordinates) {
+        continue;
+      }
+      const workerCoords = serviceLocation.coordinates;
       const distanceKm = calculateHaversineDistanceKm(
         [jobLng, jobLat],
         [workerCoords[0], workerCoords[1]]

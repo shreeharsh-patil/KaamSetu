@@ -8,6 +8,7 @@ import {
 } from '@kaamsetu/validation';
 import { UnauthorizedError, BadRequestError } from '../../errors/index.js';
 import { UserRole } from '@kaamsetu/types';
+import { jobViewService } from './job-view.service.js';
 
 function requireUser(req: Request): { id: string; role: UserRole } {
   if (!req.user) {
@@ -25,7 +26,7 @@ export async function createJob(req: Request, res: Response): Promise<void> {
 
   const job = await jobService.createJob(actor.id, actor.role, input);
 
-  res.status(201).json({ success: true, data: { job } });
+  res.status(201).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /**
@@ -48,7 +49,7 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
   res.status(200).json({
     success: true,
     data: {
-      jobs: page.items,
+      jobs: await jobViewService.toViews(page.items, actor),
       nextCursor: page.nextCursor,
       hasMore: page.hasMore,
     },
@@ -66,7 +67,7 @@ export async function getJob(req: Request, res: Response): Promise<void> {
 
   const job = await jobService.getJobById(id, actor);
 
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 export const getJobById = getJob;
@@ -85,7 +86,7 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
   const input = updateJobSchema.parse(req.body);
   const job = await jobService.updateJob(id, actor, input);
 
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /** POST /api/v1/jobs/:id/publish — DRAFT -> OPEN via the state machine */
@@ -99,7 +100,7 @@ export async function publishJob(req: Request, res: Response): Promise<void> {
 
   const job = await jobService.publishJob(id, actor);
 
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /** POST /api/v1/jobs/:id/cancel — active -> CANCELLED via the state machine */
@@ -114,7 +115,7 @@ export async function cancelJob(req: Request, res: Response): Promise<void> {
   const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
   const job = await jobService.cancelJob(id, actor, reason ?? '');
 
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /** GET /api/v1/jobs/:id/events — immutable audit trail */
@@ -141,7 +142,7 @@ export async function startTravel(req: Request, res: Response): Promise<void> {
   }
 
   const job = await jobService.startTravel(id, actor.id);
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /** POST /api/v1/jobs/:id/arrive — assigned worker arrives at job location */
@@ -154,7 +155,7 @@ export async function arrive(req: Request, res: Response): Promise<void> {
   }
 
   const job = await jobService.arrive(id, actor.id);
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /** POST /api/v1/jobs/:id/start — assigned worker starts work */
@@ -167,7 +168,7 @@ export async function startJob(req: Request, res: Response): Promise<void> {
   }
 
   const job = await jobService.startJob(id, actor.id);
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }
 
 /** POST /api/v1/jobs/:id/complete — assigned worker completes work */
@@ -180,5 +181,5 @@ export async function completeJob(req: Request, res: Response): Promise<void> {
   }
 
   const job = await jobService.completeJob(id, actor.id);
-  res.status(200).json({ success: true, data: { job } });
+  res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
 }

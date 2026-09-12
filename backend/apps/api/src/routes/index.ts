@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { healthRoutes } from '../modules/health/health.routes.js';
 import { authRoutes } from '../modules/auth/auth.routes.js';
+import { userRoutes } from '../modules/users/user.routes.js';
 import { workerRoutes } from '../modules/worker-profiles/worker-profile.routes.js';
 import { customerRoutes } from '../modules/customer-profiles/customer-profile.routes.js';
 import { jobRoutes } from '../modules/jobs/job.routes.js';
@@ -20,6 +21,7 @@ import { aiRoutes } from '../modules/ai/ai.routes.js';
 import { speechRoutes } from '../modules/speech/speech.routes.js';
 import { adminRoutes } from '../modules/admin/admin.routes.js';
 import { uploadRoutes } from '../modules/uploads/upload.routes.js';
+import { serviceCategoryRoutes } from '../modules/service-categories/service-category.routes.js';
 import { authenticate, requireRole } from '../middlewares/auth.middleware.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
@@ -39,6 +41,8 @@ export function createApiRouter(): Router {
 
   // Auth endpoints under /api/v1/auth
   apiV1Router.use('/auth', authRoutes);
+  apiV1Router.use('/', userRoutes);
+  apiV1Router.use('/categories', serviceCategoryRoutes);
 
   // Worker profile endpoints under /api/v1/workers
   apiV1Router.use('/workers', workerRoutes);

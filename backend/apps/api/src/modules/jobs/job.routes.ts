@@ -30,7 +30,7 @@ router.post(
 router.get(
   '/',
   authenticate(),
-  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.ADMIN),
+  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.SUPPORT, UserRole.ADMIN),
   asyncHandler(listJobs)
 );
 
@@ -38,7 +38,7 @@ router.get(
 router.get(
   '/:id',
   authenticate(),
-  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.ADMIN),
+  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.SUPPORT, UserRole.ADMIN),
   asyncHandler(getJob)
 );
 
@@ -62,7 +62,7 @@ router.post(
 router.post(
   '/:id/cancel',
   authenticate(),
-  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.ADMIN),
+  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.SUPPORT, UserRole.ADMIN),
   asyncHandler(cancelJob)
 );
 

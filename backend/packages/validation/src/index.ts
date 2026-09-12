@@ -213,6 +213,41 @@ export const patchWorkerMeSchema = z.object({
   portfolio: z.array(workerPortfolioItemSchema).max(20).optional(),
 });
 
+/** Complete, controlled CUSTOMER -> WORKER enrollment payload. */
+export const enrollWorkerSchema = z.object({
+  displayName: z.string().min(2).max(100),
+  primaryCategoryId: objectIdSchema,
+  skills: z
+    .array(
+      z.object({
+        skillId: objectIdSchema,
+        experienceYears: z.number().min(0).max(50),
+        level: z.nativeEnum(SkillLevel).default(SkillLevel.INTERMEDIATE),
+      })
+    )
+    .min(1, 'At least one skill is required')
+    .max(20),
+  bio: z.string().max(1000).nullable().optional(),
+  languages: z.array(z.string().min(2).max(10)).min(1).max(10),
+  serviceLocation: z.object({
+    type: z.literal('Point').default('Point'),
+    coordinates: coordinatesSchema.refine(([lng, lat]) => !(lng === 0 && lat === 0), {
+      message: 'A real service location is required',
+    }),
+  }),
+  serviceArea: z.object({
+    city: z.string().min(2).max(100),
+    pincode: z.string().regex(/^\d{6}$/, 'Invalid Indian 6-digit pincode'),
+  }),
+  serviceRadiusKm: serviceRadiusSchema,
+  pricing: workerPricingSchema.refine(
+    (pricing) => pricing.hourlyRate != null || Boolean(pricing.customRateDescription),
+    { message: 'An hourly rate or custom rate description is required' }
+  ),
+  availabilityStatus: z.nativeEnum(WorkerAvailability).default(WorkerAvailability.OFFLINE),
+});
+export type EnrollWorkerInputDto = z.infer<typeof enrollWorkerSchema>;
+
 // Customer Profile Validation Schemas
 export const customerAddressSchema = z.object({
   id: z.string().optional(),
