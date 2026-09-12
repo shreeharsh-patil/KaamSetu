@@ -131,7 +131,7 @@ export async function connectMongoDB(config: MongoConfig): Promise<typeof mongoo
       },
       `Failed to connect to MongoDB: ${diagnosis}`
     );
-    throw new Error(`${diagnosis} (Underlying error: ${err.message})`);
+    throw new Error(`${diagnosis} (Underlying error: ${err.message})`, { cause: error });
   }
 }
 
