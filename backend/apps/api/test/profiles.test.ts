@@ -163,9 +163,12 @@ describe('Worker and Customer Profiles (Phase 3)', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.userId).toBe(workerUser.id);
       expect(res.body.data.displayName).toBe('Skilled Worker');
-      expect(res.body.data.serviceLocation.type).toBe('Point');
+      // A fresh auto-created profile has no location yet (privacy: never invent coordinates);
+      // the worker explicitly sets it via PUT /workers/me/location (tested below).
+      expect(res.body.data.serviceLocation).toBeUndefined();
       expect(res.body.data.serviceRadiusKm).toBe(15);
-      expect(res.body.data.availabilityStatus).toBe(WorkerAvailability.AVAILABLE);
+      // New workers start OFFLINE (never surface in matching until they opt in via PUT /me/availability)
+      expect(res.body.data.availabilityStatus).toBe(WorkerAvailability.OFFLINE);
       expect(res.body.data.verificationStatus).toBe(WorkerVerificationStatus.UNVERIFIED);
     });
 
@@ -378,7 +381,9 @@ describe('Worker and Customer Profiles (Phase 3)', () => {
       expect(publicRes.body.success).toBe(true);
       expect(publicRes.body.data.id).toBe(workerId);
       expect(publicRes.body.data.displayName).toBe('Vikram Rajput');
-      expect(publicRes.body.data.serviceLocation.coordinates).toBeDefined();
+      // Privacy: exact coordinates must NOT be exposed publicly; only service area summary
+      expect(publicRes.body.data.serviceLocation).toBeUndefined();
+      expect(publicRes.body.data.serviceArea.radiusKm).toBeDefined();
       expect(publicRes.body.data.skills[0].skillName).toBe('Electrical Wiring');
 
       // Sanitization: Ensure internal sensitive fields are not exposed in public profile

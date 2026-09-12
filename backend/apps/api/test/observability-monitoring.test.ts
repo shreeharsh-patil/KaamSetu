@@ -7,15 +7,67 @@ import * as redisModule from '../src/database/redis.js';
 import { metricsService } from '../src/observability/metrics.service.js';
 import { sentryService } from '../src/observability/sentry.service.js';
 import { NotificationQueue } from '../src/modules/notifications/queue/notification.queue.js';
-import { NotificationChannel, INotificationEntity } from '@kaamsetu/types';
+import { NotificationChannel, INotificationEntity, UserRole } from '@kaamsetu/types';
+import { userRepository } from '../src/modules/users/user.repository.js';
+import { sessionRepository } from '../src/modules/sessions/session.repository.js';
+import { signAccessToken } from '../src/modules/auth/token.util.js';
 
 const TEST_MONGODB_URI =
   process.env['MONGODB_URI'] || 'mongodb://localhost:27017/kaamsetu_test';
 
 describe('Observability, Metrics & Production Operations (Phase 14)', () => {
+  let adminToken: string;
+
   beforeAll(async () => {
     await connectMongoDB({ uri: TEST_MONGODB_URI });
     metricsService.reset();
+
+    // /metrics is admin-gated (security fix) — create an admin session for it.
+    const PHONE_PREFIX = '+9195595';
+    await UserModelCleanupHelper();
+
+    async function UserModelCleanupHelper(): Promise<void> {
+      const ids = (
+        await UserModelFindHelper()
+      ).map((u: { _id: unknown }) => u._id);
+      if (ids.length > 0) {
+        await SessionModelDeleteHelper(ids);
+      }
+      await userRepositoryDeleteHelper();
+    }
+
+    async function UserModelFindHelper() {
+      const { UserModel } = await import('../src/modules/users/user.model.js');
+      return UserModel.find({ phoneNumber: { $regex: `^\\${PHONE_PREFIX}` } })
+        .select('_id')
+        .lean();
+    }
+
+    async function SessionModelDeleteHelper(ids: unknown[]) {
+      const { SessionModel } = await import('../src/modules/sessions/session.model.js');
+      await SessionModel.deleteMany({ userId: { $in: ids } });
+    }
+
+    async function userRepositoryDeleteHelper(): Promise<void> {
+      const { UserModel } = await import('../src/modules/users/user.model.js');
+      await UserModel.deleteMany({ phoneNumber: { $regex: `^\\${PHONE_PREFIX}` } });
+    }
+
+    const adminUser = await userRepository.create({
+      phoneNumber: `${PHONE_PREFIX}00001`,
+      role: UserRole.ADMIN,
+    });
+    const sess = await sessionRepository.create({
+      userId: adminUser.id,
+      refreshTokenHash: 'phase14-metrics-admin',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    adminToken = signAccessToken({
+      userId: adminUser.id,
+      role: adminUser.role,
+      sessionId: sess.id,
+      familyId: sess.familyId,
+    });
   });
 
   afterAll(async () => {
@@ -76,7 +128,9 @@ describe('Observability, Metrics & Production Operations (Phase 14)', () => {
     });
 
     it('GET /metrics returns standard OpenMetrics / Prometheus text output', async () => {
-      const res = await request(app).get('/metrics');
+      const res = await request(app)
+        .get('/metrics')
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toContain('text/plain');
@@ -93,7 +147,9 @@ describe('Observability, Metrics & Production Operations (Phase 14)', () => {
     });
 
     it('GET /metrics?format=json returns comprehensive JSON metrics snapshot', async () => {
-      const res = await request(app).get('/metrics?format=json');
+      const res = await request(app)
+        .get('/metrics?format=json')
+        .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

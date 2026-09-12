@@ -340,7 +340,10 @@ describe('Geospatial Matching & Job Offers (Phase 5)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.offer.id).toBe(offerWorker1Id);
-      expect(res.body.data.offer.workerId).toBe(worker1.id);
+      // Privacy view: recipient verified implicitly (owner-only access), no raw internal IDs
+      expect(res.body.data.offer.jobId).toBeDefined();
+      expect(res.body.data.offer.job.title).toBeDefined();
+      expect(res.body.data.offer.job.approximateLocality).toBeDefined();
     });
 
     it('GET /api/v1/offers/:id should forbid worker from viewing another workers offer', async () => {

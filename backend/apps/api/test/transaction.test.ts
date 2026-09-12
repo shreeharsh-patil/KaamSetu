@@ -37,4 +37,19 @@ describe('Database withTransaction Helper (Phase 1)', () => {
     const found = await userRepository.findById(result.id);
     expect(found).not.toBeNull();
   });
+
+  it('rolls back a failed multi-document transaction when the test MongoDB is a replica set', async () => {
+    const hello = await UserModel.db.db?.admin().command({ hello: 1 });
+    if (!hello?.setName) return; // Local standalone development keeps the documented fallback.
+
+    const phoneNumber = '9999700002';
+    await expect(
+      withTransaction(async (session) => {
+        await userRepository.create({ phoneNumber, role: UserRole.CUSTOMER }, session);
+        throw new Error('forced failure after first write');
+      })
+    ).rejects.toThrow('forced failure after first write');
+
+    expect(await UserModel.findOne({ phoneNumber: '+919999700002' })).toBeNull();
+  });
 });

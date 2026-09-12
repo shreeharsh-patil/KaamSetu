@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // The race suite intentionally drives 50 authenticated writes through Mongo.
+    // Five seconds is too short on CI and can leave timed-out requests running
+    // into the next assertion, so use a realistic integration-test budget.
+    testTimeout: 30_000,
     include: ['test/**/*.test.ts'],
     env: {
       NODE_ENV: 'test',
