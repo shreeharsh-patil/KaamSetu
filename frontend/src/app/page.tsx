@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Wrench,
   Zap,
@@ -16,11 +17,7 @@ import {
   Search,
   Star,
   MapPin,
-  Users,
-  Briefcase,
-  Layers,
   ChevronRight,
-  Sliders,
   BellRing,
   IndianRupee,
   Radio,
@@ -30,12 +27,9 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { PriceDisplay } from "@/components/shared/price-display";
+import { useAuth } from "@/features/auth/use-auth";
+import { useState } from "react";
 
 import { useTranslation } from "@/lib/i18n/i18n-context";
 
@@ -177,15 +171,20 @@ const MOCK_JOB_LEADS = [
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const [activeRole, setActiveRole] = useState<"customer" | "worker">("customer");
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [showDevAudit, setShowDevAudit] = useState(false);
 
-  // Phase 1 verification demo states
-  const [testInput, setTestInput] = useState("");
-  const [testSwitch, setTestSwitch] = useState(true);
-  const [testCheckbox, setTestCheckbox] = useState(true);
+  // Redirect admins to admin dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "admin") {
+      router.replace("/admin");
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Determine which view to show based on user role
+  const showWorkerView = isAuthenticated && user?.role === "worker";
 
   // Filter jobs for worker mode
   const filteredJobs = MOCK_JOB_LEADS.filter((job) => {
@@ -198,49 +197,18 @@ export default function HomePage() {
     return matchesCategory && matchesSearch;
   });
 
+  // Don't render for admins (they're being redirected)
+  if (isAuthenticated && user?.role === "admin") {
+    return null;
+  }
+
   return (
     <div className="py-4 sm:py-8 space-y-10 sm:space-y-12">
       <Container className="space-y-8">
-        {/* Role Switcher Pill */}
-        <div className="flex justify-center">
-          <div className="inline-flex p-1 rounded-full bg-secondary border border-border/80 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveRole("customer");
-                setSelectedCategory("all");
-              }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                activeRole === "customer"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              <span>{t("home.roleHire", "Hire Workers (Customer)")}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveRole("worker");
-                setSelectedCategory("all");
-              }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                activeRole === "worker"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Briefcase className="h-4 w-4" />
-              <span>{t("home.roleEarn", "Find Jobs & Earn (Worker)")}</span>
-            </button>
-          </div>
-        </div>
-
         {/* ---------------------------------------------------- */}
-        {/* VIEW 1: CUSTOMER VIEW (Hire Workers)                */}
+        {/* CUSTOMER VIEW (Default for guests and customers)     */}
         {/* ---------------------------------------------------- */}
-        {activeRole === "customer" ? (
+        {!showWorkerView ? (
           <>
             {/* KaamBazaar Hero Navy Banner */}
             <div className="relative overflow-hidden rounded-3xl hero-navy-card p-6 sm:p-10 shadow-lg border border-primary/20">
@@ -497,10 +465,29 @@ export default function HomePage() {
                 </div>
               </Card>
             </div>
+
+            {/* Sign In CTA for guests */}
+            {!isAuthenticated && (
+              <div className="rounded-3xl border border-border/80 bg-gradient-to-r from-primary/5 via-secondary/40 to-background p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 bazaar-card-shadow">
+                <div className="space-y-1.5 text-center md:text-left">
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground">
+                    {t("home.ctaTitle", "Join KaamSetu Today")}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
+                    {t("home.ctaDescription", "Sign in to book services instantly, or register as a verified worker to start earning. One phone number, one platform.")}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild className="rounded-xl px-5 font-bold">
+                    <Link href="/login">{t("nav.login", "Sign In")}</Link>
+                  </Button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           /* ---------------------------------------------------- */
-          /* VIEW 2: WORKER VIEW (Find Jobs & Earn)              */
+          /* WORKER VIEW (shown when user.role === "worker")      */
           /* ---------------------------------------------------- */
           <>
             {/* KaamBazaar Hero Navy Banner for Workers */}
@@ -697,7 +684,7 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Worker Benefits & Guarantees (Matching Screen 8 & 9) */}
+            {/* Worker Benefits & Guarantees */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
               <Card className="p-5 flex items-start gap-3.5 border-border/80 bazaar-card-shadow">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950">
@@ -749,102 +736,6 @@ export default function HomePage() {
             </div>
           </>
         )}
-
-        {/* Portals Gateway */}
-        <div className="rounded-3xl border border-border/80 bg-gradient-to-r from-primary/5 via-secondary/40 to-background p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 bazaar-card-shadow">
-          <div className="space-y-1.5 text-center md:text-left">
-            <h3 className="text-lg sm:text-xl font-bold text-foreground">
-              {activeRole === "customer"
-                ? "Are you a skilled trades professional?"
-                : "Looking to hire a skilled tradesperson?"}
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
-              {activeRole === "customer"
-                ? "Receive high-paying local jobs without middlemen fees. Build your verified reputation, track net earnings, and get paid instantly."
-                : "Post your household task in 60 seconds. Nearby verified electricians, plumbers, carpenters and painters will respond immediately."}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {activeRole === "customer" ? (
-              <>
-                <Button asChild variant="outline" className="rounded-xl px-5">
-                  <Link href="/worker">{t("header.workerPortal", "Worker Dashboard")}</Link>
-                </Button>
-                <Button asChild className="rounded-xl px-5 font-bold">
-                  <Link href="/onboarding">{t("header.earn", "Join as a Worker")}</Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button asChild variant="outline" className="rounded-xl px-5">
-                  <Link href="/customer">{t("header.customerPortal", "Customer Portal")}</Link>
-                </Button>
-                <Button asChild className="rounded-xl px-5 font-bold">
-                  <Link href="/customer/jobs/new">{t("customer.postJob", "Post a Job Request")}</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Developer & Technical Primitives Drawer (Preserved from Phase 1) */}
-        <div className="pt-6 border-t border-border/60">
-          <button
-            type="button"
-            onClick={() => setShowDevAudit(!showDevAudit)}
-            className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Sliders className="h-3.5 w-3.5" />
-            <span>{showDevAudit ? "Hide Technical Primitives Shelf" : "Show Technical Primitives Shelf (Design System & Contract Verification)"}</span>
-          </button>
-
-          {showDevAudit && (
-            <div className="mt-6 space-y-6 animate-in fade-in duration-200">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" />
-                  <h4 className="text-sm font-bold text-foreground">Phase 1 Primitives Verification</h4>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Interactive state tests for WCAG AA compliance, focus states, and domain components.
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Card className="p-4 space-y-3">
-                  <span className="text-xs font-bold text-foreground">Form Controls</span>
-                  <Input
-                    placeholder="Search test input..."
-                    value={testInput}
-                    onChange={(e) => setTestInput(e.target.value)}
-                    helperText="Input test helper"
-                  />
-                  <Select defaultValue="mumbai">
-                    <option value="mumbai">Mumbai Suburban</option>
-                    <option value="pune">Pune Metro</option>
-                  </Select>
-                  <Progress value={75} />
-                </Card>
-
-                <Card className="p-4 space-y-3">
-                  <span className="text-xs font-bold text-foreground">Accessible Toggles</span>
-                  <Switch
-                    id="dev-switch"
-                    checked={testSwitch}
-                    onCheckedChange={setTestSwitch}
-                    label="Active Worker Toggle"
-                  />
-                  <Checkbox
-                    id="dev-check"
-                    checked={testCheckbox}
-                    onChange={(e) => setTestCheckbox(e.target.checked)}
-                    label="Verified Only Filter"
-                  />
-                </Card>
-              </div>
-            </div>
-          )}
-        </div>
       </Container>
     </div>
   );

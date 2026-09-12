@@ -15,6 +15,8 @@ import {
   MapPin,
   IndianRupee,
   Navigation,
+  Mic,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { VoiceProfileBuilder, type ExtractedWorkerProfile } from "@/components/voice/voice-profile-builder";
 import type { WorkerProfileData } from "../types";
 
 const TRADE_CATEGORIES = [
@@ -70,6 +73,22 @@ export function OnboardingWizard() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [showVoiceHelper, setShowVoiceHelper] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+
+  const handleVoiceProfileExtracted = (extracted: ExtractedWorkerProfile) => {
+    setFormData((prev) => ({
+      ...prev,
+      primaryCategory: extracted.trade || prev.primaryCategory,
+      yearsExperience: extracted.yearsExperience ?? prev.yearsExperience,
+      skillIds: extracted.skills.length > 0 ? extracted.skills : prev.skillIds,
+      bio: extracted.bio || prev.bio,
+    }));
+    setVoiceNotice(
+      `Voice AI applied: ${extracted.trade?.toUpperCase()} (${extracted.yearsExperience} yrs exp, ${extracted.skills.length} skills)`
+    );
+    setShowVoiceHelper(false);
+  };
 
   // Autosave to sessionStorage
   useEffect(() => {
@@ -176,6 +195,43 @@ export function OnboardingWizard() {
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6">
+        {/* Voice AI Assistant helper */}
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-xs font-semibold text-foreground">
+              Don&apos;t want to type?
+            </span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowVoiceHelper(!showVoiceHelper)}
+            className="rounded-xl text-xs font-bold gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+          >
+            <Mic className="h-3.5 w-3.5" />
+            {showVoiceHelper ? "Hide Voice Setup" : "Setup Profile with Voice AI"}
+          </Button>
+        </div>
+
+        {voiceNotice && (
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs flex items-center justify-between">
+            <span>{voiceNotice}</span>
+            <button
+              type="button"
+              onClick={() => setVoiceNotice(null)}
+              className="text-muted-foreground hover:text-foreground font-bold px-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {showVoiceHelper && (
+          <VoiceProfileBuilder onProfileExtracted={handleVoiceProfileExtracted} />
+        )}
+
         {error && (
           <Alert variant="destructive" className="text-xs">
             <AlertDescription>{error}</AlertDescription>

@@ -22,21 +22,25 @@ export function getSocket(): Socket {
       },
     });
 
+    let hasWarnedSocket = false;
+
     socketInstance.on("connect", () => {
+      hasWarnedSocket = false;
       if (process.env.NODE_ENV !== "production") {
-        console.warn("[Socket] Connected:", socketInstance?.id);
+        console.info("[Socket] Connected:", socketInstance?.id);
       }
     });
 
     socketInstance.on("disconnect", (reason) => {
       if (process.env.NODE_ENV !== "production") {
-        console.warn("[Socket] Disconnected:", reason);
+        console.info("[Socket] Disconnected:", reason);
       }
     });
 
     socketInstance.on("connect_error", (error) => {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("[Socket] Connect error:", error.message);
+      if (process.env.NODE_ENV !== "production" && !hasWarnedSocket) {
+        console.info("[Socket] Backend server unreachable (running in offline/mock mode):", error.message);
+        hasWarnedSocket = true;
       }
     });
   }
