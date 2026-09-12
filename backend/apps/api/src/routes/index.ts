@@ -40,6 +40,20 @@ export function createApiRouter(): Router {
   // Health check under /api/v1/health
   apiV1Router.use('/', healthRoutes);
 
+  // A friendly API index makes the base deployment URL useful in a browser
+  // while keeping health/readiness checks on their existing stable routes.
+  apiV1Router.get('/', (_req, res) => {
+    res.status(200).json({
+      success: true,
+      data: {
+        service: 'KaamSetu API',
+        status: 'online',
+        health: `${env.API_PREFIX}/health`,
+        ready: `${env.API_PREFIX}/ready`,
+      },
+    });
+  });
+
   // Auth endpoints under /api/v1/auth
   apiV1Router.use('/auth', authRoutes);
   apiV1Router.use('/', userRoutes);

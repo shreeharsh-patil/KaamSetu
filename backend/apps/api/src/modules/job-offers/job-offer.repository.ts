@@ -30,6 +30,9 @@ export interface IJobOfferRepository {
     workerId: string,
     session?: ClientSession
   ): Promise<IJobOfferEntity | null>;
+  countPendingOffersForJob(jobId: string): Promise<number>;
+  expireOfferAtomic(offerId: string, session?: ClientSession): Promise<IJobOfferEntity | null>;
+  expireAllPendingOffersForJob(jobId: string, session?: ClientSession): Promise<number>;
 }
 
 export class MongoJobOfferRepository implements IJobOfferRepository {
@@ -252,6 +255,58 @@ export class MongoJobOfferRepository implements IJobOfferRepository {
     ).exec();
 
     return updated ? toJobOfferEntity(updated) : null;
+  }
+
+  async countPendingOffersForJob(jobId: string): Promise<number> {
+    if (!Types.ObjectId.isValid(jobId)) return 0;
+    return JobOfferModel.countDocuments({
+      jobId: new Types.ObjectId(jobId),
+      status: JobOfferStatus.PENDING,
+    }).exec();
+  }
+
+  async expireOfferAtomic(
+    offerId: string,
+    session?: ClientSession
+  ): Promise<IJobOfferEntity | null> {
+    if (!Types.ObjectId.isValid(offerId)) return null;
+    const now = new Date();
+    const updated = await JobOfferModel.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(offerId),
+        status: JobOfferStatus.PENDING,
+      },
+      {
+        $set: {
+          status: JobOfferStatus.EXPIRED,
+          respondedAt: now,
+        },
+      },
+      { new: true, session }
+    ).exec();
+    return updated ? toJobOfferEntity(updated) : null;
+  }
+
+  async expireAllPendingOffersForJob(
+    jobId: string,
+    session?: ClientSession
+  ): Promise<number> {
+    if (!Types.ObjectId.isValid(jobId)) return 0;
+    const now = new Date();
+    const res = await JobOfferModel.updateMany(
+      {
+        jobId: new Types.ObjectId(jobId),
+        status: JobOfferStatus.PENDING,
+      },
+      {
+        $set: {
+          status: JobOfferStatus.EXPIRED,
+          respondedAt: now,
+        },
+      },
+      { session }
+    ).exec();
+    return res.modifiedCount;
   }
 }
 

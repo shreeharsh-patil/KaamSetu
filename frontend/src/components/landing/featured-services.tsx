@@ -77,6 +77,18 @@ const CATEGORY_META: Record<
     commonTasks: ["AC Jet Wash", "Gas Refill", "PCB Diagnosis", "Motor Servicing"],
     imageUrl: "/services/appliance-repair.webp",
   },
+  "ac-repair": {
+    icon: Tv, summary: "AC servicing, refrigerant checks, filter cleaning, and cooling repairs by trained technicians.", badge: "AC Repair", rateBenchmark: "₹499", commonTasks: ["AC Service", "Gas Refill", "Cooling Repair"], imageUrl: "/services/ac-repair.webp",
+  },
+  welding: {
+    icon: Wrench, summary: "Gate, grill, and residential metal repair carried out by experienced welding professionals.", badge: "Welding", rateBenchmark: "₹549", commonTasks: ["Gate Repair", "Grill Repair", "Metal Fabrication"], imageUrl: "/services/welder.webp",
+  },
+  "motorbike-repair": {
+    icon: Wrench, summary: "Reliable two-wheeler servicing, puncture repair, battery checks, and roadside mechanical support.", badge: "Motorbike Repair", rateBenchmark: "₹349", commonTasks: ["Servicing", "Puncture Repair", "Battery Check"], imageUrl: "/services/motorbike-repair.webp",
+  },
+  "general-handyman": {
+    icon: Wrench, summary: "Practical help for curtain rods, shelves, fixtures, and small repairs around your home.", badge: "General Handyman", rateBenchmark: "₹299", commonTasks: ["Curtain Rods", "Shelf Fitting", "Minor Repairs"], imageUrl: "/services/handyman.webp",
+  },
   masonry: {
     icon: Building2,
     summary: "Floor and wall tile replacement, crack patching, brickwork restoration, and bathroom waterproofing civil repairs.",
@@ -136,7 +148,7 @@ export function FeaturedServices() {
         <div className="relative space-y-6">
           {activeCategories.map((category, index) => {
             const slugKey = category.slug.toLowerCase();
-            const metaKey = ({ electrician: "electrical", "ac-repair": "appliances", "appliance-repair": "appliances", "home-cleaning": "cleaning" } as Record<string, string>)[slugKey] ?? slugKey;
+            const metaKey = ({ electrician: "electrical", "appliance-repair": "appliances", "home-cleaning": "cleaning" } as Record<string, string>)[slugKey] ?? slugKey;
             const meta =
               CATEGORY_META[metaKey] ||
               Object.entries(CATEGORY_META).find(([key]) => metaKey.includes(key))?.[1] || {

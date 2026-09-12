@@ -179,6 +179,9 @@ importers:
 
   packages/config:
     dependencies:
+      '@kaamsetu/types':
+        specifier: workspace:*
+        version: link:../types
       dotenv:
         specifier: ^16.4.7
         version: 16.6.1
@@ -186,9 +189,6 @@ importers:
         specifier: ^3.24.2
         version: 3.25.76
     devDependencies:
-      '@kaamsetu/types':
-        specifier: workspace:*
-        version: link:../types
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
@@ -214,13 +214,13 @@ importers:
 
   packages/validation:
     dependencies:
+      '@kaamsetu/types':
+        specifier: workspace:*
+        version: link:../types
       zod:
         specifier: ^3.24.2
         version: 3.25.76
     devDependencies:
-      '@kaamsetu/types':
-        specifier: workspace:*
-        version: link:../types
       typescript:
         specifier: ^5.8.2
         version: 5.9.3

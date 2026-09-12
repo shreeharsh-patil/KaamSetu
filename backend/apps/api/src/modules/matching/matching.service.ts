@@ -2,10 +2,14 @@ import { Types } from 'mongoose';
 import {
   UserRole,
   JobStatus,
+  JobOfferStatus,
   WorkerAvailability,
   type IJobOfferEntity,
   type IWorkerProfileEntity,
+  type IJobEntity,
   type MatchingConfig,
+  type MatchingOutcome,
+  type JobMatchingStatusDto,
 } from '@kaamsetu/types';
 import { WorkerProfileModel, mapWorkerDocumentToEntity } from '../worker-profiles/worker-profile.model.js';
 import { UserModel } from '../users/user.model.js';
@@ -15,14 +19,23 @@ import { jobOfferRepository, IJobOfferRepository } from '../job-offers/job-offer
 import { jobEventRepository, IJobEventRepository } from '../job-events/job-event.repository.js';
 import { ScoringService, scoringService, calculateHaversineDistanceKm, CalculatedMatch } from './scoring.service.js';
 import { DEFAULT_MATCHING_CONFIG } from './matching.config.js';
-import { NotFoundError, BadRequestError, ConflictError } from '../../errors/index.js';
+import { matchingQueue } from './queue/matching.queue.js';
+import { NotFoundError, BadRequestError } from '../../errors/index.js';
 import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
+import { logger } from '../../config/index.js';
 
 export interface RankedWorkerCandidate {
   worker: IWorkerProfileEntity;
   distanceKm: number;
   matchScore: number;
   scoreBreakdown: CalculatedMatch['scoreBreakdown'];
+}
+
+export interface MatchAndDispatchResult {
+  outcome: MatchingOutcome;
+  offers: IJobOfferEntity[];
+  candidatesCount: number;
+  waveNumber?: number;
 }
 
 export class MatchingService {
@@ -175,33 +188,42 @@ export class MatchingService {
   }
 
   /**
-   * Matches eligible workers, dispatches a wave of job offers, and transitions the job state.
+   * Initiates the matching lifecycle for a job.
+   * Sets authoritative deadline and begins wave 1.
    */
-  async matchAndDispatchWave(
+  async startMatching(
     jobId: string,
     customConfig?: Partial<MatchingConfig>
-  ): Promise<{ offers: IJobOfferEntity[]; candidatesCount: number }> {
+  ): Promise<MatchAndDispatchResult> {
+    if (!Types.ObjectId.isValid(jobId)) {
+      throw new BadRequestError('Invalid job ID format');
+    }
+
     const job = await this.jobRepo.findById(jobId);
     if (!job) {
       throw new NotFoundError('Job not found');
     }
 
-    if (job.status !== JobStatus.OPEN && job.status !== JobStatus.MATCHING && job.status !== JobStatus.OFFERED) {
-      throw new ConflictError(
-        `Job in status '${job.status}' cannot enter matching. Must be OPEN, MATCHING, or OFFERED.`
-      );
+    if (job.status !== JobStatus.OPEN && job.status !== JobStatus.MATCHING) {
+      return {
+        outcome: 'JOB_TERMINAL_OR_ASSIGNED',
+        offers: [],
+        candidatesCount: 0,
+      };
     }
 
-    const cfg = {
+    const cfg: MatchingConfig = {
       ...this.config,
       ...customConfig,
       weights: { ...this.config.weights, ...customConfig?.weights },
     };
 
-    // Transition state from OPEN -> MATCHING if needed
+    const totalSeconds = cfg.totalMatchingTimeoutSeconds ?? 90;
+    const matchingExpiresAt = new Date(Date.now() + totalSeconds * 1000);
+
     if (job.status === JobStatus.OPEN) {
-      JobStateMachine.validateTransition(job.status, JobStatus.MATCHING);
-      await this.jobRepo.updateStatus(jobId, JobStatus.MATCHING);
+      JobStateMachine.validateTransition(JobStatus.OPEN, JobStatus.MATCHING);
+      await this.jobRepo.updateStatus(jobId, JobStatus.MATCHING, { matchingExpiresAt });
       await this.eventRepo.create({
         jobId,
         actorId: job.customerId,
@@ -209,17 +231,189 @@ export class MatchingService {
         eventType: 'MATCHING_STARTED',
         previousState: JobStatus.OPEN,
         newState: JobStatus.MATCHING,
+        metadata: {
+          totalTimeoutSeconds: totalSeconds,
+          matchingExpiresAt: matchingExpiresAt.toISOString(),
+        },
       });
+      this.emitStatusChanged(jobId, job.customerId, JobStatus.OPEN, JobStatus.MATCHING);
+    } else if (!job.matchingExpiresAt) {
+      await this.jobRepo.updateStatus(jobId, JobStatus.MATCHING, { matchingExpiresAt });
+    }
+
+    // Schedule overall matching deadline
+    await matchingQueue.enqueueExpireJobMatching(
+      jobId,
+      totalSeconds * 1000,
+      () => this.expireMatchingJob(jobId, 'MATCHING_TIMEOUT').then(() => {})
+    );
+
+    logger.info({ jobId, totalSeconds, matchingExpiresAt }, 'Matching lifecycle started');
+    return this.matchAndDispatchWave(jobId, cfg, 1);
+  }
+
+  /**
+   * Matches eligible workers, dispatches a wave of job offers, and manages state progression.
+   */
+  async matchAndDispatchWave(
+    jobId: string,
+    customConfig?: Partial<MatchingConfig>,
+    waveNumber = 1
+  ): Promise<MatchAndDispatchResult> {
+    const job = await this.jobRepo.findById(jobId);
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    // Guard: ignore if job is assigned or in a terminal state
+    if (
+      job.assignedWorkerId ||
+      job.status === JobStatus.ACCEPTED ||
+      job.status === JobStatus.EN_ROUTE ||
+      job.status === JobStatus.ARRIVED ||
+      job.status === JobStatus.IN_PROGRESS ||
+      job.status === JobStatus.COMPLETED ||
+      job.status === JobStatus.CANCELLED ||
+      job.status === JobStatus.DISPUTED ||
+      job.status === JobStatus.EXPIRED
+    ) {
+      return {
+        outcome: 'JOB_TERMINAL_OR_ASSIGNED',
+        offers: [],
+        candidatesCount: 0,
+        waveNumber,
+      };
+    }
+
+    const cfg: MatchingConfig = {
+      ...this.config,
+      ...customConfig,
+      weights: { ...this.config.weights, ...customConfig?.weights },
+    };
+
+    // Check overall matching deadline
+    if (job.matchingExpiresAt && new Date() >= new Date(job.matchingExpiresAt)) {
+      await this.expireMatchingJob(jobId, 'MATCHING_TIMEOUT');
+      return {
+        outcome: 'EXPIRED',
+        offers: [],
+        candidatesCount: 0,
+        waveNumber,
+      };
+    }
+
+    // Transition state from OPEN -> MATCHING if needed
+    if (job.status === JobStatus.OPEN) {
+      const totalSeconds = cfg.totalMatchingTimeoutSeconds ?? 90;
+      const matchingExpiresAt = new Date(Date.now() + totalSeconds * 1000);
+      JobStateMachine.validateTransition(job.status, JobStatus.MATCHING);
+      await this.jobRepo.updateStatus(jobId, JobStatus.MATCHING, { matchingExpiresAt });
+      await this.eventRepo.create({
+        jobId,
+        actorId: job.customerId,
+        actorRole: UserRole.CUSTOMER,
+        eventType: 'MATCHING_STARTED',
+        previousState: JobStatus.OPEN,
+        newState: JobStatus.MATCHING,
+        metadata: {
+          totalTimeoutSeconds: totalSeconds,
+          matchingExpiresAt: matchingExpiresAt.toISOString(),
+        },
+      });
+      this.emitStatusChanged(jobId, job.customerId, JobStatus.OPEN, JobStatus.MATCHING);
+
+      await matchingQueue.enqueueExpireJobMatching(
+        jobId,
+        totalSeconds * 1000,
+        () => this.expireMatchingJob(jobId, 'MATCHING_TIMEOUT').then(() => {})
+      );
+    } else if (job.status === JobStatus.OFFERED) {
+      // Transition back to MATCHING while computing and dispatching the next wave
+      JobStateMachine.validateTransition(JobStatus.OFFERED, JobStatus.MATCHING);
+      await this.jobRepo.updateStatus(jobId, JobStatus.MATCHING);
+      await this.eventRepo.create({
+        jobId,
+        actorId: job.customerId,
+        actorRole: 'SYSTEM',
+        eventType: 'STATUS_CHANGED',
+        previousState: JobStatus.OFFERED,
+        newState: JobStatus.MATCHING,
+        metadata: { waveNumber },
+      });
+      this.emitStatusChanged(jobId, job.customerId, JobStatus.OFFERED, JobStatus.MATCHING);
     }
 
     const candidates = await this.findRankedCandidates(jobId, cfg);
+    const existingWorkerIds = await this.offerRepo.findExistingWorkerIdsForJob(jobId);
+
+    // ================= EMPTY CANDIDATES CASES =================
     if (candidates.length === 0) {
-      return { offers: [], candidatesCount: 0 };
+      if (existingWorkerIds.length === 0) {
+        // CASE 1: Immediate zero eligible workers found on wave 1
+        JobStateMachine.validateTransition(JobStatus.MATCHING, JobStatus.EXPIRED);
+        await this.jobRepo.updateStatus(jobId, JobStatus.EXPIRED);
+        await this.eventRepo.create({
+          jobId,
+          actorId: job.customerId,
+          actorRole: 'SYSTEM',
+          eventType: 'STATUS_CHANGED',
+          previousState: JobStatus.MATCHING,
+          newState: JobStatus.EXPIRED,
+          reason: 'NO_ELIGIBLE_WORKERS',
+          metadata: { reason: 'NO_ELIGIBLE_WORKERS' },
+        });
+        this.emitStatusChanged(jobId, job.customerId, JobStatus.MATCHING, JobStatus.EXPIRED);
+        logger.info({ jobId }, 'Matching expired immediately: NO_ELIGIBLE_WORKERS');
+        return {
+          outcome: 'NO_ELIGIBLE_WORKERS',
+          offers: [],
+          candidatesCount: 0,
+          waveNumber,
+        };
+      }
+
+      // CASE 2: Offers were previously sent, check if any remain pending
+      const pendingOffersCount = await this.offerRepo.countPendingOffersForJob(jobId);
+      if (pendingOffersCount > 0) {
+        // Still awaiting response on previous wave offers
+        return {
+          outcome: 'OFFERS_DISPATCHED',
+          offers: [],
+          candidatesCount: 0,
+          waveNumber,
+        };
+      }
+
+      // CASE 3: No pending offers and no remaining eligible workers exist
+      JobStateMachine.validateTransition(JobStatus.MATCHING, JobStatus.EXPIRED);
+      await this.jobRepo.updateStatus(jobId, JobStatus.EXPIRED);
+      await this.eventRepo.create({
+        jobId,
+        actorId: job.customerId,
+        actorRole: 'SYSTEM',
+        eventType: 'STATUS_CHANGED',
+        previousState: JobStatus.MATCHING,
+        newState: JobStatus.EXPIRED,
+        reason: 'ALL_ELIGIBLE_WORKERS_EXHAUSTED',
+        metadata: { reason: 'ALL_ELIGIBLE_WORKERS_EXHAUSTED' },
+      });
+      this.emitStatusChanged(jobId, job.customerId, JobStatus.MATCHING, JobStatus.EXPIRED);
+      logger.info({ jobId }, 'Matching expired: ALL_ELIGIBLE_WORKERS_EXHAUSTED');
+      return {
+        outcome: 'ALL_ELIGIBLE_WORKERS_EXHAUSTED',
+        offers: [],
+        candidatesCount: 0,
+        waveNumber,
+      };
     }
 
-    // Select top wave candidates
+    // ================= DISPATCH WAVE =================
     const wave = candidates.slice(0, cfg.waveSize);
-    const expiresAt = new Date(Date.now() + cfg.offerExpiryMinutes * 60 * 1000);
+    const expirySeconds = cfg.offerExpirySeconds ?? (cfg.offerExpiryMinutes * 60);
+    let expiresAt = new Date(Date.now() + expirySeconds * 1000);
+    if (job.matchingExpiresAt && expiresAt > new Date(job.matchingExpiresAt)) {
+      expiresAt = new Date(job.matchingExpiresAt);
+    }
 
     const offersToCreate = wave.map((cand) => ({
       jobId,
@@ -233,24 +427,24 @@ export class MatchingService {
     const createdOffers = await this.offerRepo.createMany(offersToCreate);
 
     // Transition state to OFFERED
-    if (job.status !== JobStatus.OFFERED) {
-      JobStateMachine.validateTransition(JobStatus.MATCHING, JobStatus.OFFERED);
-      await this.jobRepo.updateStatus(jobId, JobStatus.OFFERED);
-      await this.eventRepo.create({
-        jobId,
-        actorId: job.customerId,
-        actorRole: 'SYSTEM',
-        eventType: 'STATUS_CHANGED',
-        previousState: JobStatus.MATCHING,
-        newState: JobStatus.OFFERED,
-        metadata: {
-          offersCount: createdOffers.length,
-          waveSize: cfg.waveSize,
-        },
-      });
-    }
+    JobStateMachine.validateTransition(JobStatus.MATCHING, JobStatus.OFFERED);
+    await this.jobRepo.updateStatus(jobId, JobStatus.OFFERED);
+    await this.eventRepo.create({
+      jobId,
+      actorId: job.customerId,
+      actorRole: 'SYSTEM',
+      eventType: 'STATUS_CHANGED',
+      previousState: JobStatus.MATCHING,
+      newState: JobStatus.OFFERED,
+      metadata: {
+        waveNumber,
+        offersCount: createdOffers.length,
+        waveSize: cfg.waveSize,
+      },
+    });
+    this.emitStatusChanged(jobId, job.customerId, JobStatus.MATCHING, JobStatus.OFFERED);
 
-    // Log offer created events and emit realtime notifications to workers
+    // Dispatch realtime notifications & schedule per-offer BullMQ expiration
     for (const offer of createdOffers) {
       await this.eventRepo.create({
         jobId,
@@ -263,6 +457,7 @@ export class MatchingService {
           offerId: offer.id,
           workerId: offer.workerId,
           matchScore: offer.matchScore,
+          waveNumber,
         },
       });
 
@@ -273,11 +468,222 @@ export class MatchingService {
         matchScore: offer.matchScore,
         expiresAt: offer.expiresAt.toISOString(),
       });
+
+      // Schedule delayed BullMQ offer expiration
+      await matchingQueue.enqueueExpireJobOffer(
+        jobId,
+        offer.id,
+        expirySeconds * 1000,
+        () => this.expireOffer(jobId, offer.id)
+      );
+    }
+
+    // Schedule delayed BullMQ next wave attempt
+    await matchingQueue.enqueueDispatchNextWave(
+      jobId,
+      waveNumber,
+      expirySeconds * 1000,
+      () => this.matchAndDispatchWave(jobId, cfg, waveNumber + 1).then(() => {})
+    );
+
+    logger.info(
+      { jobId, waveNumber, offersCount: createdOffers.length, candidatesRemaining: candidates.length - wave.length },
+      'Matching wave dispatched'
+    );
+
+    return {
+      outcome: 'OFFERS_DISPATCHED',
+      offers: createdOffers,
+      candidatesCount: candidates.length,
+      waveNumber,
+    };
+  }
+
+  /**
+   * Idempotently expires a single offer when its window closes.
+   * If all offers in the wave have terminated, triggers the next wave.
+   */
+  async expireOffer(jobId: string, offerId: string): Promise<void> {
+    const expired = await this.offerRepo.expireOfferAtomic(offerId);
+    if (!expired) return;
+
+    await this.eventRepo.create({
+      jobId,
+      actorId: expired.workerId,
+      actorRole: 'SYSTEM',
+      eventType: 'OFFER_WITHDRAWN',
+      previousState: JobStatus.OFFERED,
+      newState: JobStatus.OFFERED,
+      reason: 'OFFER_EXPIRED',
+      metadata: { offerId, reason: 'OFFER_EXPIRED' },
+    });
+
+    const pendingCount = await this.offerRepo.countPendingOffersForJob(jobId);
+    if (pendingCount === 0) {
+      await this.matchAndDispatchWave(jobId);
+    }
+  }
+
+  /**
+   * Invoked when all offers in a wave have been rejected before timeout.
+   */
+  async handleWaveExhausted(jobId: string): Promise<void> {
+    await this.matchAndDispatchWave(jobId);
+  }
+
+  /**
+   * Transitions a matching/offered job to EXPIRED cleanly.
+   */
+  async expireMatchingJob(
+    jobId: string,
+    reason = 'MATCHING_TIMEOUT'
+  ): Promise<IJobEntity | null> {
+    if (!Types.ObjectId.isValid(jobId)) return null;
+
+    const job = await this.jobRepo.findById(jobId);
+    if (!job) return null;
+
+    // Do NOT expire assigned or already terminal jobs
+    if (
+      job.assignedWorkerId ||
+      job.status === JobStatus.ACCEPTED ||
+      job.status === JobStatus.EN_ROUTE ||
+      job.status === JobStatus.ARRIVED ||
+      job.status === JobStatus.IN_PROGRESS ||
+      job.status === JobStatus.COMPLETED ||
+      job.status === JobStatus.CANCELLED ||
+      job.status === JobStatus.DISPUTED ||
+      job.status === JobStatus.EXPIRED
+    ) {
+      return job;
+    }
+
+    // Expire any remaining pending offers
+    await this.offerRepo.expireAllPendingOffersForJob(jobId);
+
+    const previousStatus = job.status;
+    JobStateMachine.validateTransition(previousStatus, JobStatus.EXPIRED);
+    const updated = await this.jobRepo.updateStatus(jobId, JobStatus.EXPIRED);
+
+    await this.eventRepo.create({
+      jobId,
+      actorId: job.customerId,
+      actorRole: 'SYSTEM',
+      eventType: 'STATUS_CHANGED',
+      previousState: previousStatus,
+      newState: JobStatus.EXPIRED,
+      reason,
+      metadata: { reason },
+    });
+
+    this.emitStatusChanged(jobId, job.customerId, previousStatus, JobStatus.EXPIRED);
+    logger.info({ jobId, previousStatus, reason }, 'Job matching expired');
+    return updated;
+  }
+
+  /**
+   * Realtime status broadcast helper.
+   */
+  emitStatusChanged(
+    jobId: string,
+    customerId: string,
+    previousStatus: JobStatus,
+    newStatus: JobStatus
+  ): void {
+    const updatedAt = new Date().toISOString();
+    this.realtime.emitToJob(jobId, 'job.status.changed', {
+      jobId,
+      previousStatus,
+      newStatus,
+      updatedAt,
+    });
+    this.realtime.emitToUser(customerId, 'job.status.changed', {
+      jobId,
+      previousStatus,
+      newStatus,
+      updatedAt,
+    });
+  }
+
+  /**
+   * Provides safe, customer-facing matching progress and diagnostics.
+   */
+  async getMatchingStatus(jobId: string): Promise<JobMatchingStatusDto> {
+    if (!Types.ObjectId.isValid(jobId)) {
+      throw new BadRequestError('Invalid job ID format');
+    }
+
+    let job = await this.jobRepo.findById(jobId);
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    // Passive expiration on read
+    if (
+      (job.status === JobStatus.OPEN ||
+        job.status === JobStatus.MATCHING ||
+        job.status === JobStatus.OFFERED) &&
+      job.matchingExpiresAt &&
+      new Date() >= new Date(job.matchingExpiresAt)
+    ) {
+      const expired = await this.expireMatchingJob(jobId, 'MATCHING_TIMEOUT');
+      if (expired) job = expired;
+    }
+
+    const [offers, events] = await Promise.all([
+      this.offerRepo.findByJobId(jobId),
+      this.eventRepo.findByJobId(jobId),
+    ]);
+
+    const matchingStartedEvent = events.find((e) => e.eventType === 'MATCHING_STARTED');
+    const startedAt = matchingStartedEvent
+      ? matchingStartedEvent.createdAt.toISOString()
+      : job.createdAt.toISOString();
+    const expiresAt = job.matchingExpiresAt ? job.matchingExpiresAt.toISOString() : null;
+
+    let remainingSeconds: number | undefined;
+    if (
+      job.matchingExpiresAt &&
+      (job.status === JobStatus.OPEN ||
+        job.status === JobStatus.MATCHING ||
+        job.status === JobStatus.OFFERED)
+    ) {
+      remainingSeconds = Math.max(
+        0,
+        Math.floor((new Date(job.matchingExpiresAt).getTime() - Date.now()) / 1000)
+      );
+    }
+
+    const pendingOffers = offers.filter((o) => o.status === JobOfferStatus.PENDING).length;
+    const waveEvents = events.filter(
+      (e) => e.eventType === 'STATUS_CHANGED' && e.newState === JobStatus.OFFERED
+    );
+    const currentWave = Math.max(1, waveEvents.length);
+    const totalTimeout = this.config.totalMatchingTimeoutSeconds ?? 90;
+    const waveExpiry = this.config.offerExpirySeconds ?? 30;
+
+    let outcomeReason: string | null = null;
+    if (job.status === JobStatus.EXPIRED) {
+      const expiredEvent = [...events].reverse().find(
+        (e) => e.eventType === 'STATUS_CHANGED' && e.newState === JobStatus.EXPIRED
+      );
+      outcomeReason = expiredEvent?.reason ?? 'NO_ELIGIBLE_WORKERS';
     }
 
     return {
-      offers: createdOffers,
-      candidatesCount: candidates.length,
+      jobId: job.id,
+      status: job.status,
+      matching: {
+        startedAt,
+        expiresAt,
+        remainingSeconds,
+        candidatesFound: offers.length,
+        offersSent: offers.length,
+        pendingOffers,
+        currentWave,
+        maxWaves: Math.ceil(totalTimeout / waveExpiry),
+      },
+      outcomeReason,
     };
   }
 }
