@@ -58,6 +58,15 @@ export const sharedEnvSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().default(process.env['NODE_ENV'] || 'development'),
   METRICS_ENABLED: z.coerce.boolean().default(true),
+  AUTH_MOCK_OTP_ENABLED: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val !== undefined) return val === 'true';
+      return process.env['NODE_ENV'] !== 'production';
+    })
+    .default(process.env['NODE_ENV'] !== 'production' ? 'true' : 'false'),
+  AUTH_MOCK_OTP: z.string().default('123456'),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
   GEMINI_BACKUP_MODEL: z.string().default('gemini-3.5-flash'),

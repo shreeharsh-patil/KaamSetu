@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/features/auth/use-auth";
 import {
   Building2,
   CheckCircle2,
@@ -48,6 +50,7 @@ interface UploadItem {
 export function JobCreationWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, logout } = useAuth();
   const preselectedCategory = searchParams.get("category");
   const requestedVoiceFlow = searchParams.get("source") === "voice";
 
@@ -77,8 +80,16 @@ export function JobCreationWizard() {
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const previewUrls = useRef(new Set<string>());
   const categoriesQuery = useQuery({ queryKey: ["service-categories"], queryFn: jobsApi.getCategories });
-  const customerQuery = useQuery({ queryKey: ["customer", "profile"], queryFn: customerApi.me });
-  const skillsQuery = useQuery({ queryKey: ["service-skills", formData.categoryId], queryFn: () => jobsApi.getSkills(formData.categoryId), enabled: Boolean(formData.categoryId) });
+  const customerQuery = useQuery({
+    queryKey: ["customer", "profile"],
+    queryFn: customerApi.me,
+    enabled: user?.role === "CUSTOMER",
+  });
+  const skillsQuery = useQuery({
+    queryKey: ["service-skills", formData.categoryId],
+    queryFn: () => jobsApi.getSkills(formData.categoryId),
+    enabled: Boolean(formData.categoryId),
+  });
 
   useEffect(() => {
     if (!preselectedCategory || formData.categoryId || !categoriesQuery.data) return;
@@ -226,7 +237,12 @@ export function JobCreationWizard() {
       router.push(`/customer/jobs/${created.id}/matching`);
     } catch (err: unknown) {
       setIsSubmitting(false);
-      const msg = err instanceof Error ? err.message : "Failed to publish job. Please try again.";
+      const msg =
+        err instanceof Error
+          ? err.message.toLowerCase().includes("forbidden") || err.message.toLowerCase().includes("role")
+            ? "Posting service requests requires a Customer account. Please switch to a Customer account."
+            : err.message
+          : "Failed to publish job. Please try again.";
       setSubmitError(msg);
     }
   };
@@ -236,18 +252,58 @@ export function JobCreationWizard() {
   const voiceCompleteness = getVoiceBookingCompleteness(formData);
   const voiceReview = formData.source === "VOICE" && voiceCompleteness.canReview && step === 6;
 
+  if (user?.role === "WORKER") {
+    return (
+      <div className="max-w-xl mx-auto my-8 p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center space-y-4">
+        <div className="inline-flex p-3 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">
+          Worker Account Detected
+        </h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          You are currently signed in with a <strong>Worker</strong> profile. Posting service requests is reserved for <strong>Customer</strong> accounts.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Link href="/worker">
+            <Button className="w-full sm:w-auto font-semibold">
+              Go to Worker Dashboard
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            onClick={() => {
+              logout();
+              router.push("/login");
+            }}
+            className="w-full sm:w-auto"
+          >
+            Switch to Customer Account
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Step Header */}
-      {!voiceReview ? <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-muted-foreground">
-            Step {step} of {totalSteps}
-          </span>
-          <span className="font-semibold text-primary">{progressPercent}% complete</span>
+      {!voiceReview ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-muted-foreground">
+              Step {step} of {totalSteps}
+            </span>
+            <span className="font-semibold text-primary">{progressPercent}% complete</span>
+          </div>
+          <Progress value={progressPercent} className="h-2" />
         </div>
-        <Progress value={progressPercent} className="h-2" />
-      </div> : <div className="rounded-xl border border-primary/25 bg-primary/5 p-4"><p className="text-sm font-semibold text-primary">Voice booking ready</p><p className="text-xs text-muted-foreground">Review the details below, then we’ll start real matching.</p></div>}
+      ) : (
+        <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+          <p className="text-sm font-semibold text-primary">Voice booking ready</p>
+          <p className="text-xs text-muted-foreground">Review the details below, then we’ll start real matching.</p>
+        </div>
+      )}
 
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-2">

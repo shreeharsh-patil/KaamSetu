@@ -20,7 +20,7 @@ export function AuthGuard({
   allowedRoles,
   fallbackUrl = "/login",
 }: AuthGuardProps) {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -47,6 +47,8 @@ export function AuthGuard({
           title="Role Access Restricted"
           description={`Your account is registered as ${user?.role || "user"}. This section requires ${permittedRoles.join(" or ")} access.`}
           requiredRole={permittedRoles.join(" or ")}
+          currentRole={user?.role}
+          onLogout={logout}
         />
       </div>
     );
