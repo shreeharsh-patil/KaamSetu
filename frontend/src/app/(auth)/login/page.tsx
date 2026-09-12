@@ -12,6 +12,7 @@ import { RoleSelector, type AuthRole } from "@/features/auth/components/role-sel
 import { PhoneInputField } from "@/features/auth/components/phone-input-field";
 import { EmailInputField } from "@/features/auth/components/email-input-field";
 import { AuthFooter } from "@/features/auth/components/auth-footer";
+import { isValidIndianPhone, toIndianE164 } from "@/features/auth/phone";
 
 function LoginSkeleton() {
   return (
@@ -43,10 +44,8 @@ function LoginContent() {
 
   const validate = (): string | null => {
     if (authMethod === "phone") {
-      const cleaned = phoneNumber.replace(/\D/g, "");
-      if (!cleaned) return "Enter your 10-digit mobile number";
-      if (cleaned.length !== 10) return "Please enter a valid 10-digit mobile number";
-      if (!/^[6-9]/.test(cleaned)) return "Indian mobile numbers must start with 6, 7, 8, or 9";
+      if (!phoneNumber) return "Enter your 10-digit mobile number";
+      if (!isValidIndianPhone(phoneNumber)) return "Enter a valid 10-digit mobile number starting with 6, 7, 8, or 9";
       return null;
     }
 
@@ -59,7 +58,7 @@ function LoginContent() {
 
   const isFormValid =
     authMethod === "phone"
-      ? phoneNumber.replace(/\D/g, "").length === 10
+      ? isValidIndianPhone(phoneNumber)
       : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const handleSubmit = async (e: FormEvent) => {
@@ -78,7 +77,7 @@ function LoginContent() {
 
       const targetIdentifier =
         authMethod === "phone"
-          ? `+91${phoneNumber.replace(/\D/g, "")}`
+          ? toIndianE164(phoneNumber)
           : email.trim().toLowerCase();
 
       // Pass role preference ('customer' | 'worker') to requestOtp
@@ -127,7 +126,7 @@ function LoginContent() {
       )}
 
       {/* Authentication Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4 pt-1">
         {authMethod === "phone" ? (
           <PhoneInputField
             value={phoneNumber}

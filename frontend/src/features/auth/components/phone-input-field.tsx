@@ -2,6 +2,7 @@
 
 import { useId, type ChangeEvent } from "react";
 import { cn } from "@/lib/utils";
+import { normalizeIndianPhone } from "@/features/auth/phone";
 
 interface PhoneInputFieldProps {
   value: string; // 10 raw digits
@@ -31,7 +32,7 @@ export function PhoneInputField({
   const inputId = useId();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 10);
+    const raw = normalizeIndianPhone(e.target.value);
     onChange(raw);
   };
 
@@ -65,8 +66,7 @@ export function PhoneInputField({
           id={inputId}
           type="tel"
           inputMode="tel"
-          pattern="[0-9]*"
-          maxLength={11} // 10 digits + 1 space
+          maxLength={16}
           placeholder="98765 43210"
           value={formatPhoneDisplay(value)}
           onChange={handleChange}
