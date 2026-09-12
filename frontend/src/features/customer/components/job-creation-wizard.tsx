@@ -66,6 +66,7 @@ export function JobCreationWizard() {
     urgency: "FLEXIBLE",
     timingOption: "ASAP",
     scheduledAt: "",
+    addressLabel: "",
     addressLine: "",
     locality: "",
     city: "Mumbai",
@@ -125,7 +126,7 @@ export function JobCreationWizard() {
     const address = customerQuery.data?.defaultAddress;
     if (!address || formData.addressLine || formData.latitude !== undefined) return;
     const next = {
-      ...formData, addressLine: address.addressLine, locality: address.city, city: address.city, state: address.state,
+      ...formData, addressLabel: address.label, addressLine: address.addressLine, locality: address.city, city: address.city, state: address.state,
       pincode: address.pincode, longitude: address.coordinates?.[0], latitude: address.coordinates?.[1],
     };
     setFormData(next);
@@ -233,11 +234,12 @@ export function JobCreationWizard() {
   const totalSteps = 6;
   const progressPercent = Math.round((step / totalSteps) * 100);
   const voiceCompleteness = getVoiceBookingCompleteness(formData);
+  const voiceReview = formData.source === "VOICE" && voiceCompleteness.canReview && step === 6;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Step Header */}
-      <div className="space-y-2">
+      {!voiceReview ? <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-muted-foreground">
             Step {step} of {totalSteps}
@@ -245,7 +247,7 @@ export function JobCreationWizard() {
           <span className="font-semibold text-primary">{progressPercent}% complete</span>
         </div>
         <Progress value={progressPercent} className="h-2" />
-      </div>
+      </div> : <div className="rounded-xl border border-primary/25 bg-primary/5 p-4"><p className="text-sm font-semibold text-primary">Voice booking ready</p><p className="text-xs text-muted-foreground">Review the details below, then we’ll start real matching.</p></div>}
 
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-2">
@@ -629,9 +631,9 @@ export function JobCreationWizard() {
       {step === 6 && (
         <Card className="rounded-xl shadow-xs border border-border/80">
           <CardHeader>
-            <CardTitle>Review & Publish Request</CardTitle>
+            <CardTitle>{voiceReview ? "Your booking is ready" : "Review & Publish Request"}</CardTitle>
             <CardDescription>
-              Double check your booking details before sending out offers to nearby workers.
+              {voiceReview ? "Everything from your voice request has been prepared. You can edit it before matching starts." : "Double check your booking details before sending out offers to nearby workers."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -658,7 +660,7 @@ export function JobCreationWizard() {
                 <div>
                   <span className="text-muted-foreground">Location:</span>
                   <p className="font-medium text-foreground">
-                    {formData.locality}, {formData.city} ({formData.pincode})
+                    {formData.addressLabel ? `${formData.addressLabel} · ` : ""}{formData.locality}, {formData.city} ({formData.pincode})
                   </p>
                 </div>
                 <div>
@@ -697,8 +699,8 @@ export function JobCreationWizard() {
             </div>
           </CardContent>
           <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(5)} disabled={isSubmitting}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> Back
+            <Button variant="outline" onClick={() => setStep(voiceReview ? 1 : 5)} disabled={isSubmitting}>
+              <ChevronLeft className="mr-1 h-4 w-4" /> {voiceReview ? "Edit details" : "Back"}
             </Button>
             <Button onClick={handlePublish} disabled={isSubmitting} size="lg">
               {isSubmitting ? (
@@ -706,7 +708,7 @@ export function JobCreationWizard() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...
                 </>
               ) : (
-                "Publish Service Request"
+                voiceReview ? "Find a professional" : "Publish Service Request"
               )}
             </Button>
           </CardFooter>

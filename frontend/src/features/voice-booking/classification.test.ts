@@ -40,4 +40,12 @@ describe("voice booking skill resolution", () => {
     expect(getVoiceBookingCompleteness(form).missing).toEqual(["problem"]);
     expect(getFirstIncompleteStep(form)).toBe(2);
   });
+
+  it("does not mistake a bare service request for a completed problem", () => {
+    const draft = classificationToDraft({
+      transcript: "Book a plumber.", category: { id: "plumbing-id", name: "Plumbing", slug: "plumbing" }, skills: [], confidenceState: "READY",
+      classification: { categorySlug: "plumbing", suggestedSkills: [], confidence: 0.9 },
+    });
+    expect(draft).toMatchObject({ source: "VOICE", categoryId: "plumbing-id", title: "", description: "", timingOption: "ASAP" });
+  });
 });

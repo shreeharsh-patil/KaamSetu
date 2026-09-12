@@ -6,6 +6,7 @@ import { aiApi } from "./api";
 import type { JobClassification, ResolvedVoiceBooking } from "./types";
 
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9\u0900-\u097f]+/g, " ").trim();
+const categoryAliases: Record<string, string[]> = { electrical: ["electrician"] };
 
 export function resolveSkills(suggestions: string[], skills: ServiceSkill[]): ServiceSkill[] {
   return skills.filter((skill) => suggestions.some((suggestion) => {
@@ -28,8 +29,10 @@ export interface VoiceBookingCompleteness {
 export async function resolveVoiceBooking(transcript: string): Promise<ResolvedVoiceBooking> {
   const classification = await aiApi.classifyJob(transcript);
   const categories = await jobsApi.getCategories();
-  const category = classification.categorySlug
-    ? categories.find((item) => item.slug.toLowerCase() === classification.categorySlug?.toLowerCase())
+  const requestedSlug = classification.categorySlug?.toLowerCase();
+  const acceptableSlugs = requestedSlug ? [requestedSlug, ...(categoryAliases[requestedSlug] ?? [])] : [];
+  const category = requestedSlug
+    ? categories.find((item) => acceptableSlugs.includes(item.slug.toLowerCase()))
     : undefined;
   const skills = category ? resolveSkills(classification.suggestedSkills, await jobsApi.getSkills(category.id)) : [];
   return {
@@ -62,6 +65,7 @@ export function defaultAddressToDraft(address?: CustomerAddress | null): Partial
   if (!address) return {};
   return {
     addressLine: address.addressLine,
+    addressLabel: address.label,
     // Older profiles do not store locality separately. City is a safe, visible fallback.
     locality: address.city,
     city: address.city,
@@ -74,11 +78,13 @@ export function defaultAddressToDraft(address?: CustomerAddress | null): Partial
 
 export function classificationToDraft(result: ResolvedVoiceBooking, address?: CustomerAddress | null): Partial<JobDraft> {
   const c = result.classification;
+  const serviceOnlyRequest = /^(?:please\s+)?(?:book|need|find|want)\s+(?:a\s+)?(?:plumber|electrician|cleaner|painter)\.?$/i.test(result.transcript.trim());
   return {
     version: 3, source: "VOICE", originalTranscript: result.transcript,
     categorySlug: result.category?.slug ?? c.categorySlug, categoryId: result.category?.id,
     requiredSkills: result.skills.map((skill) => skill.id),
-    title: deriveConciseTitle(result.transcript, c), description: c.description?.trim() || result.transcript.trim(),
+    title: serviceOnlyRequest ? "" : deriveConciseTitle(result.transcript, c),
+    description: serviceOnlyRequest ? "" : (c.description?.trim() || result.transcript.trim()),
     urgency: c.urgency ?? "FLEXIBLE", timingOption: c.timingIntent ?? "ASAP",
     scheduledAt: c.scheduledAt, estimatedPrice: c.estimatedPrice,
     ...defaultAddressToDraft(address),
@@ -132,6 +138,7 @@ export function applyVoiceDraft(form: JobCreationFormState, draft: Partial<JobDr
     urgency: draft.urgency ?? form.urgency,
     timingOption: draft.timingOption ?? form.timingOption,
     scheduledAt: draft.scheduledAt ?? form.scheduledAt,
+    addressLabel: draft.addressLabel ?? form.addressLabel,
     addressLine: draft.addressLine ?? form.addressLine,
     locality: draft.locality ?? form.locality,
     city: draft.city ?? form.city,

@@ -22,6 +22,7 @@ import { seedGoaDemo, resetGoaDemoData } from '../src/database/seeds/goa-demo/go
 import { seedCategoriesAndSkills } from '../src/database/seeds/index.js';
 import { GOA_LOCATIONS } from '../src/database/seeds/goa-demo/seed-data/goa-locations.js';
 import { SEED_WORKERS } from '../src/database/seeds/goa-demo/seed-data/people.js';
+import { SEED_JOBS } from '../src/database/seeds/goa-demo/seed-data/jobs.js';
 import { WorkerAvailability } from '@kaamsetu/types';
 
 const TEST_MONGODB_URI =
@@ -38,12 +39,13 @@ describe('Goa demo seed', () => {
 
   it('seeds the dataset with expected volumes', async () => {
     await connectMongoDB({ uri: TEST_MONGODB_URI });
+    await UserModel.deleteMany({ phoneNumber: { $in: ['+919900009999', '+919888888888'] } });
     await seedCategoriesAndSkills();
     const summary = await seedGoaDemo();
 
     expect(summary.customers).toBe(12);
     expect(summary.workers).toBe(31);
-    expect(summary.jobs).toBe(50);
+    expect(summary.jobs).toBe(SEED_JOBS.length);
     expect(summary.categories).toBeGreaterThanOrEqual(10);
     expect(summary.skills).toBeGreaterThanOrEqual(40);
     expect(summary.reviews).toBe(15);
@@ -166,8 +168,9 @@ describe('Goa demo seed', () => {
 
   it('reset removes only seed-owned data', async () => {
     // Non-seed user that must survive the reset
+    await UserModel.deleteMany({ phoneNumber: { $in: ['+919900009999', '+919888888888'] } });
     const outsider = await userRepository.create({
-      phoneNumber: '+919900009999',
+      phoneNumber: '+919888888888',
       role: 'CUSTOMER' as never,
     });
     nonSeedUserId = outsider.id;

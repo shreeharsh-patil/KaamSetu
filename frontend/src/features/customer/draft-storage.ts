@@ -13,6 +13,7 @@ export interface JobDraft {
   urgency?: JobUrgency;
   timingOption?: JobTimingOption;
   scheduledAt?: string;
+  addressLabel?: string;
   addressLine?: string;
   locality?: string;
   city?: string;

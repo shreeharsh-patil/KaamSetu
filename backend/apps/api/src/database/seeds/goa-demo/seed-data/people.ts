@@ -56,7 +56,7 @@ export const SEED_WORKERS: SeedWorkerDef[] = [
 
   // ---- Calangute / Candolim (3) ----
   { n: 11, displayName: 'Rahul Tari', town: 'CALANGUTE', category: 'ac-repair', skills: ['ac-servicing', 'ac-installation', 'cooling-issue'], experienceYears: 7, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 420, bio: 'AC service for homes and guesthouses in the coastal belt.' },
-  { n: 12, displayName: 'Ajay Bandekar', town: 'CALANGUTE', category: 'electrical', skills: ['light-installation', 'socket-repair', 'wiring'], experienceYears: 5, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 12, hourlyRate: 260, bio: 'Light fittings and small electrical jobs.' },
+  { n: 12, displayName: 'Ajay Bandekar', town: 'CALANGUTE', category: 'electrician', skills: ['light-installation', 'socket-repair', 'wiring'], experienceYears: 5, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 12, hourlyRate: 260, bio: 'Light fittings and small electrical jobs.' },
   { n: 13, displayName: 'Sanjay Velip', town: 'CANDOLIM', category: 'painting', skills: ['exterior-painting', 'interior-painting'], experienceYears: 14, languages: EN_HI_KOK, availability: 'BUSY', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 280, bio: 'Painting contractor, coastal-grade coatings.' },
 
   // ---- Bicholim / Old Goa (2) ----
@@ -66,7 +66,7 @@ export const SEED_WORKERS: SeedWorkerDef[] = [
   // ---- Ponda (3) ----
   { n: 16, displayName: 'Ramesh Faldesai', town: 'PONDA', category: 'carpentry', skills: ['door-repair', 'shelf-installation', 'woodwork'], experienceYears: 12, languages: EN_HI_MR, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 300, bio: 'Carpenter in Ponda. Doors, shelves, custom woodwork.' },
   { n: 17, displayName: 'Kishor Naik', town: 'PONDA', category: 'plumbing', skills: ['drain-blockage', 'toilet-repair', 'water-tank-plumbing'], experienceYears: 6, languages: EN_HI_MR, availability: 'AVAILABLE', verification: 'PENDING', serviceRadiusKm: 18, hourlyRate: 210, bio: 'Drainage and sanitation work.' },
-  { n: 18, displayName: 'Tukaram Gaude', town: 'PONDA', category: 'electrical', skills: ['wiring', 'mcb-repair', 'fan-repair'], experienceYears: 9, languages: EN_HI_MR, availability: 'OFFLINE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 240, bio: 'House wiring and MCB work.' },
+  { n: 18, displayName: 'Tukaram Gaude', town: 'PONDA', category: 'electrician', skills: ['wiring', 'mcb-repair', 'fan-repair'], experienceYears: 9, languages: EN_HI_MR, availability: 'OFFLINE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 240, bio: 'House wiring and MCB work.' },
 
   // ---- Margao (4) ----
   { n: 19, displayName: 'João Fernandes', town: 'MARGAO', category: 'appliance-repair', skills: ['washing-machine-repair', 'refrigerator-repair', 'water-purifier-repair'], experienceYears: 11, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 20, hourlyRate: 330, bio: 'Appliance repair across Salcete.' },
@@ -80,7 +80,7 @@ export const SEED_WORKERS: SeedWorkerDef[] = [
   { n: 25, displayName: 'Nitin Dhargalkar', town: 'VASCO', category: 'motorbike-repair', skills: ['bike-servicing', 'battery-replacement', 'puncture-repair'], experienceYears: 9, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 15, hourlyRate: 160, bio: 'Two-wheeler servicing near Bogmalo road.' },
 
   // ---- Verna (2) ----
-  { n: 26, displayName: 'Cajetan D’Souza', town: 'VERNA', category: 'electrical', skills: ['wiring', 'light-installation'], experienceYears: 6, languages: ['en', 'kok', 'hi'], availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 20, hourlyRate: 260, bio: 'Wiring and fittings around the Verna industrial estate.' },
+  { n: 26, displayName: 'Cajetan D’Souza', town: 'VERNA', category: 'electrician', skills: ['wiring', 'light-installation'], experienceYears: 6, languages: ['en', 'kok', 'hi'], availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 20, hourlyRate: 260, bio: 'Wiring and fittings around the Verna industrial estate.' },
   { n: 27, displayName: 'Minguel Barreto', town: 'VERNA', category: 'carpentry', skills: ['furniture-repair', 'lock-fitting', 'woodwork'], experienceYears: 16, languages: EN_HI_KOK, availability: 'AVAILABLE', verification: 'VERIFIED', serviceRadiusKm: 20, hourlyRate: 320, bio: 'Furniture maker and repairer, 16 years experience.' },
 
   // ---- Colva (1) ----

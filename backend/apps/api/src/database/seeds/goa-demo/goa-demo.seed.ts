@@ -49,30 +49,30 @@ import {
   ReportStatus,
   ReportTargetType,
 } from '@kaamsetu/types';
-import { env, logger } from '../../config/index.js';
-import { UserModel } from '../../modules/users/user.model.js';
+import { env, logger } from '../../../config/index.js';
+import { UserModel } from '../../../modules/users/user.model.js';
 import {
   WorkerProfileModel,
-} from '../../modules/worker-profiles/worker-profile.model.js';
+} from '../../../modules/worker-profiles/worker-profile.model.js';
 import {
   CustomerProfileModel,
-} from '../../modules/customer-profiles/customer-profile.model.js';
-import { ServiceCategoryModel } from '../../modules/service-categories/service-category.model.js';
-import { SkillModel } from '../../modules/skills/skill.model.js';
-import { JobModel } from '../../modules/jobs/job.model.js';
-import { JobOfferModel } from '../../modules/job-offers/job-offer.model.js';
-import { JobEventModel } from '../../modules/job-events/job-event.model.js';
-import { ConversationModel } from '../../modules/conversations/conversation.model.js';
-import { MessageModel } from '../../modules/messages/message.model.js';
-import { ReviewModel } from '../../modules/reviews/review.model.js';
-import { ExpenseModel } from '../../modules/expenses/expense.model.js';
-import { TransactionModel } from '../../modules/transactions/transaction.model.js';
-import { NotificationModel } from '../../modules/notifications/notification.model.js';
-import { VerificationRequestModel } from '../../modules/verification/verification-request.model.js';
-import { DisputeModel } from '../../modules/disputes/dispute.model.js';
-import { ReportModel } from '../../modules/reports/report.model.js';
-import { AuditLogModel } from '../../modules/audit-logs/audit-log.model.js';
-import { GOA_CATEGORIES } from './seed-data/categories.js';
+} from '../../../modules/customer-profiles/customer-profile.model.js';
+import { ServiceCategoryModel } from '../../../modules/service-categories/service-category.model.js';
+import { SkillModel } from '../../../modules/skills/skill.model.js';
+import { JobModel } from '../../../modules/jobs/job.model.js';
+import { JobOfferModel } from '../../../modules/job-offers/job-offer.model.js';
+import { JobEventModel } from '../../../modules/job-events/job-event.model.js';
+import { ConversationModel } from '../../../modules/conversations/conversation.model.js';
+import { MessageModel } from '../../../modules/messages/message.model.js';
+import { ReviewModel } from '../../../modules/reviews/review.model.js';
+import { ExpenseModel } from '../../../modules/expenses/expense.model.js';
+import { TransactionModel } from '../../../modules/transactions/transaction.model.js';
+import { NotificationModel } from '../../../modules/notifications/notification.model.js';
+import { VerificationRequestModel } from '../../../modules/verification/verification-request.model.js';
+import { DisputeModel } from '../../../modules/disputes/dispute.model.js';
+import { ReportModel } from '../../../modules/reports/report.model.js';
+import { AuditLogModel } from '../../../modules/audit-logs/audit-log.model.js';
+import { GOA_CATEGORIES, CATEGORY_SLUGS } from './seed-data/categories.js';
 import {
   SEED_WORKERS,
   SEED_CUSTOMERS,
@@ -176,6 +176,13 @@ async function seedCategoriesAndSkills(ctx: Ctx): Promise<void> {
         { upsert: true, new: true }
       );
       ctx.skills.set(skill.slug, { id: skillDoc._id, categoryId: categoryDoc._id });
+    }
+  }
+
+  for (const [alias, canonicalSlug] of Object.entries(CATEGORY_SLUGS)) {
+    const target = ctx.categories.get(canonicalSlug);
+    if (target && !ctx.categories.has(alias)) {
+      ctx.categories.set(alias, target);
     }
   }
 }
@@ -696,13 +703,13 @@ async function seedLedger(ctx: Ctx): Promise<void> {
     const jobId = ctx.jobs.get(def.key)!;
     const completedAt = minutesAgo(Math.max(1, def.createdMinutesAgo - 200), ctx.now);
     const txId = deterministicId('tx-revenue', def.key);
-    await TransactionModel.findOneAndUpdate(
-      { _id: txId },
+    await TransactionModel.collection.updateOne(
+      { _id: new Types.ObjectId(txId) },
       {
-        $setOnInsert: { _id: txId, createdAt: completedAt },
+        $setOnInsert: { _id: new Types.ObjectId(txId), createdAt: completedAt },
         $set: {
-          workerId: ctx.users.get(`w${def.workerN}`)!,
-          jobId,
+          workerId: new Types.ObjectId(ctx.users.get(`w${def.workerN}`)!),
+          jobId: new Types.ObjectId(jobId),
           type: TransactionType.JOB_REVENUE,
           amount: Math.round(def.estimatedPrice * 100), // rupees → integer paise
           currency: 'INR',
@@ -745,14 +752,16 @@ async function seedLedger(ctx: Ctx): Promise<void> {
     );
 
     const txId = deterministicId('tx-expense', `${e.workerN}-${e.note}`);
-    await TransactionModel.findOneAndUpdate(
-      { _id: txId },
+    await TransactionModel.collection.updateOne(
+      { _id: new Types.ObjectId(txId) },
       {
         $setOnInsert: {
-          _id: txId,
+          _id: new Types.ObjectId(txId),
           createdAt: at,
-          workerId,
-          jobId,
+        },
+        $set: {
+          workerId: new Types.ObjectId(workerId),
+          jobId: jobId ? new Types.ObjectId(jobId) : null,
           type: TransactionType.EXPENSE,
           amount: amountPaise,
           currency: 'INR',
@@ -894,12 +903,13 @@ async function seedNotificationsDisputesAndMore(ctx: Ctx): Promise<void> {
   // ── Admin audit record for approving the demo worker's verification ──
   const adminId = ctx.users.get('admin')!;
   const demoWorkerUserId = ctx.users.get('w1')!;
-  await AuditLogModel.findOneAndUpdate(
-    { _id: deterministicId('audit', 'w1-verified') },
+  const auditId = deterministicId('audit', 'w1-verified');
+  await AuditLogModel.collection.updateOne(
+    { _id: new Types.ObjectId(auditId) },
     {
-      $setOnInsert: { _id: deterministicId('audit', 'w1-verified'), createdAt: minutesAgo(40000, ctx.now) },
+      $setOnInsert: { _id: new Types.ObjectId(auditId), createdAt: minutesAgo(40000, ctx.now) },
       $set: {
-        actorId: adminId,
+        actorId: new Types.ObjectId(adminId),
         actorRole: UserRole.ADMIN,
         action: 'VERIFICATION_APPROVED',
         resourceType: 'VerificationRequest',
@@ -911,7 +921,6 @@ async function seedNotificationsDisputesAndMore(ctx: Ctx): Promise<void> {
         ipAddress: '127.0.0.1',
         requestId: 'seed-goa-demo',
         updatedAt: ctx.now,
-        createdAt: minutesAgo(40000, ctx.now),
       },
     },
     { upsert: true }
@@ -1076,7 +1085,7 @@ export async function resetGoaDemoData(): Promise<void> {
   await DisputeModel.deleteMany({ jobId: { $in: jobIds } });
   await ReportModel.deleteMany({ targetId: { $in: jobIds.map(String) } });
   await ExpenseModel.deleteMany({ workerId: { $in: userIds } });
-  await TransactionModel.deleteMany({ workerId: { $in: userIds } });
+  await TransactionModel.collection.deleteMany({ workerId: { $in: userIds } });
   await NotificationModel.deleteMany({ userId: { $in: userIds } });
   await VerificationRequestModel.deleteMany({ workerId: { $in: userIds } });
   await AuditLogModel.deleteMany({ requestId: 'seed-goa-demo' });
