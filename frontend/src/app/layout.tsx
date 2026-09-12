@@ -7,7 +7,6 @@ import { AppHeader } from "@/components/layout/app-header";
 import { AppFooter } from "@/components/layout/app-footer";
 import { OfflineBanner } from "@/components/feedback/offline-banner";
 import { VoiceAssistantFAB } from "@/components/voice/voice-assistant-fab";
-import { MagneticCursor } from "@/components/ui/magnetic-cursor";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -55,8 +54,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={interTight.variable}>
       <body className={`${interTight.className} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground selection:bg-blue-500/20`}>
-        <MagneticCursor />
-
         {/* Accessible Skip Link */}
         <a
           href="#main-content"

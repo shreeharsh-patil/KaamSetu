@@ -10,6 +10,14 @@ function requireUser(req: Request): { id: string; role: UserRole } {
   return { id: req.user.id, role: req.user.role };
 }
 
+/** GET /api/v1/conversations */
+export async function listConversations(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+
+  const conversations = await conversationService.listConversationsForUser(actor);
+  res.status(200).json({ success: true, data: { conversations } });
+}
+
 /** GET /api/v1/jobs/:jobId/conversation */
 export async function getJobConversation(req: Request, res: Response): Promise<void> {
   const actor = requireUser(req);

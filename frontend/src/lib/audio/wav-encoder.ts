@@ -68,7 +68,6 @@ export class PcmAudioRecorder {
   constructor(private readonly targetSampleRate = 16000) {}
 
   start(stream: MediaStream) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) {
       throw new Error("Web Audio API is not supported in this browser");
@@ -154,7 +153,6 @@ export class PcmAudioRecorder {
  */
 export async function convertBlobToWav(audioBlob: Blob): Promise<Blob> {
   const arrayBuffer = await audioBlob.arrayBuffer();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
   if (!AudioContextClass) {
     return audioBlob;

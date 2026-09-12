@@ -1,208 +1,285 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ArrowUpRight, PhoneCall, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Wrench,
+  Hammer,
+  Search,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 
 interface HeroProps {
-  activeRole?: "customer" | "worker";
-  onSelectRole?: (role: "customer" | "worker") => void;
+  onSearch?: (query: string) => void;
 }
 
-export function Hero({ activeRole = "customer", onSelectRole }: HeroProps) {
-  const customerTitleText = "Connecting India's verified trades with AI intelligence";
-  const workerTitleText = "Empowering skilled trades with direct jobs & daily payouts";
-  
-  const titleText = activeRole === "worker" ? workerTitleText : customerTitleText;
-  const words = titleText.split(" ");
+const QUICK_TRADES = [
+  { id: "electrical", label: "Electrician", icon: Zap, count: "48 online" },
+  { id: "plumbing", label: "Plumbing", icon: Wrench, count: "62 online" },
+  { id: "carpentry", label: "Carpentry", icon: Hammer, count: "31 online" },
+  { id: "appliances", label: "AC Repair", icon: Sparkles, count: "29 online" },
+];
 
-  const quickServices = [
-    { label: "⚡ Electrician", query: "electrical" },
-    { label: "🔧 Plumber", query: "plumbing" },
-    { label: "🪚 Carpenter", query: "carpentry" },
-    { label: "❄️ AC & Appliances", query: "appliances" },
-    { label: "🎨 Painter", query: "painting" },
-  ];
+/** One word of the headline, revealed on load. */
+function RevealWord({
+  word,
+  delay,
+  className = "",
+}: {
+  word: string;
+  delay: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`hero-word ${className}`}
+      style={{ animationDelay: `${delay}s`, marginRight: "0.24em" }}
+    >
+      {word}
+    </span>
+  );
+}
+
+export function Hero({ onSearch }: HeroProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [opacity, setOpacity] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const maxScroll = 450;
+      const calculatedOpacity = Math.min(1, scrollPosition / maxScroll);
+      setOpacity(calculatedOpacity);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", checkDesktop);
+    };
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSearch) {
+      onSearch(searchQuery);
+    }
+  };
 
   return (
-    <section className="min-h-[85vh] flex flex-col justify-center pt-24 md:pt-32 pb-16 relative overflow-hidden">
-      {/* 3D Rotating Orb Background from ai-product-portfolio */}
-      <div className="absolute -right-32 md:-right-48 top-20 md:top-28 w-[450px] h-[450px] md:w-[720px] md:h-[720px] pointer-events-none animate-orb-rotate -z-10 scale-125 opacity-90 dark:opacity-80">
+    <section className="min-h-[90vh] flex flex-col justify-center pt-8 md:pt-14 relative overflow-hidden">
+      {/* 3D orb asset, tinted into the brand's navy/indigo family */}
+      <div className="absolute -right-32 md:-right-48 top-12 md:top-20 w-[460px] h-[460px] md:w-[740px] md:h-[740px] pointer-events-none animate-orb-rotate -z-10 scale-110 opacity-80">
         <Image
           src="/images/orb.png"
           alt=""
-          width={720}
-          height={720}
-          className="w-full h-full object-contain"
+          width={740}
+          height={740}
+          className="w-full h-full object-contain orb-brand"
           priority
         />
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12 w-full">
+      {/* Ambient background blur blobs */}
+      <div className="absolute top-1/4 -left-48 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-12 md:py-20 w-full">
         <div className="max-w-4xl">
-          {/* Eyebrow / Brand tag */}
-          <div className="flex items-center gap-3 mb-6">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-secondary border border-border">
-              <span className="h-2 w-2 rounded-full bg-[#00d4ff] animate-pulse" />
-              <span>KaamSetu Platform</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">National Blue-Collar Protocol</span>
+          {/* Single quiet proof line — what the platform actually is */}
+          <p className="flex items-center gap-2 text-sm sm:text-base font-medium text-muted-foreground mb-6">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-          </div>
-
-          {/* Main Title with Animated Words & AI Gradient */}
-          <h1 className="text-4xl sm:text-6xl lg:text-[76px] font-semibold tracking-tight leading-[1.05] text-balance mb-8">
-            {words.map((word, index) => (
-              <span
-                key={`${word}-${index}`}
-                className={`hero-word inline-block font-sans font-semibold text-4xl sm:text-6xl lg:text-[76px] ${
-                  word === "AI" ? "ai-gradient-word" : ""
-                }`}
-                style={{
-                  animationDelay: `${index * 0.08}s`,
-                  marginRight: index < words.length - 1 ? "0.26em" : "0",
-                  ...(word === "AI"
-                    ? {
-                        background:
-                          "linear-gradient(135deg, #ff006e 0%, #8b5cf6 33%, #203eec 66%, #00d4ff 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                        filter:
-                          "drop-shadow(0 0 20px rgba(255, 0, 110, 0.3)) drop-shadow(0 0 30px rgba(139, 92, 246, 0.3)) drop-shadow(0 0 40px rgba(0, 212, 255, 0.2))",
-                      }
-                    : {}),
-                }}
-              >
-                {word}
-              </span>
-            ))}
-          </h1>
-
-          {/* Subtitle */}
-          <p className="max-w-2xl leading-relaxed text-base sm:text-lg text-muted-foreground mb-10">
-            {activeRole === "customer"
-              ? "Book background-verified electricians, plumbers, carpenters, and technicians near you in 60 seconds. Guaranteed work, upfront standardized rate cards, and multilingual voice booking."
-              : "Direct customer leads without commission cuts. Guaranteed instant UPI payouts, Aadhaar-verified badge, and jobs matched strictly in your preferred pin codes."}
+            Verified local electricians, plumbers &amp; carpenters
           </p>
 
-          {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-12">
-            {activeRole === "customer" ? (
-              <>
-                <Link
-                  href="/customer/jobs/new"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all relative overflow-hidden group shadow-xl"
-                  style={{
-                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                    boxShadow: "0 8px 30px rgba(32, 62, 236, 0.35)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 12px 35px rgba(32, 62, 236, 0.5), 0 0 40px rgba(0, 212, 255, 0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(32, 62, 236, 0.35)";
-                  }}
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    Book a Technician Now
-                    <ArrowUpRight className="w-5 h-5" />
-                  </span>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-gradient-to-r from-[#203eec] to-[#00d4ff]" />
-                </Link>
+          {/* Headline — one promise, one stroke. The amber marker line draws
+              once beneath "Skilled hands", the way tradespeople mark work. */}
+          <h1 className="font-display text-[2.6rem] leading-[1.04] sm:text-6xl lg:text-7xl xl:text-[84px] font-semibold tracking-tight text-foreground">
+            <span className="marker-stroke">
+              <RevealWord word="Skilled" delay={0} />
+              <RevealWord word="hands" delay={0.06} />
+            </span>
+            <RevealWord word="at" delay={0.12} />
+            <RevealWord word="your" delay={0.18} />
+            <RevealWord word="doorstep" delay={0.24} />
+            <RevealWord word="in" delay={0.3} />
+            <RevealWord word="15" delay={0.36} className="numeric" />
+            <RevealWord word="minutes." delay={0.42} />
+          </h1>
 
-                <Link
-                  href="/voice-ai"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-4 text-base font-medium rounded-full border border-border bg-card hover:bg-secondary transition-all"
-                >
-                  <PhoneCall className="w-4 h-4 text-[#203eec]" />
-                  <span>Voice Booking (बोलकर बुक करें)</span>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/worker"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all relative overflow-hidden group shadow-xl"
-                  style={{
-                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                    boxShadow: "0 8px 30px rgba(32, 62, 236, 0.35)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 12px 35px rgba(32, 62, 236, 0.5), 0 0 40px rgba(0, 212, 255, 0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(32, 62, 236, 0.35)";
-                  }}
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    Join as Worker • Start Earning
-                    <ArrowUpRight className="w-5 h-5" />
-                  </span>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-gradient-to-r from-[#203eec] to-[#00d4ff]" />
-                </Link>
+          <p className="mt-7 max-w-xl leading-relaxed text-base sm:text-lg text-muted-foreground">
+            Post the job, get matched to the nearest verified pro in about 15
+            minutes, and pay through escrow only when the work is done.
+          </p>
 
-                <Link
-                  href="/customer"
-                  onClick={() => onSelectRole?.("customer")}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-4 text-base font-medium rounded-full border border-border bg-card hover:bg-secondary transition-all"
-                >
-                  <span>Switch to Hire Workers</span>
-                </Link>
-              </>
-            )}
-          </div>
+          {/* Interactive Search Bar */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="mt-8 flex flex-col sm:flex-row items-center gap-3 p-2 bg-card/80 backdrop-blur-md rounded-2xl border border-border shadow-lg max-w-xl"
+          >
+            <div className="flex items-center gap-3 px-3 py-2 w-full">
+              <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+              <input
+                type="text"
+                placeholder="What help do you need? (e.g. MCB tripping, leaking pipe)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-sm sm:text-base outline-none text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+            <Link
+              href={searchQuery ? `/customer/jobs/new?query=${encodeURIComponent(searchQuery)}` : "/customer/jobs/new"}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-semibold text-white shrink-0 text-center transition-all duration-200"
+              style={{
+                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
+                boxShadow: "0 4px 18px rgba(32, 62, 236, 0.3)",
+              }}
+            >
+              Find Pro
+            </Link>
+          </form>
 
           {/* Quick Trade Badges */}
-          {activeRole === "customer" && (
-            <div className="pt-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                In-Demand Services Near You
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {quickServices.map((service) => (
-                  <Link
-                    key={service.label}
-                    href={`/customer/jobs/new?trade=${service.query}`}
-                    className="px-3.5 py-1.5 text-xs font-medium border border-border rounded-full hover:bg-secondary hover:border-foreground/30 transition-all cursor-pointer inline-flex items-center gap-1.5"
-                  >
-                    <span>{service.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
+            <span className="text-muted-foreground font-medium mr-1">Popular:</span>
+            {QUICK_TRADES.map((trade) => {
+              const Icon = trade.icon;
+              return (
+                <Link
+                  key={trade.id}
+                  href={`/customer/jobs/new?trade=${trade.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/80 hover:bg-secondary border border-border/70 text-foreground transition-all duration-150 hover:-translate-y-0.5"
+                >
+                  <Icon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span className="font-medium">{trade.label}</span>
+                  <span className="text-[10px] text-muted-foreground ml-0.5 numeric">({trade.count})</span>
+                </Link>
+              );
+            })}
+          </div>
 
-          {/* Trust Guarantees Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 pt-8 border-t border-border">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-[#203eec] shrink-0" />
-              <div className="text-xs">
-                <p className="font-semibold text-foreground">100% Aadhaar</p>
-                <p className="text-muted-foreground">Identity Verified</p>
+          {/* Primary & Secondary Dual CTAs */}
+          <div className="flex flex-wrap items-center gap-4 mt-8">
+            <Link
+              href="/customer/jobs/new"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all relative overflow-hidden group"
+              style={{
+                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
+                boxShadow: "0 4px 20px rgba(32, 62, 236, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 8px 28px rgba(32, 62, 236, 0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(32, 62, 236, 0.3)";
+              }}
+            >
+              Post a Job in 60s
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              href="/worker"
+              className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+            >
+              Join as Worker &amp; Earn
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Platform Live Snapshot with parallax reveal */}
+      <div className="w-full max-w-[1280px] mx-auto px-6 md:px-12 mt-4 md:mt-8">
+        <div
+          className="relative rounded-2xl md:rounded-3xl border border-border bg-card/60 backdrop-blur-xl overflow-hidden shadow-2xl transition-all duration-300"
+          style={{
+            opacity: isDesktop ? Math.max(0.65, opacity) : 1,
+            transform: isDesktop ? `translateY(${(1 - Math.max(0.65, opacity)) * 20}px)` : "none",
+          }}
+        >
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:px-6 border-b border-border/80 bg-muted/40">
+            <div className="flex items-center gap-3">
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+              </span>
+              <span className="font-display font-semibold text-xs sm:text-sm">Live marketplace pulse</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                Mumbai, Bengaluru &amp; Delhi NCR
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground numeric">
+              <span>Avg match time 82s</span>
+              <span>Escrow on every job</span>
+            </div>
+          </div>
+
+          {/* Showcase Content */}
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+            {/* Stat 1 */}
+            <div className="p-6 flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="font-display text-2xl font-bold numeric">15 Mins</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
+                  Geospatial Dispatch Wave
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Multi-ring geo-fencing alerts the nearest 5 verified technicians simultaneously.
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-[#00d4ff] shrink-0" />
-              <div className="text-xs">
-                <p className="font-semibold text-foreground">Standard Rates</p>
-                <p className="text-muted-foreground">No Hidden Charges</p>
+
+            {/* Stat 2 */}
+            <div className="p-6 flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="font-display text-2xl font-bold">Zero Fraud</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
+                  Aadhaar &amp; Police Verified
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Every technician undergoes biometric Aadhaar verification and skill benchmarking.
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-[#203eec] shrink-0" />
-              <div className="text-xs">
-                <p className="font-semibold text-foreground">Escrow Payouts</p>
-                <p className="text-muted-foreground">Pay After Work Done</p>
+
+            {/* Stat 3 */}
+            <div className="p-6 flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
               </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-[#00d4ff] shrink-0" />
-              <div className="text-xs">
-                <p className="font-semibold text-foreground">30-Day Guarantee</p>
-                <p className="text-muted-foreground">Free Re-service</p>
+              <div>
+                <div className="font-display text-2xl font-bold numeric">100% Escrow</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
+                  Direct Bank UPI Payouts
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Customer funds stay safe in escrow until completion OTP is exchanged at your doorstep.
+                </p>
               </div>
             </div>
           </div>

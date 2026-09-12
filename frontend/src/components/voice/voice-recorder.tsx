@@ -71,7 +71,6 @@ export function VoiceRecorder({
   const directWavBlobRef = useRef<Blob | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const liveTranscriptRef = useRef<string>("");
   const isManuallyStoppedRef = useRef<boolean>(false);
@@ -139,7 +138,6 @@ export function VoiceRecorder({
       }
 
       // 2. Start browser Web Speech API for real-time speech preview and zero-latency fallback
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         try {
@@ -148,7 +146,6 @@ export function VoiceRecorder({
           recognition.interimResults = true;
           recognition.lang = selectedLanguage === "auto" ? (navigator.language || "hi-IN") : selectedLanguage;
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           recognition.onresult = (event: any) => {
             let fullTranscript = "";
             for (let i = 0; i < event.results.length; ++i) {

@@ -2,7 +2,24 @@ import { Types } from 'mongoose';
 import { UserRole, type IConversationEntity } from '@kaamsetu/types';
 import { conversationRepository, IConversationRepository } from './conversation.repository.js';
 import { jobRepository, IJobRepository } from '../jobs/job.repository.js';
+import { userRepository } from '../users/user.repository.js';
+import { workerProfileRepository } from '../worker-profiles/worker-profile.repository.js';
+import { customerProfileRepository } from '../customer-profiles/customer-profile.repository.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../../errors/index.js';
+
+/** Conversation summary shape returned to clients. */
+export interface ConversationSummaryView {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  otherParticipant: {
+    id: string;
+    name: string;
+    role: UserRole;
+  };
+  lastMessageAt: string | null;
+  updatedAt: string;
+}
 
 export class ConversationService {
   constructor(
@@ -64,6 +81,59 @@ export class ConversationService {
     }
 
     return conversation;
+  }
+
+  /**
+   * Lists all conversations the user participates in, newest activity first,
+   * with the job title and the other participant's display name resolved.
+   */
+  async listConversationsForUser(
+    user: { id: string; role: UserRole }
+  ): Promise<ConversationSummaryView[]> {
+    const conversations = await this.conversationRepo.listForUser(user.id);
+
+    return Promise.all(
+      conversations.map(async (conversation) => {
+        const job = await this.jobRepo.findById(conversation.jobId);
+
+        const otherId = conversation.participants.find((p) => p !== user.id);
+        const otherParticipant = otherId ? await this.resolveParticipantName(otherId) : null;
+
+        return {
+          id: conversation.id,
+          jobId: conversation.jobId,
+          jobTitle: job?.title ?? 'Service request',
+          otherParticipant: {
+            id: otherId ?? '',
+            name: otherParticipant?.name ?? 'Participant',
+            role: otherParticipant?.role ?? UserRole.CUSTOMER,
+          },
+          lastMessageAt: conversation.lastMessageAt
+            ? new Date(conversation.lastMessageAt).toISOString()
+            : null,
+          updatedAt: new Date(conversation.updatedAt).toISOString(),
+        };
+      })
+    );
+  }
+
+  /** Resolves a user id to a display name via profile-first, user fallback. */
+  private async resolveParticipantName(
+    userId: string
+  ): Promise<{ name: string; role: UserRole } | null> {
+    const user = await userRepository.findById(userId);
+    if (!user) return null;
+
+    let name = user.phoneNumber;
+    if (user.role === UserRole.WORKER) {
+      const profile = await workerProfileRepository.findByUserId(userId);
+      if (profile?.displayName) name = profile.displayName;
+    } else if (user.role === UserRole.CUSTOMER) {
+      const profile = await customerProfileRepository.findByUserId(userId);
+      if (profile?.displayName) name = profile.displayName;
+    }
+
+    return { name, role: user.role };
   }
 }
 

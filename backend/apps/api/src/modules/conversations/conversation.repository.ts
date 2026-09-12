@@ -5,6 +5,7 @@ import type { IConversationEntity } from '@kaamsetu/types';
 export interface IConversationRepository {
   findById(id: string): Promise<IConversationEntity | null>;
   findByJobId(jobId: string): Promise<IConversationEntity | null>;
+  listForUser(userId: string, limit?: number): Promise<IConversationEntity[]>;
   create(jobId: string, participants: string[], session?: ClientSession): Promise<IConversationEntity>;
   getOrCreateForJob(
     jobId: string,
@@ -26,6 +27,15 @@ export class ConversationRepository implements IConversationRepository {
     if (!Types.ObjectId.isValid(jobId)) return null;
     const doc = await ConversationModel.findOne({ jobId }).exec();
     return doc ? toConversationEntity(doc) : null;
+  }
+
+  async listForUser(userId: string, limit = 50): Promise<IConversationEntity[]> {
+    if (!Types.ObjectId.isValid(userId)) return [];
+    const docs = await ConversationModel.find({ participants: new Types.ObjectId(userId) })
+      .sort({ updatedAt: -1 })
+      .limit(Math.min(Math.max(1, limit), 100))
+      .exec();
+    return docs.map(toConversationEntity);
   }
 
   async create(
