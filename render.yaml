@@ -1,46 +1,73 @@
 services:
+  # ----------------------------------------------------------------------------
+  # KaamSetu Express REST API & Socket.IO Realtime Server
+  # ----------------------------------------------------------------------------
   - type: web
     name: kaamsetu-api
     runtime: node
-    rootDir: backend
-    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @kaamsetu/api build
-    startCommand: pnpm --filter @kaamsetu/api start
+    plan: starter
+    region: oregon # or frankfurt, singapore, etc.
+    buildCommand: corepack enable && pnpm install && pnpm build:backend
+    startCommand: pnpm start
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "5000"
+      - key: APP_VERSION
+        value: 1.0.0
+      - key: API_PREFIX
+        value: /api/v1
       - key: MONGODB_URI
-        sync: false
+        sync: false # Set in Render Dashboard (e.g. MongoDB Atlas)
       - key: REDIS_URL
-        sync: false
+        fromService:
+          type: redis
+          name: kaamsetu-redis
+          property: connectionString
       - key: JWT_ACCESS_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        sync: false
+        sync: false # Set to your frontend URL, e.g. https://your-frontend.vercel.app
+      - key: STORAGE_PROVIDER
+        value: mock # Change to 's3' if using AWS S3
+      - key: S3_BUCKET
+        value: kaamsetu-uploads
+      - key: S3_REGION
+        value: ap-south-1
+
+  # ----------------------------------------------------------------------------
+  # KaamSetu BullMQ Background Worker (Optional / Dedicated worker)
+  # ----------------------------------------------------------------------------
   - type: worker
     name: kaamsetu-worker
     runtime: node
-    rootDir: backend
-    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @kaamsetu/worker build
-    startCommand: pnpm --filter @kaamsetu/worker start
+    plan: starter
+    region: oregon
+    buildCommand: corepack enable && pnpm install && pnpm build:backend
+    startCommand: node backend/apps/worker/dist/index.js
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
         sync: false
       - key: REDIS_URL
-        sync: false
-      - key: JWT_ACCESS_SECRET
         fromService:
-          type: web
-          name: kaamsetu-api
-          envVarKey: JWT_ACCESS_SECRET
-      - key: JWT_REFRESH_SECRET
-        fromService:
-          type: web
-          name: kaamsetu-api
-          envVarKey: JWT_REFRESH_SECRET
+          type: redis
+          name: kaamsetu-redis
+          property: connectionString
+      - key: STORAGE_PROVIDER
+        value: mock
+
+# ------------------------------------------------------------------------------
+# Managed Redis for BullMQ Queues and Realtime State
+# ------------------------------------------------------------------------------
+redis:
+  - name: kaamsetu-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: [] # internal access only

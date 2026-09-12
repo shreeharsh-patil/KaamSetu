@@ -40,11 +40,14 @@ export function jitteredCoordinates(
   key: GoaLocationKey,
   index: number
 ): [number, number] {
-  const base = GOA_LOCATIONS[key].coordinates;
+  const loc = GOA_LOCATIONS[key];
+  const base = loc ? loc.coordinates : [73.83, 15.49];
+  const lng = base[0] ?? 73.83;
+  const lat = base[1] ?? 15.49;
   const dLng = (((index * 37) % 17) - 8) * 0.0012; // ±~0.9 km east/west
   const dLat = (((index * 53) % 19) - 9) * 0.0011; // ±~1.0 km north/south
   return [
-    Math.round((base[0] + dLng) * 1e6) / 1e6,
-    Math.round((base[1] + dLat) * 1e6) / 1e6,
+    Math.round((lng + dLng) * 1e6) / 1e6,
+    Math.round((lat + dLat) * 1e6) / 1e6,
   ];
 }
