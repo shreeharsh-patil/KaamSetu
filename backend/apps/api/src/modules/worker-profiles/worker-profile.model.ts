@@ -19,11 +19,16 @@ export interface IWorkerProfileDocument extends Document {
     verified: boolean;
   }>;
   languages: string[];
-  serviceLocation: {
+  serviceLocation?: {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
   };
+  serviceArea?: {
+    city?: string | null;
+    pincode?: string | null;
+  };
   serviceRadiusKm: number;
+  onboardingComplete: boolean;
   availabilityStatus: WorkerAvailability;
   pricing: {
     hourlyRate?: number | null;
@@ -138,12 +143,16 @@ export const workerProfileSchema = new Schema<IWorkerProfileDocument>(
       type: {
         type: String,
         enum: ['Point'],
-        default: 'Point',
       },
       coordinates: {
         type: [Number], // [longitude, latitude]
-        required: [true, 'Coordinates [longitude, latitude] are required'],
       },
+      _id: false,
+    },
+    serviceArea: {
+      city: { type: String, trim: true, default: null },
+      pincode: { type: String, trim: true, default: null },
+      _id: false,
     },
     serviceRadiusKm: {
       type: Number,
@@ -154,7 +163,12 @@ export const workerProfileSchema = new Schema<IWorkerProfileDocument>(
     availabilityStatus: {
       type: String,
       enum: Object.values(WorkerAvailability),
-      default: WorkerAvailability.AVAILABLE,
+      default: WorkerAvailability.OFFLINE,
+      index: true,
+    },
+    onboardingComplete: {
+      type: Boolean,
+      default: false,
       index: true,
     },
     pricing: {
@@ -230,10 +244,7 @@ workerProfileSchema.index({ 'skills.skillId': 1 });
 workerProfileSchema.index({ availabilityStatus: 1, verificationStatus: 1 });
 
 export function mapWorkerDocumentToEntity(doc: IWorkerProfileDocument): IWorkerProfileEntity {
-  const coordinates: [number, number] = [
-    doc.serviceLocation?.coordinates?.[0] ?? 0,
-    doc.serviceLocation?.coordinates?.[1] ?? 0,
-  ];
+  const coordinates = doc.serviceLocation?.coordinates;
 
   return {
     id: doc._id.toString(),
@@ -250,16 +261,20 @@ export function mapWorkerDocumentToEntity(doc: IWorkerProfileDocument): IWorkerP
       verified: s.verified,
     })),
     languages: doc.languages || ['en'],
-    serviceLocation: {
-      type: 'Point',
-      coordinates,
-    },
-    serviceArea: {
-      type: 'Point',
-      coordinates,
-      radiusKm: doc.serviceRadiusKm,
-    },
+    ...(coordinates
+      ? { serviceLocation: { type: 'Point' as const, coordinates } }
+      : {}),
+    serviceArea: coordinates
+      ? {
+          type: 'Point',
+          coordinates,
+          radiusKm: doc.serviceRadiusKm,
+          city: doc.serviceArea?.city ?? null,
+          pincode: doc.serviceArea?.pincode ?? null,
+        }
+      : undefined,
     serviceRadiusKm: doc.serviceRadiusKm,
+    onboardingComplete: doc.onboardingComplete,
     availabilityStatus: doc.availabilityStatus,
     isAvailable: doc.availabilityStatus === WorkerAvailability.AVAILABLE,
     pricing: {

@@ -6,6 +6,7 @@ import {
   updateWorkerAvailabilitySchema,
   updateWorkerServiceRadiusSchema,
   addWorkerSkillSchema,
+  enrollWorkerSchema,
 } from '@kaamsetu/validation';
 import { UnauthorizedError, BadRequestError } from '../../errors/index.js';
 
@@ -20,6 +21,13 @@ export async function getMyWorkerProfile(req: Request, res: Response): Promise<v
     success: true,
     data: profile,
   });
+}
+
+export async function enrollWorker(req: Request, res: Response): Promise<void> {
+  if (!req.user) throw new UnauthorizedError('Authentication required');
+  const input = enrollWorkerSchema.parse(req.body);
+  const result = await workerProfileService.enroll(req.user.id, input);
+  res.status(200).json({ success: true, data: result });
 }
 
 export async function updateMyWorkerProfile(req: Request, res: Response): Promise<void> {

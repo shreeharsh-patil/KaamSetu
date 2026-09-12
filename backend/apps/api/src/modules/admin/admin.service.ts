@@ -63,6 +63,24 @@ export class AdminService {
     }
   }
 
+  async getStats(actor: IAdminActionContext): Promise<Record<string, number>> {
+    this.assertAdminOrSupport(actor.actorRole);
+    const activeStatuses = ['OPEN', 'MATCHING', 'OFFERED', 'ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS'];
+    const [totalUsers, totalWorkers, verifiedWorkers, activeJobs, completedJobs, openDisputes, gmv] = await Promise.all([
+      UserModel.countDocuments({ status: { $ne: UserStatus.DELETED } }),
+      WorkerProfileModel.countDocuments(),
+      WorkerProfileModel.countDocuments({ verificationStatus: WorkerVerificationStatus.VERIFIED }),
+      JobModel.countDocuments({ status: { $in: activeStatuses } }),
+      JobModel.countDocuments({ status: 'COMPLETED' }),
+      DisputeModel.countDocuments({ status: 'OPEN' }),
+      TransactionModel.aggregate<{ total: number }>([
+        { $match: { type: TransactionType.JOB_REVENUE } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+    ]);
+    return { totalUsers, totalWorkers, verifiedWorkers, activeJobs, completedJobs, openDisputes, platformGmv: gmv[0]?.total ?? 0 };
+  }
+
   // -------------------------------------------------------------
   // 1. User Management
   // -------------------------------------------------------------

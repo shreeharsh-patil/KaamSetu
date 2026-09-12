@@ -7,6 +7,7 @@ import {
   type IJobEntity,
   type CursorPage,
   type ListJobOffersFilters,
+  type IJobOfferView,
 } from '@kaamsetu/types';
 import { IJobOfferRepository, jobOfferRepository } from './job-offer.repository.js';
 import { IJobRepository, jobRepository } from '../jobs/job.repository.js';
@@ -45,6 +46,56 @@ export class JobOfferService {
       ...filters,
       workerId,
     });
+  }
+
+  private async toWorkerView(offer: IJobOfferEntity): Promise<IJobOfferView> {
+    const job = await this.jobRepo.findById(offer.jobId);
+    if (!job) throw new NotFoundError('Job for offer not found');
+    const category = await import('../service-categories/service-category.repository.js')
+      .then(({ serviceCategoryRepository }) => serviceCategoryRepository.findById(job.categoryId));
+    const sanitizedDescription = job.description
+      ?.replace(/\+?91[-\s]?\d{10}|\b\d{10}\b/g, '[contact hidden]')
+      .slice(0, 500);
+
+    return {
+      id: offer.id,
+      jobId: offer.jobId,
+      distanceKm: offer.distanceKm,
+      matchScore: offer.matchScore,
+      scoreBreakdown: offer.scoreBreakdown,
+      status: offer.status,
+      expiresAt: offer.expiresAt,
+      createdAt: offer.createdAt,
+      job: {
+        category: {
+          id: category?.id ?? job.categoryId,
+          name: category?.name ?? 'Service',
+          slug: category?.slug ?? '',
+        },
+        title: job.title,
+        description: sanitizedDescription ?? null,
+        urgency: job.urgency,
+        approximateLocality: job.address.city,
+        preferredTime: job.preferredTime,
+        estimatedAmount: job.estimatedPrice ?? null,
+      },
+    };
+  }
+
+  async getOfferViewsForWorker(
+    workerId: string,
+    filters: ListJobOffersFilters
+  ): Promise<CursorPage<IJobOfferView>> {
+    const page = await this.getOffersForWorker(workerId, filters);
+    return { ...page, items: await Promise.all(page.items.map((offer) => this.toWorkerView(offer))) };
+  }
+
+  async getOfferViewById(
+    offerId: string,
+    user: { id: string; role: UserRole }
+  ): Promise<IJobOfferView> {
+    const offer = await this.getOfferById(offerId, user);
+    return this.toWorkerView(offer);
   }
 
   /**

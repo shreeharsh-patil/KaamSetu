@@ -24,6 +24,11 @@ import {
   type IAdminJobListQuery,
 } from '@kaamsetu/types';
 
+export async function getStats(req: Request, res: Response): Promise<void> {
+  const actor = extractActorContext(req, res);
+  res.status(200).json({ success: true, data: await adminService.getStats(actor) });
+}
+
 function getParamId(req: Request, paramName: string = 'id'): string {
   const val = req.params[paramName];
   if (Array.isArray(val)) {

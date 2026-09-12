@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   listUsers,
+  getStats,
   getUserById,
   suspendUser,
   restoreUser,
@@ -23,6 +24,13 @@ import { asyncHandler } from '../../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
 
 export const adminRoutes = Router();
+
+adminRoutes.get(
+  '/stats',
+  authenticate(),
+  requireRole(UserRole.ADMIN, UserRole.SUPPORT),
+  asyncHandler(getStats)
+);
 
 // -------------------------------------------------------------
 // 1. User Management Endpoints

@@ -8,12 +8,21 @@ import {
   addWorkerSkill,
   removeWorkerSkill,
   getPublicWorkerProfile,
+  enrollWorker,
 } from './worker-profile.controller.js';
 import { authenticate, requireRole } from '../../middlewares/auth.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import { UserRole } from '@kaamsetu/types';
 
 export const workerRoutes = Router();
+
+// Controlled CUSTOMER -> WORKER transition. The payload cannot select a staff role.
+workerRoutes.post(
+  '/enroll',
+  authenticate(),
+  requireRole(UserRole.CUSTOMER, UserRole.WORKER),
+  asyncHandler(enrollWorker)
+);
 
 // Authenticated Worker endpoints
 workerRoutes.get('/me', authenticate(), requireRole(UserRole.WORKER), asyncHandler(getMyWorkerProfile));

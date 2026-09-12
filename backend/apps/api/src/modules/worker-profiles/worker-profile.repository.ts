@@ -80,6 +80,10 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
     const query: Record<string, unknown> = {
       deletedAt: null,
       availabilityStatus: WorkerAvailability.AVAILABLE,
+      onboardingComplete: true,
+      primaryCategoryId: { $exists: true },
+      'skills.0': { $exists: true },
+      'serviceLocation.coordinates.1': { $exists: true },
       serviceLocation: {
         $nearSphere: {
           $geometry: {
@@ -104,10 +108,7 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
     session?: ClientSession | null
   ): Promise<IWorkerProfileEntity> {
     const displayName = data.displayName || data.fullName || 'Skilled Worker';
-    const coordinates: [number, number] =
-      data.serviceLocation?.coordinates ||
-      data.serviceArea?.coordinates ||
-      [73.8567, 18.5204];
+    const coordinates = data.serviceLocation?.coordinates || data.serviceArea?.coordinates;
     const radiusKm = data.serviceRadiusKm ?? data.serviceArea?.radiusKm ?? 15;
 
     const docData: Partial<IWorkerProfileDocument> = {
@@ -125,14 +126,22 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
         verified: s.verified ?? false,
       })),
       languages: data.languages || ['en'],
-      serviceLocation: {
-        type: 'Point',
-        coordinates,
-      },
+      ...(coordinates
+        ? { serviceLocation: { type: 'Point', coordinates } }
+        : {}),
+      ...(data.serviceArea
+        ? {
+            serviceArea: {
+              city: data.serviceArea.city ?? null,
+              pincode: data.serviceArea.pincode ?? null,
+            },
+          }
+        : {}),
       serviceRadiusKm: radiusKm,
       availabilityStatus:
         data.availabilityStatus ??
-        (data.isAvailable === false ? WorkerAvailability.OFFLINE : WorkerAvailability.AVAILABLE),
+        (data.isAvailable === true ? WorkerAvailability.AVAILABLE : WorkerAvailability.OFFLINE),
+      onboardingComplete: data.onboardingComplete ?? false,
       pricing: {
         hourlyRate: data.pricing?.hourlyRate ?? data.hourlyRate ?? null,
         customRateDescription: data.pricing?.customRateDescription ?? null,
@@ -172,6 +181,11 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
     if (data.availabilityStatus !== undefined) updateData['availabilityStatus'] = data.availabilityStatus;
     if (data.serviceRadiusKm !== undefined) updateData['serviceRadiusKm'] = data.serviceRadiusKm;
     if (data.serviceLocation !== undefined) updateData['serviceLocation'] = data.serviceLocation;
+    if (data.serviceArea !== undefined) {
+      if (data.serviceArea.city !== undefined) updateData['serviceArea.city'] = data.serviceArea.city;
+      if (data.serviceArea.pincode !== undefined) updateData['serviceArea.pincode'] = data.serviceArea.pincode;
+    }
+    if (data.onboardingComplete !== undefined) updateData['onboardingComplete'] = data.onboardingComplete;
     if (data.ratingAverage !== undefined) updateData['rating.average'] = data.ratingAverage;
     if (data.ratingCount !== undefined) updateData['rating.count'] = data.ratingCount;
     if (data.completedJobsCount !== undefined) updateData['stats.completedJobs'] = data.completedJobsCount;
@@ -217,6 +231,22 @@ export class WorkerProfileRepository implements IWorkerProfileRepository {
     if (data.availabilityStatus !== undefined) updateData['availabilityStatus'] = data.availabilityStatus;
     if (data.serviceRadiusKm !== undefined) updateData['serviceRadiusKm'] = data.serviceRadiusKm;
     if (data.serviceLocation !== undefined) updateData['serviceLocation'] = data.serviceLocation;
+    if (data.serviceArea !== undefined) {
+      if (data.serviceArea.city !== undefined) updateData['serviceArea.city'] = data.serviceArea.city;
+      if (data.serviceArea.pincode !== undefined) updateData['serviceArea.pincode'] = data.serviceArea.pincode;
+    }
+    if (data.onboardingComplete !== undefined) updateData['onboardingComplete'] = data.onboardingComplete;
+    if (data.primaryCategoryId && Types.ObjectId.isValid(data.primaryCategoryId)) {
+      updateData['primaryCategoryId'] = new Types.ObjectId(data.primaryCategoryId);
+    }
+    if (data.skills !== undefined) {
+      updateData['skills'] = data.skills.map((skill) => ({
+        skillId: new Types.ObjectId(skill.skillId),
+        experienceYears: skill.experienceYears,
+        level: skill.level,
+        verified: skill.verified,
+      }));
+    }
 
     const doc = await WorkerProfileModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId), deletedAt: null },

@@ -16,8 +16,11 @@ import {
   WorkerAvailability,
   SkillLevel,
   UserRole,
+  UserStatus,
+  type IWorkerEnrollmentInput,
 } from '@kaamsetu/types';
 import { NotFoundError, ConflictError, BadRequestError } from '../../errors/index.js';
+import { withTransaction } from '../../database/transaction.js';
 
 export class WorkerProfileService {
   constructor(
@@ -56,13 +59,11 @@ export class WorkerProfileService {
 
       profile = await this.workerRepo.create({
         userId,
-        displayName: 'Skilled Worker',
-        serviceLocation: {
-          type: 'Point',
-          coordinates: [73.8567, 18.5204],
-        },
+        // Omit displayName so the repository fallback ('Skilled Worker') applies,
+        // keeping the default consistent with direct profile creation.
         serviceRadiusKm: 15,
-        availabilityStatus: WorkerAvailability.AVAILABLE,
+        availabilityStatus: WorkerAvailability.OFFLINE,
+        onboardingComplete: false,
       });
     }
 
@@ -123,7 +124,10 @@ export class WorkerProfileService {
     userId: string,
     availabilityStatus: WorkerAvailability
   ): Promise<IWorkerProfileEntity> {
-    await this.getOrCreateMyProfile(userId);
+    const profile = await this.getOrCreateMyProfile(userId);
+    if (availabilityStatus === WorkerAvailability.AVAILABLE && !this.isMatchingReady(profile)) {
+      throw new ConflictError('Complete onboarding and confirm a real service location before going available');
+    }
     const updated = await this.workerRepo.updateAvailability(userId, availabilityStatus);
     if (!updated) {
       throw new NotFoundError('Worker profile not found');
@@ -203,7 +207,11 @@ export class WorkerProfileService {
         verified: s.verified,
       })),
       languages: populated.languages,
-      serviceLocation: populated.serviceLocation,
+      serviceArea: {
+        city: populated.serviceArea?.city ?? null,
+        pincode: populated.serviceArea?.pincode ?? null,
+        radiusKm: populated.serviceRadiusKm,
+      },
       serviceRadiusKm: populated.serviceRadiusKm,
       availabilityStatus: populated.availabilityStatus,
       pricing: populated.pricing,
@@ -215,6 +223,97 @@ export class WorkerProfileService {
       verificationStatus: populated.verificationStatus,
       createdAt: populated.createdAt,
     };
+  }
+
+  private isMatchingReady(profile: IWorkerProfileEntity): boolean {
+    return Boolean(
+      profile.onboardingComplete &&
+        profile.primaryCategoryId &&
+        profile.skills.length > 0 &&
+        profile.serviceLocation?.coordinates &&
+        profile.serviceLocation.coordinates.length === 2
+    );
+  }
+
+  /** Controlled CUSTOMER -> WORKER transition. Never accepts a role from the client. */
+  async enroll(userId: string, input: IWorkerEnrollmentInput): Promise<{
+    user: Awaited<ReturnType<IUserRepository['findById']>>;
+    profile: IWorkerProfileEntity;
+  }> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new NotFoundError('User not found');
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ConflictError('Only active accounts can enroll as workers');
+    }
+    if (user.role !== UserRole.CUSTOMER && user.role !== UserRole.WORKER) {
+      throw new ConflictError('Staff accounts cannot enroll through the worker workflow');
+    }
+
+    const [category, skills] = await Promise.all([
+      this.categoryRepo.findById(input.primaryCategoryId),
+      this.skillRepo.findByIds(input.skills.map((skill) => skill.skillId)),
+    ]);
+    if (!category || !category.active || category.deletedAt) {
+      throw new BadRequestError('Category does not exist or is inactive');
+    }
+    if (skills.length !== input.skills.length) {
+      throw new BadRequestError('One or more skills do not exist');
+    }
+    if (skills.some((skill) => !skill.active || skill.deletedAt || skill.categoryId !== input.primaryCategoryId)) {
+      throw new BadRequestError('Skills must be active and belong to the selected category');
+    }
+
+    return withTransaction(async (session) => {
+      const profileInput: IUpdateWorkerProfileInput = {
+        displayName: input.displayName,
+        bio: input.bio ?? null,
+        primaryCategoryId: input.primaryCategoryId,
+        skills: input.skills.map((skill) => ({ ...skill, verified: false })),
+        languages: input.languages,
+        serviceLocation: input.serviceLocation,
+        serviceArea: {
+          type: 'Point',
+          coordinates: input.serviceLocation.coordinates,
+          radiusKm: input.serviceRadiusKm,
+          city: input.serviceArea.city,
+          pincode: input.serviceArea.pincode,
+        },
+        serviceRadiusKm: input.serviceRadiusKm,
+        pricing: input.pricing,
+        onboardingComplete: true,
+        availabilityStatus: input.availabilityStatus,
+      };
+
+      const existing = await this.workerRepo.findByUserId(userId);
+      const profile = existing
+        ? await this.workerRepo.updateByUserId(userId, profileInput, session)
+        : await this.workerRepo.create({
+            userId,
+            displayName: input.displayName,
+            bio: input.bio ?? null,
+            primaryCategoryId: input.primaryCategoryId,
+            skills: input.skills.map((skill) => ({ ...skill, verified: false })),
+            languages: input.languages,
+            serviceLocation: input.serviceLocation,
+            serviceArea: {
+              type: 'Point',
+              coordinates: input.serviceLocation.coordinates,
+              radiusKm: input.serviceRadiusKm,
+              city: input.serviceArea.city,
+              pincode: input.serviceArea.pincode,
+            },
+            serviceRadiusKm: input.serviceRadiusKm,
+            pricing: input.pricing,
+            onboardingComplete: true,
+            availabilityStatus: input.availabilityStatus,
+          }, session);
+      if (!profile) throw new NotFoundError('Worker profile could not be saved');
+
+      const updatedUser = await this.userRepo.update(userId, { role: UserRole.WORKER }, session);
+      if (!updatedUser) throw new NotFoundError('User role could not be updated');
+
+      return { user: updatedUser, profile: await this.populateSkillNames(profile) };
+    });
   }
 
   // --- Legacy Phase 1 methods for backwards compatibility ---

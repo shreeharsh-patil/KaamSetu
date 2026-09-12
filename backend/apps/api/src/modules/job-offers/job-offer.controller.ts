@@ -7,6 +7,7 @@ import {
 } from '@kaamsetu/validation';
 import { UnauthorizedError, BadRequestError } from '../../errors/index.js';
 import { UserRole } from '@kaamsetu/types';
+import { jobViewService } from '../jobs/job-view.service.js';
 
 function requireUser(req: Request): { id: string; role: UserRole } {
   if (!req.user) {
@@ -22,7 +23,7 @@ export async function getWorkerOffers(req: Request, res: Response): Promise<void
   const actor = requireUser(req);
   const query = listJobOffersQuerySchema.parse(req.query);
 
-  const page = await jobOfferService.getOffersForWorker(actor.id, query);
+  const page = await jobOfferService.getOfferViewsForWorker(actor.id, query);
 
   res.status(200).json({
     success: true,
@@ -45,7 +46,7 @@ export async function getOfferById(req: Request, res: Response): Promise<void> {
     throw new BadRequestError('Invalid or missing offer ID');
   }
 
-  const offer = await jobOfferService.getOfferById(id, actor);
+  const offer = await jobOfferService.getOfferViewById(id, actor);
 
   res.status(200).json({
     success: true,
@@ -70,7 +71,7 @@ export async function acceptOffer(req: Request, res: Response): Promise<void> {
     success: true,
     data: {
       offer: result.offer,
-      job: result.job,
+      job: await jobViewService.toView(result.job, actor),
     },
   });
 }
