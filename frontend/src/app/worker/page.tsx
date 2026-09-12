@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BellRing, Briefcase, IndianRupee, Radio } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,15 +25,15 @@ export default function WorkerDashboardPage() {
   });
 
   if (profile.isLoading || assignedJobs.isLoading || offers.isLoading || earnings.isLoading) {
-    return <Container className="py-8 space-y-4"><div className="h-24 animate-pulse rounded-2xl bg-muted" /><div className="h-48 animate-pulse rounded-2xl bg-muted" /></Container>;
+    return <div className="space-y-4"><div className="h-24 animate-pulse rounded-2xl bg-muted" /><div className="h-48 animate-pulse rounded-2xl bg-muted" /></div>;
   }
   const error = profile.error || assignedJobs.error || offers.error || earnings.error;
-  if (error) return <Container className="py-8"><Alert variant="destructive"><AlertDescription>{error instanceof Error ? error.message : "Could not load the worker dashboard"}</AlertDescription></Alert></Container>;
-  if (!profile.data?.onboardingComplete) return <Container className="py-8"><Card className="p-6 text-center space-y-3"><p>Your worker profile is incomplete and cannot receive matches.</p><Button asChild><Link href="/worker/onboarding">Complete onboarding</Link></Button></Card></Container>;
+  if (error) return <div className="py-8"><Alert variant="destructive"><AlertDescription>{error instanceof Error ? error.message : "Could not load the worker dashboard"}</AlertDescription></Alert></div>;
+  if (!profile.data?.onboardingComplete) return <div className="py-8"><Card className="p-6 text-center space-y-3"><p>Your worker profile is incomplete and cannot receive matches.</p><Button asChild><Link href="/worker/onboarding">Complete onboarding</Link></Button></Card></div>;
 
   const activeJob = assignedJobs.data?.find((job) => !["COMPLETED", "CANCELLED", "EXPIRED"].includes(job.status));
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       {/* 1. Availability Status Toggle */}
       <Card>
         <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
@@ -167,6 +166,6 @@ export default function WorkerDashboardPage() {
           </Card>
         </div>
       </section>
-    </Container>
+    </div>
   );
 }
