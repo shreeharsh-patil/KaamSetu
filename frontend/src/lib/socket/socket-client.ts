@@ -52,6 +52,11 @@ export function getSocket(): Socket {
 }
 
 export function connectSocket(): void {
+  const token = getAccessToken();
+  if (!token) {
+    // Unauthenticated guest user - do not attempt to connect socket
+    return;
+  }
   const socket = getSocket();
   if (!socket.connected) {
     socket.connect();
@@ -70,13 +75,10 @@ export function syncSocketAuth(token: string | null): void {
     disconnectSocket();
     return;
   }
-  if (socketInstance) {
-    socketInstance.auth = { token };
-    if (!socketInstance.connected) {
-      socketInstance.connect();
-    }
-  } else {
-    connectSocket();
+  const socket = getSocket();
+  socket.auth = { token };
+  if (!socket.connected) {
+    socket.connect();
   }
 }
 

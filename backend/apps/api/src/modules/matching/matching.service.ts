@@ -618,6 +618,13 @@ export class MatchingService {
       throw new NotFoundError('Job not found');
     }
 
+    // If job is in OPEN status when matching status is queried, begin matching lifecycle
+    if (job.status === JobStatus.OPEN) {
+      await this.startMatching(jobId);
+      const reloaded = await this.jobRepo.findById(jobId);
+      if (reloaded) job = reloaded;
+    }
+
     // Passive expiration on read
     if (
       (job.status === JobStatus.OPEN ||
@@ -642,7 +649,9 @@ export class MatchingService {
     const expiresAt = job.matchingExpiresAt ? job.matchingExpiresAt.toISOString() : null;
 
     let remainingSeconds: number | undefined;
-    if (
+    if (job.status === JobStatus.EXPIRED) {
+      remainingSeconds = 0;
+    } else if (
       job.matchingExpiresAt &&
       (job.status === JobStatus.OPEN ||
         job.status === JobStatus.MATCHING ||

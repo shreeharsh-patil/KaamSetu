@@ -48,6 +48,7 @@ export function AuthBrandPanel() {
               fill
               className="object-cover"
               sizes="48px"
+              priority
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -67,6 +68,7 @@ export function AuthBrandPanel() {
               fill
               className="object-cover"
               sizes="48px"
+              priority
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -86,6 +88,7 @@ export function AuthBrandPanel() {
               fill
               className="object-cover"
               sizes="48px"
+              priority
             />
           </div>
           <div className="flex-1 min-w-0">
