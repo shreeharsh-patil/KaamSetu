@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Hammer, LogOut, Menu, Moon, Sun, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, Menu, Moon, Sun, User as UserIcon } from "lucide-react";
 import { LanguageSelector } from "@/components/shared/language-selector";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -11,6 +11,7 @@ import { useAuth } from "@/features/auth/use-auth";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/features/notifications/use-notifications";
+import { BrandMark } from "@/components/shared/brand-mark";
 
 export interface DashboardTopbarProps {
   title?: string;
@@ -79,7 +80,7 @@ export function DashboardTopbar({ title = "Dashboard", breadcrumbs, onOpenMobile
           aria-label="KaamSetu home"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Hammer className="h-4 w-4" aria-hidden />
+            <BrandMark size={32} className="h-8 w-8 rounded-md object-cover" />
           </span>
           <span className="text-base font-bold tracking-tight text-foreground">KaamSetu</span>
         </Link>

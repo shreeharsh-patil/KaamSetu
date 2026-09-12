@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Hammer, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/i18n-context";
 import {
@@ -124,7 +125,7 @@ export function DashboardSidebar({ role, collapsed, onToggleCollapsed }: Dashboa
             className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Hammer className="h-[18px] w-[18px]" aria-hidden />
+              <BrandMark size={30} className="h-[30px] w-[30px] rounded-md object-cover" />
             </span>
             {!collapsed && (
               <span className="text-lg font-bold tracking-tight text-foreground">KaamSetu</span>

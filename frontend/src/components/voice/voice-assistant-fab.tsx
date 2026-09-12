@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ArrowRight, CheckCircle2, Mic, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,8 +12,15 @@ import type { ResolvedVoiceBooking } from "@/features/voice-booking/types";
 
 export function VoiceAssistantFAB() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState<"IDLE" | "UNDERSTANDING" | "READY" | "LOW_CONFIDENCE" | "ERROR">("IDLE");
+
+  const isAuthRoute = ["/login", "/signup", "/verify-otp", "/complete-profile"].some(
+    (root) => pathname === root || pathname.startsWith(`${root}/`)
+  );
+
+  if (isAuthRoute) return null;
   const [result, setResult] = useState<ResolvedVoiceBooking | null>(null);
   const [error, setError] = useState<string | null>(null);
 

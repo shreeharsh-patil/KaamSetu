@@ -6,9 +6,10 @@ import {
   updateJobSchema,
   listJobsQuerySchema,
 } from '@kaamsetu/validation';
-import { UnauthorizedError, BadRequestError } from '../../errors/index.js';
+import { UnauthorizedError, BadRequestError, ForbiddenError } from '../../errors/index.js';
 import { UserRole } from '@kaamsetu/types';
 import { jobViewService } from './job-view.service.js';
+import { matchingService } from '../matching/matching.service.js';
 
 function requireUser(req: Request): { id: string; role: UserRole } {
   if (!req.user) {
@@ -182,4 +183,23 @@ export async function completeJob(req: Request, res: Response): Promise<void> {
 
   const job = await jobService.completeJob(id, actor.id);
   res.status(200).json({ success: true, data: { job: await jobViewService.toView(job, actor) } });
+}
+
+/** GET /api/v1/jobs/:id/matching-status — real-time matching status and diagnostics */
+export async function getJobMatchingStatus(req: Request, res: Response): Promise<void> {
+  const actor = requireUser(req);
+  const rawId = req.params['id'];
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    throw new BadRequestError('Invalid or missing job ID');
+  }
+
+  // Ensure caller has access (must be the customer owner, worker assigned, or admin)
+  const job = await jobService.getJobById(id, actor);
+  if (actor.role === UserRole.CUSTOMER && job.customerId !== actor.id) {
+    throw new ForbiddenError('You do not have permission to view matching status for this job');
+  }
+
+  const matchingStatus = await matchingService.getMatchingStatus(id);
+  res.status(200).json({ success: true, data: matchingStatus });
 }

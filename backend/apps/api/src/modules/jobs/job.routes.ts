@@ -11,6 +11,7 @@ import {
   arrive,
   startJob,
   completeJob,
+  getJobMatchingStatus,
 } from './job.controller.js';
 import { authenticate, requireRole } from '../../middlewares/auth.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
@@ -72,6 +73,14 @@ router.get(
   authenticate(),
   requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.ADMIN),
   asyncHandler(getJobEvents)
+);
+
+// GET /api/v1/jobs/:id/matching-status - Real-time matching status & timer
+router.get(
+  '/:id/matching-status',
+  authenticate(),
+  requireRole(UserRole.CUSTOMER, UserRole.WORKER, UserRole.ADMIN),
+  asyncHandler(getJobMatchingStatus)
 );
 
 // POST /api/v1/jobs/:id/start-travel - Assigned worker starts travel

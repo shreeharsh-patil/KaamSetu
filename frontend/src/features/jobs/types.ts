@@ -63,6 +63,8 @@ export interface ApiJobView extends Omit<CreateJobApiRequest, "publishImmediatel
 
 export interface Job {
   id: string;
+  categoryId?: string;
+  requiredSkills?: string[];
   customer: { id: string; name: string; phone?: string };
   worker?: { id: string; name: string; phone?: string; avatarUrl?: string; rating: number; totalReviews: number; skills: string[]; isVerified: boolean };
   category: string;
@@ -92,3 +94,19 @@ export interface JobOffer {
 }
 
 export type JobPresentationStatus = "SEARCHING" | "WAITING_FOR_ACCEPTANCE" | "WORKER_ASSIGNED" | "TRAVELLING" | "ARRIVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "DISPUTED" | "EXPIRED" | "DRAFT";
+
+export interface JobMatchingStatusDto {
+  jobId: string;
+  status: JobStatus;
+  matching: {
+    startedAt?: string | null;
+    expiresAt?: string | null;
+    remainingSeconds?: number;
+    candidatesFound: number;
+    offersSent: number;
+    pendingOffers: number;
+    currentWave: number;
+    maxWaves: number;
+  };
+  outcomeReason: string | null;
+}

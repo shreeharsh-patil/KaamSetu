@@ -33,6 +33,8 @@ export function mapJobCreationFormToApi(form: JobCreationFormState, now = new Da
 export function mapApiJobToView(job: ApiJobView): Job {
   return {
     id: job.id,
+    categoryId: job.category?.id ?? job.categoryId,
+    requiredSkills: job.requiredSkills ?? [],
     customer: { id: job.customer.id, name: job.customer.displayName, phone: job.customer.phoneNumber },
     worker: job.assignedWorker ? { id: job.assignedWorker.id, name: job.assignedWorker.displayName, phone: job.assignedWorker.phoneNumber, avatarUrl: job.assignedWorker.profilePhotoUrl ?? undefined, rating: job.assignedWorker.rating.average, totalReviews: job.assignedWorker.rating.count, skills: job.assignedWorker.skills, isVerified: job.assignedWorker.verificationStatus === "VERIFIED" } : undefined,
     category: job.category.name,

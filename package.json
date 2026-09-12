@@ -23,6 +23,7 @@
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "typecheck": "pnpm --filter \"@kaamsetu/*\" typecheck",
     "verify:deployment": "tsx scripts/verify-deployment.ts",
+    "repair:stuck-matching": "pnpm --filter @kaamsetu/api repair:stuck-matching",
     "load-test": "k6 run backend/load-tests/scenarios/06-full-marketplace-lifecycle.js",
     "load-test:health": "k6 run backend/load-tests/scenarios/01-health.js",
     "load-test:auth": "k6 run backend/load-tests/scenarios/02-auth-flow.js",

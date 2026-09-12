@@ -1,7 +1,8 @@
 import { apiClient } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { mapApiJobToView, mapApiOfferToView } from "./mappers";
-import type { ApiJobOfferView, ApiJobView, CreateJobApiRequest, Job, JobOffer, ServiceCategory, ServiceSkill } from "./types";
+import type { ApiJobOfferView, ApiJobView, CreateJobApiRequest, Job, JobOffer, ServiceCategory, ServiceSkill, JobMatchingStatusDto } from "./types";
+export type { JobMatchingStatusDto };
 
 interface JobsResponse { jobs: ApiJobView[]; nextCursor: string | null; hasMore: boolean }
 interface JobResponse { job: ApiJobView }
@@ -34,7 +35,9 @@ export const jobsApi = {
     const response = await apiClient.post<JobResponse>(API_ENDPOINTS.JOBS.CANCEL(id), { reason });
     return mapApiJobToView(response.job);
   },
-  getJobMatchingStatus: async (jobId: string): Promise<Job> => jobsApi.getJobById(jobId),
+  getJobMatchingStatus: async (jobId: string): Promise<JobMatchingStatusDto> => {
+    return apiClient.get<JobMatchingStatusDto>(API_ENDPOINTS.JOBS.MATCHING_STATUS(jobId));
+  },
   getWorkerOffers: async (): Promise<JobOffer[]> => {
     const response = await apiClient.get<OffersResponse>(API_ENDPOINTS.OFFERS.LIST);
     return response.offers.map(mapApiOfferToView);

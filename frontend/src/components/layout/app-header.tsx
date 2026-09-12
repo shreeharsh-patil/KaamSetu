@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Hammer,
   Sun,
   Moon,
   LogOut,
@@ -18,6 +17,7 @@ import { useTheme } from "@/providers/theme-provider";
 import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/i18n-context";
+import { BrandMark } from "@/components/shared/brand-mark";
 
 /**
  * AppHeader — serves public/guest pages only.
@@ -104,8 +104,12 @@ export function AppHeader() {
     }
   };
 
-  // Hide on authenticated dashboard routes — sidebar handles navigation there
-  if (isDashboard) {
+  const isAuthRoute = ["/login", "/signup", "/verify-otp", "/complete-profile"].some(
+    (root) => pathname === root || pathname.startsWith(`${root}/`)
+  );
+
+  // Hide on authenticated dashboard routes and dedicated auth routes
+  if (isDashboard || isAuthRoute) {
     return null;
   }
 
@@ -125,8 +129,8 @@ export function AppHeader() {
             href="/"
             className="flex items-center gap-2.5 font-semibold text-lg tracking-tight group shrink-0"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
-              <Hammer className="h-4 w-4" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-background shadow-xs transition-transform group-hover:scale-105">
+              <BrandMark size={36} className="h-full w-full object-cover" />
             </span>
             <div className="flex flex-col shrink-0">
               <span className="font-sans font-bold text-lg sm:text-xl tracking-tight text-foreground leading-tight whitespace-nowrap">

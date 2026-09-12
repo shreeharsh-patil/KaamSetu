@@ -31,6 +31,12 @@ export function setupGracefulShutdown(server: Server): void {
       const { notificationQueue } = await import('../modules/notifications/index.js');
       await notificationQueue.close();
 
+      const { matchingWorker } = await import('../modules/matching/queue/matching.worker.js');
+      await matchingWorker.close();
+
+      const { matchingQueue } = await import('../modules/matching/queue/matching.queue.js');
+      await matchingQueue.close();
+
       // 2. Stop receiving new HTTP connections
       await new Promise<void>((resolve, reject) => {
         server.close((err) => {

@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     ARRIVE: (id: string) => `/jobs/${id}/arrive`,
     START: (id: string) => `/jobs/${id}/start`,
     COMPLETE: (id: string) => `/jobs/${id}/complete`,
+    MATCHING_STATUS: (id: string) => `/jobs/${id}/matching-status`,
   },
   OFFERS: {
     LIST: "/worker/offers",

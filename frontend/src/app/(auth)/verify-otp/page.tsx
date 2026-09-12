@@ -1,41 +1,30 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { KeyRound, ArrowRight, RefreshCw, Edit3 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { ArrowRight, RefreshCw, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/use-auth";
 import { ApiError } from "@/lib/api/errors";
-import { cn } from "@/lib/utils";
+import { AuthCard } from "@/features/auth/components/auth-card";
+import { OtpInputField } from "@/features/auth/components/otp-input-field";
+import { formatPhoneDisplay } from "@/features/auth/components/phone-input-field";
 
 const OTP_LENGTH = 6;
-const RESEND_COOLDOWN_SECONDS = 60;
+const RESEND_COOLDOWN_SECONDS = 30;
 
 function VerifyOtpSkeleton() {
   return (
-    <Card className="max-w-md mx-auto shadow-md border-border">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary animate-pulse">
-          <KeyRound className="h-6 w-6 opacity-40" />
-        </div>
-        <div className="h-7 w-52 bg-muted rounded-md mx-auto animate-pulse" />
-        <div className="h-4 w-64 bg-muted rounded-md mx-auto mt-2 animate-pulse" />
-      </CardHeader>
-      <CardContent className="pt-4 space-y-6">
-        <div className="flex justify-center gap-2 sm:gap-3">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="h-12 w-11 sm:h-14 sm:w-12 rounded-lg bg-muted/60 animate-pulse border border-border"
-            />
-          ))}
-        </div>
-        <div className="h-11 w-full bg-muted rounded-lg animate-pulse" />
-      </CardContent>
-    </Card>
+    <div className="w-full max-w-[440px] mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 space-y-6">
+      <div className="space-y-2">
+        <div className="h-7 w-44 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+        <div className="h-4 w-60 bg-slate-100 dark:bg-slate-800/60 rounded-md animate-pulse" />
+      </div>
+      <div className="h-14 w-full bg-slate-100 dark:bg-slate-800/40 rounded-xl animate-pulse" />
+      <div className="h-11 w-full bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+    </div>
   );
 }
 
@@ -52,7 +41,6 @@ function VerifyOtpContent() {
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN_SECONDS);
   const [isResending, setIsResending] = useState(false);
 
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const isNavigatingRef = useRef(false);
 
   useEffect(() => {
@@ -75,7 +63,7 @@ function VerifyOtpContent() {
       ? sessionStorage.getItem("kaamsetu_pending_phone")
       : null);
 
-  // If user accesses /verify-otp directly without pending phone, redirect to /login
+  // If accessed directly with no pending phone and no active session, redirect to login
   useEffect(() => {
     if (!mounted) return;
     if (!effectivePhone && !user && !isNavigatingRef.current) {
@@ -92,85 +80,37 @@ function VerifyOtpContent() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleDigitChange = (index: number, val: string) => {
-    // Only accept numeric digit
-    const cleaned = val.replace(/\D/g, "");
-    if (!cleaned) {
-      const nextDigits = [...otpDigits];
-      nextDigits[index] = "";
-      setOtpDigits(nextDigits);
-      return;
-    }
-
-    const digit = cleaned.slice(-1);
-    const nextDigits = [...otpDigits];
-    nextDigits[index] = digit;
-    setOtpDigits(nextDigits);
-    if (error) setError(null);
-
-    // Auto-advance to next input box
-    if (index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    } else {
-      // If last digit filled, auto submit
-      const fullOtp = nextDigits.join("");
-      if (fullOtp.length === OTP_LENGTH) {
-        submitOtp(fullOtp);
-      }
-    }
-  };
-
-  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
-    if (!pastedData) return;
-
-    const nextDigits = [...otpDigits];
-    for (let i = 0; i < pastedData.length; i++) {
-      nextDigits[i] = pastedData[i] || "";
-    }
-    setOtpDigits(nextDigits);
-    if (error) setError(null);
-
-    const focusIndex = Math.min(pastedData.length, OTP_LENGTH - 1);
-    inputRefs.current[focusIndex]?.focus();
-
-    if (pastedData.length === OTP_LENGTH) {
-      submitOtp(pastedData);
-    }
-  };
-
   const submitOtp = async (otpString: string) => {
-    if (!effectivePhone || isNavigatingRef.current) return;
+    if (!effectivePhone || isNavigatingRef.current || isLoading) return;
 
     try {
       setIsLoading(true);
       setError(null);
       isNavigatingRef.current = true;
 
-      const requestedRole = sessionStorage.getItem("kaamsetu_pending_role");
-      const verifiedUser = await verifyOtp(effectivePhone, otpString);
-      sessionStorage.removeItem("kaamsetu_pending_role");
+      const requestedRole = typeof window !== "undefined"
+        ? sessionStorage.getItem("kaamsetu_pending_role")
+        : null;
 
-      // Redirect legacy users with incomplete profile to /complete-profile
+      const verifiedUser = await verifyOtp(effectivePhone, otpString);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("kaamsetu_pending_role");
+      }
+
+      // Check if user requires profile completion (legacy accounts)
       if (verifiedUser.requiresProfileCompletion) {
         router.replace(`/complete-profile${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`);
         return;
       }
 
-      // Check if redirect query param exists
+      // Custom redirect query param
       if (redirect) {
         router.replace(redirect);
         return;
       }
 
-      // Role-based redirects per specification
+      // Role-based redirects
       if (requestedRole === "worker" && verifiedUser.role === "CUSTOMER") {
         router.replace("/worker/onboarding");
       } else if (verifiedUser.role === "WORKER") {
@@ -185,7 +125,7 @@ function VerifyOtpContent() {
       if (err instanceof ApiError) {
         setError(err.message || "Invalid or expired verification code.");
       } else {
-        setError("Network failure. Please try again.");
+        setError("Network failure. Please check your connection and try again.");
       }
     } finally {
       setIsLoading(false);
@@ -201,10 +141,9 @@ function VerifyOtpContent() {
       await requestOtp(effectivePhone);
       setCountdown(RESEND_COOLDOWN_SECONDS);
       setOtpDigits(Array(OTP_LENGTH).fill(""));
-      inputRefs.current[0]?.focus();
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message || "Failed to resend code.");
+        setError(err.message || "Failed to resend code. Please try again.");
       } else {
         setError("Network error. Please try again.");
       }
@@ -218,108 +157,95 @@ function VerifyOtpContent() {
   }
 
   const isComplete = otpDigits.every((d) => d.length === 1);
+  const formattedPhone = effectivePhone.startsWith("+91")
+    ? `+91 ${formatPhoneDisplay(effectivePhone.slice(3))}`
+    : effectivePhone;
 
   return (
-    <Card className="max-w-md mx-auto shadow-md border-border">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <KeyRound className="h-6 w-6" />
-        </div>
-        <CardTitle className="text-2xl font-bold tracking-tight">
-          Verify Mobile Number
-        </CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          Enter the 6-digit code sent to <span className="font-semibold text-foreground">{effectivePhone}</span>
-        </CardDescription>
-        <div className="pt-1">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
-          >
-            <Edit3 className="h-3 w-3" />
-            <span>Change mobile number</span>
-          </Link>
-        </div>
-      </CardHeader>
+    <AuthCard
+      title="Verify your number"
+      subtitle="Enter the 6-digit verification code sent to"
+      backHref="/login"
+    >
+      {/* Phone number display with quick change link */}
+      <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
+        <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tracking-wide">
+          {formattedPhone}
+        </span>
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+        >
+          <Pencil className="h-3 w-3" />
+          <span>Change</span>
+        </Link>
+      </div>
 
-      <CardContent className="pt-4 space-y-6">
+      {/* Error container with reserved space */}
+      <div className="min-h-[20px]">
         {error && (
-          <Alert variant="destructive" className="text-xs">
+          <Alert variant="destructive" className="py-2.5 px-3.5 text-xs rounded-xl border-destructive/30">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+      </div>
 
-        {process.env.NODE_ENV !== "production" && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-2 text-center text-xs text-amber-700 dark:text-amber-300 font-medium">
-            Development OTP: <span className="font-mono font-bold">123456</span>
-          </div>
-        )}
-
-        {/* 6-box OTP input field */}
-        <div className="flex justify-center gap-2 sm:gap-3">
-          {otpDigits.map((digit, idx) => (
-            <input
-              key={idx}
-              ref={(el) => {
-                inputRefs.current[idx] = el;
-              }}
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleDigitChange(idx, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(idx, e)}
-              onPaste={handlePaste}
-              autoFocus={idx === 0}
-              disabled={isLoading}
-              aria-label={`Digit ${idx + 1} of 6`}
-              className={cn(
-                "h-12 w-11 sm:h-14 sm:w-12 rounded-lg border border-input bg-background text-center text-xl font-bold shadow-xs transition-all focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 min-h-touch",
-                digit ? "border-primary bg-primary/5 text-primary" : ""
-              )}
-            />
-          ))}
-        </div>
+      {/* 6-box OTP Input */}
+      <div className="space-y-4 pt-1">
+        <OtpInputField
+          value={otpDigits}
+          onChange={(digits) => {
+            setOtpDigits(digits);
+            if (error) setError(null);
+          }}
+          onComplete={(fullCode) => submitOtp(fullCode)}
+          disabled={isLoading}
+          error={Boolean(error)}
+        />
 
         <Button
+          type="button"
           onClick={() => submitOtp(otpDigits.join(""))}
-          className="w-full h-11 text-sm font-semibold"
+          className="w-full h-12 text-sm font-semibold rounded-xl"
           disabled={!isComplete || isLoading}
           isLoading={isLoading}
-          rightIcon={<ArrowRight className="h-4 w-4" />}
+          rightIcon={!isLoading ? <ArrowRight className="h-4 w-4" /> : undefined}
         >
-          Verify & Continue
+          {isLoading ? "Verifying code..." : "Verify & Continue"}
         </Button>
+      </div>
 
-        {/* Resend OTP cooldown */}
-        <div className="text-center pt-2">
-          {countdown > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Resend code in <span className="font-semibold text-foreground font-mono">{countdown}s</span>
-            </p>
-          ) : (
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={isResending}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline disabled:opacity-50"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5", isResending && "animate-spin")} />
-              <span>Resend OTP</span>
-            </button>
-          )}
+      {/* Resend OTP Section */}
+      <div className="pt-2 text-center">
+        {countdown > 0 ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Didn&apos;t receive the code? Resend in{" "}
+            <span className="font-semibold text-slate-700 dark:text-slate-200 font-mono">
+              {countdown}s
+            </span>
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={isResending}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+          >
+            <RefreshCw className={isResending ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} />
+            <span>Resend OTP</span>
+          </button>
+        )}
+      </div>
+
+      {/* Subtle dev-only note (completely hidden in production) */}
+      {process.env.NODE_ENV !== "production" && (
+        <div className="pt-2 text-center">
+          <span className="text-[11px] text-amber-600/80 dark:text-amber-400/80 font-mono">
+            Dev OTP: 123456
+          </span>
         </div>
-      </CardContent>
-
-      <CardFooter className="border-t bg-muted/10 pt-4 flex justify-between">
-        <Link href="/login" className="w-full">
-          <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground">
-            Cancel & Return to Login
-          </Button>
-        </Link>
-      </CardFooter>
-    </Card>
+      )}
+    </AuthCard>
   );
 }
 

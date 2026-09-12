@@ -2,29 +2,27 @@
 
 import { useState, Suspense, useEffect, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { UserCheck, CheckCircle2, Mail, ArrowRight, ArrowLeft } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { CheckCircle2, Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/use-auth";
 import { ApiError } from "@/lib/api/errors";
-import { useTranslation } from "@/lib/i18n/i18n-context";
+import { AuthCard } from "@/features/auth/components/auth-card";
 
 function CompleteProfileSkeleton() {
   return (
-    <Card className="max-w-md mx-auto shadow-md border-border">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-3 h-12 w-12 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-6 w-48 bg-muted rounded mx-auto animate-pulse" />
-        <div className="h-4 w-64 bg-muted rounded mx-auto mt-2 animate-pulse" />
-      </CardHeader>
-      <CardContent className="pt-4 space-y-4">
-        <div className="h-11 w-full bg-muted rounded-xl animate-pulse" />
-        <div className="h-11 w-full bg-muted rounded-xl animate-pulse" />
-      </CardContent>
-    </Card>
+    <div className="w-full max-w-[440px] mx-auto bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 space-y-6">
+      <div className="space-y-2">
+        <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+        <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800/60 rounded animate-pulse" />
+      </div>
+      <div className="space-y-4 pt-4">
+        <div className="h-11 w-full bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+        <div className="h-11 w-full bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+        <div className="h-11 w-full bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse" />
+      </div>
+    </div>
   );
 }
 
@@ -33,7 +31,6 @@ function CompleteProfileContent() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "";
 
-  const { t } = useTranslation();
   const { user, completeProfile, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const [firstName, setFirstName] = useState("");
@@ -129,135 +126,115 @@ function CompleteProfileContent() {
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-6">
-      <Card className="shadow-sm border-border/80 rounded-3xl p-2 sm:p-4">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
-            <UserCheck className="h-6 w-6" />
+    <AuthCard
+      title="Complete your profile"
+      subtitle="Provide your name and email to finish setting up your account."
+      backHref="/"
+    >
+      {/* Verified Phone Badge */}
+      {user?.phoneNumber && (
+        <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+              Verified: {user.phoneNumber}
+            </span>
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            Complete Your Profile
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
-            Please provide your name and email to finish setting up your account.
-          </CardDescription>
-        </CardHeader>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
+            Active
+          </span>
+        </div>
+      )}
 
-        <CardContent className="pt-2">
-          {/* Verified Phone Badge */}
-          {user?.phoneNumber && (
-            <div className="mb-4 flex items-center justify-between p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-xs font-semibold text-foreground">
-                  Phone Verified: {user.phoneNumber}
-                </span>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                Verified
-              </span>
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <Alert variant="destructive" className="text-xs rounded-xl py-2.5">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {error && (
-              <Alert variant="destructive" className="text-xs rounded-xl">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="first-name-input"
-                  className="text-xs font-semibold text-foreground"
-                >
-                  First Name
-                </label>
-                <Input
-                  id="first-name-input"
-                  placeholder="Rohan"
-                  value={firstName}
-                  onChange={(e) => {
-                    setFirstName(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  disabled={isSubmitting}
-                  className="text-sm rounded-xl"
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="last-name-input"
-                  className="text-xs font-semibold text-foreground"
-                >
-                  Last Name
-                </label>
-                <Input
-                  id="last-name-input"
-                  placeholder="Sharma"
-                  value={lastName}
-                  onChange={(e) => {
-                    setLastName(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  disabled={isSubmitting}
-                  className="text-sm rounded-xl"
-                />
-              </div>
-            </div>
-
-            {/* Email Address */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email-input"
-                className="text-xs font-semibold text-foreground"
-              >
-                Email Address
-              </label>
-              <div className="relative">
-                <Input
-                  id="email-input"
-                  type="email"
-                  placeholder="rohan@example.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  disabled={isSubmitting}
-                  className="text-sm rounded-xl pl-9"
-                />
-                <Mail className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                We use your email for service receipts, booking confirmations, and updates.
-              </p>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full h-11 text-sm font-bold mt-2 rounded-xl"
-              isLoading={isSubmitting}
-              rightIcon={<ArrowRight className="h-4 w-4" />}
+        {/* Name Fields */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="first-name-input"
+              className="text-xs font-semibold text-slate-700 dark:text-slate-300"
             >
-              Save & Continue to Dashboard
-            </Button>
-          </form>
-        </CardContent>
+              First Name
+            </label>
+            <Input
+              id="first-name-input"
+              placeholder="Rohan"
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+              className="text-sm rounded-xl h-11"
+              autoFocus
+            />
+          </div>
 
-        <CardFooter className="border-t border-border/60 pt-3 flex justify-between">
-          <Link href="/" className="w-full">
-            <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground rounded-xl" leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}>
-              {t("action.back", "Back to Home")}
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
-    </div>
+          <div className="space-y-1.5">
+            <label
+              htmlFor="last-name-input"
+              className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Last Name
+            </label>
+            <Input
+              id="last-name-input"
+              placeholder="Sharma"
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+              className="text-sm rounded-xl h-11"
+            />
+          </div>
+        </div>
+
+        {/* Email Address */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email-input"
+            className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+          >
+            Email Address
+          </label>
+          <div className="relative">
+            <Input
+              id="email-input"
+              type="email"
+              placeholder="rohan@example.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+              className="text-sm rounded-xl h-11 pl-9"
+            />
+            <Mail className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            Used for service invoices, booking confirmations, and worker coordination.
+          </p>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-11 text-sm font-semibold mt-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+          isLoading={isSubmitting}
+          rightIcon={<ArrowRight className="h-4 w-4" />}
+        >
+          Save & Continue to Dashboard
+        </Button>
+      </form>
+    </AuthCard>
   );
 }
 

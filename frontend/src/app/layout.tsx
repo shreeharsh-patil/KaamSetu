@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   icons: {
     icon: "/icon.png",
-    apple: "/icon.png",
+    apple: "/brand-logo.png",
   },
   openGraph: {
     type: "website",

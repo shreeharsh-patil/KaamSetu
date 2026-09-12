@@ -37,6 +37,7 @@ import {
 } from '../../errors/index.js';
 import { logger } from '../../config/index.js';
 import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
+import { matchingService } from '../matching/matching.service.js';
 
 export class JobService {
   constructor(
@@ -137,6 +138,16 @@ export class JobService {
           immediate: true,
         },
       });
+
+      // Automatically kick off matching in the background (skipped in test runner for determinism)
+      if (process.env.NODE_ENV !== 'test') {
+        void matchingService.startMatching(job.id).catch((err) => {
+          logger.error(
+            { err: err instanceof Error ? err.message : String(err), jobId: job.id },
+            'Background matching auto-start failed on createJob'
+          );
+        });
+      }
     }
 
     return job;
@@ -149,9 +160,24 @@ export class JobService {
     jobId: string,
     user: { id: string; role: UserRole }
   ): Promise<IJobEntity> {
-    const job = await this.jobRepo.findById(jobId);
+    let job = await this.jobRepo.findById(jobId);
     if (!job) {
       throw new NotFoundError('Job not found');
+    }
+
+    // Passive expiration on read if matching window has elapsed
+    if (
+      process.env.NODE_ENV !== 'test' &&
+      (job.status === JobStatus.OPEN ||
+        job.status === JobStatus.MATCHING ||
+        job.status === JobStatus.OFFERED) &&
+      job.matchingExpiresAt &&
+      new Date() >= new Date(job.matchingExpiresAt)
+    ) {
+      const expired = await matchingService.expireMatchingJob(jobId, 'MATCHING_TIMEOUT');
+      if (expired) {
+        job = expired;
+      }
     }
 
     if (user.role === UserRole.CUSTOMER) {
@@ -282,6 +308,16 @@ export class JobService {
       previousState: job.status,
       newState: JobStatus.OPEN,
     });
+
+    // Automatically kick off matching in the background (skipped in test runner for determinism)
+    if (process.env.NODE_ENV !== 'test') {
+      void matchingService.startMatching(jobId).catch((err) => {
+        logger.error(
+          { err: err instanceof Error ? err.message : String(err), jobId },
+          'Background matching auto-start failed on publishJob'
+        );
+      });
+    }
 
     return updated;
   }

@@ -21,6 +21,8 @@ import {
   BadRequestError,
 } from '../../errors/index.js';
 import { RealtimeGateway, realtimeGateway } from '../../realtime/index.js';
+import { matchingService } from '../matching/matching.service.js';
+import { logger } from '../../config/index.js';
 
 export interface AcceptOfferResult {
   offer: IJobOfferEntity;
@@ -300,6 +302,17 @@ export class JobOfferService {
         reason,
       },
     });
+
+    // If no more pending offers remain in this wave, advance immediately
+    const pendingCount = await this.jobOfferRepo.countPendingOffersForJob(offer.jobId);
+    if (pendingCount === 0) {
+      void matchingService.handleWaveExhausted(offer.jobId).catch((err) => {
+        logger.error(
+          { err: err instanceof Error ? err.message : String(err), jobId: offer.jobId },
+          'Failed to advance matching wave after offer rejection'
+        );
+      });
+    }
 
     return rejected;
   }

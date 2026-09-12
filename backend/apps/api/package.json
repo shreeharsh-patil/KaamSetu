@@ -10,6 +10,7 @@
     "seed": "tsx src/database/seeds/run-seed.ts",
     "seed:goa": "tsx src/database/seeds/goa-demo/goa-demo.runner.ts seed",
     "seed:goa:reset": "tsx src/database/seeds/goa-demo/goa-demo.runner.ts reset",
+    "repair:stuck-matching": "tsx src/scripts/repair-stuck-matching.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

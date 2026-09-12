@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Hammer } from "lucide-react";
+import { Bell } from "lucide-react";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/use-auth";
 import { useNotifications } from "@/features/notifications/use-notifications";
@@ -27,7 +28,7 @@ export function MobileDashboardHeader() {
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
       <Link href="/" className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Hammer className="h-4 w-4" aria-hidden />
+          <BrandMark size={32} className="h-8 w-8 rounded-md object-cover" />
         </span>
         <span className="text-base font-bold tracking-tight text-foreground">KaamSetu</span>
       </Link>

@@ -81,6 +81,20 @@ async function bootstrap(): Promise<void> {
   const httpServer = http.createServer(app);
   realtimeGateway.initialize(httpServer, env.CORS_ORIGINS);
 
+  // Initialize matching background worker if Redis is available
+  if (env.REDIS_URL) {
+    try {
+      const { matchingWorker } = await import('./modules/matching/queue/matching.worker.js');
+      matchingWorker.start();
+      logger.info('Matching background worker started');
+    } catch (workerErr) {
+      logger.warn(
+        { err: workerErr instanceof Error ? workerErr.message : String(workerErr) },
+        'Could not start matching background worker'
+      );
+    }
+  }
+
   // Bind to 0.0.0.0 and port assigned by Render/host
   httpServer.listen(env.PORT, '0.0.0.0', () => {
     logger.info(

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Hammer, ShieldCheck, Mail, ArrowUpRight, Heart } from "lucide-react";
+import { ShieldCheck, Mail, ArrowUpRight, Heart } from "lucide-react";
+import { BrandMark } from "@/components/shared/brand-mark";
 
 const socialLinks = [
   { href: "https://twitter.com", label: "Twitter", icon: "𝕏" },
@@ -40,7 +41,7 @@ export function AppFooter() {
           <div className="md:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2.5 font-semibold text-lg tracking-tight">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
-                <Hammer className="h-4 w-4" />
+                <BrandMark size={32} className="h-8 w-8 rounded-md object-cover" />
               </span>
               <span className="font-sans font-bold text-xl">KaamSetu</span>
             </Link>
