@@ -51,7 +51,7 @@
 - [🧪 Automated Testing & Concurrency Verification](#-automated-testing--concurrency-verification)
 - [🔒 Security Architecture & Hardening](#-security-architecture--hardening)
 - [📚 Documentation Index](#-documentation-index)
-- [👤 Project Author](#-project-author)
+- [👥 Project Authors](#-project-authors)
 
 ---
 
@@ -549,9 +549,12 @@ pnpm load-test:concurrency
 
 ---
 
-## 👤 Project Author
+## 👥 Project Authors
 
-**Shreeharsh Patil** — [GitHub Profile](https://github.com/shreeharsh-patil)
+- **Shreeharsh Patil** — [GitHub Profile](https://github.com/shreeharsh-patil)
+- **Savali Thakur**
+- **Abhishek Paste**
+- **Kenneth Alemida**
 
 ---
 
