@@ -209,7 +209,7 @@ flowchart LR
 - **Expense Logging**: After completion, workers enter out-of-pocket expenses (replacement fixtures, wire spools, toll receipts).
 - **Exact Net Profit Computation**:
 
-$$\text{Net Take-Home Profit} = \text{Gross Settled Revenue} - (\text{Material Outlays} + \text{Fuel \& Transit Overhead})$$
+$$\text{Net Take-Home Profit} = \text{Gross Settled Revenue} - (\text{Material Outlays} + \text{Fuel and Transit Overhead})$$
 
 ---
 
@@ -287,7 +287,7 @@ KaamSetu features a dedicated, conversation-per-job messaging sub-system:
 | 🛡️ 50-Worker Race Condition | High-density job broadcasts cause race conditions when dozens of workers tap "Accept" simultaneously. | Uses atomic conditional queries (`findOneAndUpdate`) in MongoDB. Benchmarked against 50 concurrent requests: yields exactly 1 winner (`200 OK`) and 49 clean rejections (`409 Conflict`) without duplicate assignments. |
 | ⏱️ Anti-Stall Matching | Customers left hanging when workers are unavailable or ignore offers. | Enforces strict multi-wave dispatching with BullMQ delayed queues, immediate wave progression on rejection, 90s deadline, and passive expiration on read. |
 | 🎙️ AI Third-Party Outages | Cloud speech-to-text API latency or network timeouts can halt job creation pipelines. | Implements a resilient Circuit Breaker (`ai/circuit-breaker.ts`) that falls back to rule-based keyword matchers if third-party AI APIs become unresponsive. |
-| 💰 Financial Precision | JavaScript IEEE-754 floating-point calculations cause rounding discrepancies across financial accounting. | Stores all currency values as 64-bit integer paise ($1\text{ INR} = 100\text{ paise}$), computing net take-home margins without precision loss. |
+| 💰 Financial Precision | JavaScript IEEE-754 floating-point calculations cause rounding discrepancies across financial accounting. | Stores all currency values as 64-bit integer paise (1 INR = 100 paise), computing net take-home margins without precision loss. |
 | 📱 Offline Resiliency | Workers on budget devices frequently lose connectivity in basements or remote rural locales. | Deploys a Progressive Web App (PWA) with client-side service worker caches (`/offline`) allowing continuous access to active job addresses and offline logging. |
 
 ---
