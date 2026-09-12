@@ -19,6 +19,7 @@ import {
   X,
   Loader2,
   Sparkle,
+  Mic,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { VoiceRecorder } from "@/components/voice/voice-recorder";
 import { jobsApi } from "@/features/jobs/api";
 import type { CreateJobInput } from "@/features/jobs/types";
 
@@ -69,6 +71,39 @@ export function JobCreationWizard() {
     longitude: 72.8777,
     images: [],
   });
+
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceSuccessMsg, setVoiceSuccessMsg] = useState<string | null>(null);
+
+  const handleVoiceExtracted = (extractedText: string) => {
+    const trimmed = extractedText.trim();
+    if (!trimmed) return;
+
+    const currentTitle = formData.title.trim();
+    let newTitle = currentTitle;
+    if (!currentTitle) {
+      const firstSentence = trimmed.split(/[.?!।]/)[0]?.trim() || trimmed;
+      newTitle = firstSentence.length > 55 ? `${firstSentence.slice(0, 52)}...` : firstSentence;
+    }
+
+    const lower = trimmed.toLowerCase();
+    let detectedUrgency = formData.urgency;
+    if (lower.includes("emergency") || lower.includes("turant") || lower.includes("aag") || lower.includes("blast")) {
+      detectedUrgency = "EMERGENCY";
+    } else if (lower.includes("urgent") || lower.includes("jaldi") || lower.includes("leak") || lower.includes("paani beh")) {
+      detectedUrgency = "URGENT";
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      title: newTitle,
+      description: prev.description ? `${prev.description}\n\n${trimmed}` : trimmed,
+      urgency: detectedUrgency,
+    }));
+
+    setVoiceSuccessMsg("Voice requirement transcribed and applied to your task!");
+    setIsVoiceMode(false);
+  };
 
   // Restore draft from sessionStorage
   useEffect(() => {
@@ -216,13 +251,57 @@ export function JobCreationWizard() {
       {/* Step 2: Title & Description & Urgency */}
       {step === 2 && (
         <Card className="rounded-3xl bazaar-card-shadow">
-          <CardHeader>
-            <CardTitle>Describe Your Requirement</CardTitle>
-            <CardDescription>
-              Be as specific as possible so nearby professionals can give accurate quotes.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                Describe Your Requirement
+              </CardTitle>
+              <CardDescription>
+                Be as specific as possible so nearby professionals can give accurate quotes.
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant={isVoiceMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsVoiceMode(!isVoiceMode)}
+              className="rounded-xl text-xs font-bold gap-1.5 shrink-0"
+            >
+              <Mic className="h-3.5 w-3.5" />
+              {isVoiceMode ? "Switch to Typing" : "Speak (Voice AI)"}
+            </Button>
           </CardHeader>
+
           <CardContent className="space-y-4">
+            {voiceSuccessMsg && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="h-4 w-4" /> {voiceSuccessMsg}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVoiceSuccessMsg(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            {isVoiceMode ? (
+              <div className="space-y-3">
+                <div className="p-3 rounded-2xl bg-primary/5 border border-primary/20 text-xs text-muted-foreground">
+                  💡 Speak in Hindi, Marathi, or English. Describe what needs fixing, where, and how quickly. The AI will transcribe and auto-fill your title and description!
+                </div>
+                <VoiceRecorder
+                  onConfirmText={handleVoiceExtracted}
+                  title="Speak Your Problem"
+                  description="Press start, describe the issue, and tap stop when done."
+                  placeholderPrompt="e.g., 'Bathroom ka pipe leak ho raha hai aur tap se paani tapak raha hai. Jaldi plumber chahiye.'"
+                />
+              </div>
+            ) : null}
+
             <div className="space-y-1">
               <label className="text-sm font-medium text-foreground">Task Title *</label>
               <Input

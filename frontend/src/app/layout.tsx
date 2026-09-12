@@ -6,6 +6,7 @@ import { RootProviders } from "@/providers/root-providers";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppFooter } from "@/components/layout/app-footer";
 import { OfflineBanner } from "@/components/feedback/offline-banner";
+import { VoiceAssistantFAB } from "@/components/voice/voice-assistant-fab";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -67,6 +68,7 @@ export default function RootLayout({
           <main id="main-content" className="flex-1 flex flex-col">
             {children}
           </main>
+          <VoiceAssistantFAB />
           <AppFooter />
         </RootProviders>
       </body>

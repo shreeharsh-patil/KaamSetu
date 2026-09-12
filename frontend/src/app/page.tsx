@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Users, Briefcase } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/i18n-context";
+import { useAuth } from "@/features/auth/use-auth";
 
 import { GradientBar } from "@/components/landing/gradient-bar";
 import { Hero } from "@/components/landing/hero";
@@ -17,7 +19,29 @@ import { WorkerLeadBoard } from "@/components/landing/worker-lead-board";
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+
   const [activeRole, setActiveRole] = useState<"customer" | "worker">("customer");
+
+  // Redirect admins to admin dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "admin") {
+      router.replace("/admin");
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Set initial role view based on worker authentication
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "worker") {
+      setActiveRole("worker");
+    }
+  }, [isAuthenticated, user]);
+
+  // Don't render while redirecting admins
+  if (isAuthenticated && user?.role === "admin") {
+    return null;
+  }
 
   return (
     <>
