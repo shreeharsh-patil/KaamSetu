@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,6 +14,8 @@ import {
   Receipt,
   MapPin,
   Sparkles,
+  Star,
+  Loader2,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -22,7 +24,10 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { JobTimeline } from "@/components/shared/job-timeline";
 import { jobsApi } from "@/features/jobs/api";
+import { reviewsApi } from "@/features/reviews/api";
 import { QUERY_KEYS } from "@/lib/api/query-keys";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function WorkerActiveJobPage({
   params,
@@ -31,6 +36,11 @@ export default function WorkerActiveJobPage({
 }) {
   const { jobId } = use(params);
   const queryClient = useQueryClient();
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   const { data: job, isLoading, error } = useQuery({
     queryKey: QUERY_KEYS.JOBS.DETAIL(jobId),
@@ -43,6 +53,24 @@ export default function WorkerActiveJobPage({
       jobsApi.advanceJobState(jobId, action),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.JOBS.DETAIL(jobId) });
+    },
+  });
+
+  const submitReviewMutation = useMutation({
+    mutationFn: () => reviewsApi.submitReview(jobId, {
+      overallRating: rating,
+      qualityRating: rating,
+      punctualityRating: rating,
+      communicationRating: rating,
+      comment: comment.trim(),
+    }),
+    onSuccess: () => {
+      setReviewSubmitted(true);
+      setReviewError(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.JOBS.DETAIL(jobId) });
+    },
+    onError: (error: unknown) => {
+      setReviewError(error instanceof Error ? error.message : "Unable to submit your review. Please try again.");
     },
   });
 
@@ -197,6 +225,17 @@ export default function WorkerActiveJobPage({
                   <Receipt className="mr-2 h-4 w-4" /> Log Job Expense / Materials
                 </Link>
               </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setReviewError(null);
+                  setReviewSubmitted(false);
+                  setReviewOpen(true);
+                }}
+              >
+                <Star className="mr-2 h-4 w-4" /> Rate customer
+              </Button>
             </div>
           )}
         </CardContent>
@@ -249,6 +288,71 @@ export default function WorkerActiveJobPage({
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rate your customer</DialogTitle>
+            <DialogDescription>
+              Share feedback about this completed service experience.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reviewSubmitted ? (
+            <div className="py-6 text-center space-y-2">
+              <Sparkles className="h-10 w-10 text-emerald-600 mx-auto" />
+              <p className="font-semibold">Your review has been submitted.</p>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              {reviewError ? (
+                <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {reviewError}
+                </p>
+              ) : null}
+              <fieldset>
+                <legend className="text-sm font-medium text-foreground">Overall rating</legend>
+                <div className="mt-2 flex gap-1" aria-label="Overall rating">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-label={`${value} star${value === 1 ? "" : "s"}`}
+                      aria-pressed={value === rating}
+                      onClick={() => setRating(value)}
+                      className="rounded p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Star className={`h-7 w-7 ${value <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/35"}`} />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="space-y-1.5">
+                <label htmlFor="customer-review-comment" className="text-sm font-medium text-foreground">
+                  Comment <span className="text-muted-foreground">(optional)</span>
+                </label>
+                <Textarea
+                  id="customer-review-comment"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  maxLength={1000}
+                  placeholder="Tell us about your experience."
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+
+          {!reviewSubmitted ? (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReviewOpen(false)}>Cancel</Button>
+              <Button disabled={submitReviewMutation.isPending} onClick={() => submitReviewMutation.mutate()}>
+                {submitReviewMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit review"}
+              </Button>
+            </DialogFooter>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
     </Container>
   );
