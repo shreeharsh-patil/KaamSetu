@@ -18,7 +18,6 @@ import {
   Edit3,
   Award,
 } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,12 +46,11 @@ export default function WorkerProfilePage() {
     : "—";
 
   return (
-    <div className="py-4 sm:py-8 space-y-6">
-      <Container className="space-y-6">
-        <PageHeader
-          title="Trade Profile"
-          subtitle="Manage your worker profile, trade details, and documents"
-        />
+    <div className="max-w-4xl space-y-6">
+      <PageHeader
+        title="Trade Profile"
+        subtitle="Manage your worker profile, trade details, and documents"
+      />
 
         {/* Profile Header Card */}
         <Card className="p-6 sm:p-8">
@@ -320,7 +318,6 @@ export default function WorkerProfilePage() {
             Sign Out
           </Button>
         </div>
-      </Container>
     </div>
   );
 }

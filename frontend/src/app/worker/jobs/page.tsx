@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Briefcase, Clock, ArrowRight, Search } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,7 +39,7 @@ export default function WorkerJobsHistoryPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">My Jobs & History</h1>
         <p className="text-sm text-muted-foreground">
@@ -134,6 +133,6 @@ export default function WorkerJobsHistoryPage() {
           ))}
         </div>
       )}
-    </Container>
+    </div>
   );
 }

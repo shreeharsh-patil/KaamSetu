@@ -10,7 +10,6 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +76,7 @@ export default function WorkerEarningsPage() {
   const net = summary?.netEarnings ?? (gross - totalExp);
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       {/* Top Header & Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -322,6 +321,6 @@ export default function WorkerEarningsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Container>
+    </div>
   );
 }

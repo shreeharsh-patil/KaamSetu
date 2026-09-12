@@ -9,7 +9,6 @@ import {
   Briefcase,
   Flame,
 } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +25,7 @@ export default function WorkerOffersPage() {
   const pendingOffers = offers?.filter((o) => o.status === "PENDING") ?? [];
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -125,6 +124,6 @@ export default function WorkerOffersPage() {
           ))}
         </div>
       )}
-    </Container>
+    </div>
   );
 }
