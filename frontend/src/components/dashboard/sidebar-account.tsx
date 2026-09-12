@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { LogOut, User as UserIcon, ChevronUp } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { LogOut, User as UserIcon, ChevronUp, Briefcase } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
@@ -28,12 +28,12 @@ export interface SidebarAccountProps {
 
 /**
  * Account summary footer: avatar, name, masked phone. Opens a small popover
- * with Profile link and Logout. Collapsed mode shows just the avatar with a
- * tooltip-equivalent aria-label.
+ * with Mode switcher, Profile link, and Logout. Collapsed mode shows just the avatar.
  */
 export function SidebarAccount({ collapsed, onNavigate }: SidebarAccountProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +67,13 @@ export function SidebarAccount({ collapsed, onNavigate }: SidebarAccountProps) {
     await logout();
     router.push("/login");
   };
+
+  const profileHref =
+    user.role === "WORKER"
+      ? "/worker/profile"
+      : user.role === "ADMIN" || user.role === "SUPPORT"
+        ? "/admin"
+        : "/customer/profile";
 
   if (collapsed) {
     return (
@@ -125,27 +132,92 @@ export function SidebarAccount({ collapsed, onNavigate }: SidebarAccountProps) {
         <div
           role="menu"
           aria-label="Account menu"
-          className="absolute bottom-full left-3 right-3 z-50 mb-2 overflow-hidden rounded-lg border border-border bg-background shadow-md"
+          className="absolute bottom-full left-3 right-3 z-50 mb-2 overflow-hidden rounded-lg border border-border bg-background shadow-lg"
         >
+          {/* User info */}
+          <div className="border-b border-border px-3 py-2">
+            <p className="truncate text-xs font-semibold text-foreground">{displayName}</p>
+            <p className="text-[11px] text-muted-foreground">{maskedPhone}</p>
+          </div>
+
+          {/* Compact Role Switch / Mode (Section 11) */}
+          {user.role === "WORKER" && (
+            <div className="border-b border-border px-3 py-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Mode</span>
+              <div className="mt-1.5 flex rounded-md bg-muted p-0.5 text-xs font-medium">
+                <Link
+                  href="/customer"
+                  onClick={() => {
+                    setOpen(false);
+                    onNavigate?.();
+                  }}
+                  className={cn(
+                    "flex-1 rounded py-1 text-center transition-colors",
+                    pathname.startsWith("/customer")
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Hire
+                </Link>
+                <Link
+                  href="/worker"
+                  onClick={() => {
+                    setOpen(false);
+                    onNavigate?.();
+                  }}
+                  className={cn(
+                    "flex-1 rounded py-1 text-center transition-colors",
+                    pathname.startsWith("/worker")
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Work
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {user.role === "CUSTOMER" && (
+            <Link
+              href="/worker/onboarding"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="flex items-center justify-between border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-primary" />
+                <span>Earn as Worker</span>
+              </span>
+              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">Join</span>
+            </Link>
+          )}
+
+          {/* Links */}
           <Link
-            href={user.role === "WORKER" ? "/worker/profile" : user.role === "ADMIN" || user.role === "SUPPORT" ? "/admin" : "/customer/profile"}
+            href={profileHref}
             role="menuitem"
             onClick={() => {
               setOpen(false);
               onNavigate?.();
             }}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted outline-none focus-visible:bg-muted"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-foreground hover:bg-muted outline-none focus-visible:bg-muted"
           >
-            <UserIcon className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <UserIcon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
             Profile
           </Link>
+
           <button
             type="button"
             role="menuitem"
             onClick={handleLogout}
-            className="flex w-full items-center gap-2.5 border-t border-border px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 outline-none focus-visible:bg-destructive/5"
+            className="flex w-full items-center gap-2.5 border-t border-border px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/5 outline-none focus-visible:bg-destructive/5"
           >
-            <LogOut className="h-4 w-4" aria-hidden />
+            <LogOut className="h-3.5 w-3.5" aria-hidden />
             Log out
           </button>
         </div>
