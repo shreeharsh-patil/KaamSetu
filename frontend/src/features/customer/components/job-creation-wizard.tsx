@@ -28,7 +28,7 @@ import { mapJobCreationFormToApi } from "@/features/jobs/mappers";
 import type { JobCreationFormState } from "@/features/jobs/types";
 import { putPresignedFile, uploadsApi } from "@/features/uploads/api";
 import { clearJobDraft, readJobDraft, writeJobDraft } from "@/features/customer/draft-storage";
-import { applyVoiceDraft, classificationToDraft, classifyTranscript } from "@/features/voice-booking/classification";
+import { applyVoiceDraft, getFirstIncompleteStep, getVoiceBookingCompleteness, processVoiceBooking } from "@/features/voice-booking/classification";
 import { customerApi } from "@/features/customer/api";
 
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -49,12 +49,14 @@ export function JobCreationWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedCategory = searchParams.get("category");
+  const requestedVoiceFlow = searchParams.get("source") === "voice";
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [draftHydrated, setDraftHydrated] = useState(false);
 
   const [formData, setFormData] = useState<JobCreationFormState>({
     categoryId: "",
@@ -95,10 +97,11 @@ export function JobCreationWizard() {
     const trimmed = extractedText.trim();
     if (!trimmed) return;
     try {
-      const draft = classificationToDraft(await classifyTranscript(trimmed));
-      writeJobDraft(draft);
-      setFormData((prev) => applyVoiceDraft(prev, draft));
-      setVoiceSuccessMsg("Booking details prepared from your voice. Please confirm the service location.");
+      const { draft } = await processVoiceBooking(trimmed);
+      const next = applyVoiceDraft(formData, draft);
+      setFormData(next);
+      setStep(getFirstIncompleteStep(next));
+      setVoiceSuccessMsg("Booking details prepared from your voice. Review the remaining item, if any.");
     } catch {
       const fallback = { source: "VOICE" as const, originalTranscript: trimmed, description: trimmed };
       writeJobDraft(fallback);
@@ -110,21 +113,29 @@ export function JobCreationWizard() {
 
   useEffect(() => {
     const saved = readJobDraft();
-    if (saved) setFormData((prev) => applyVoiceDraft(prev, saved));
-  }, []);
+    if (saved) {
+      const next = applyVoiceDraft(formData, saved);
+      setFormData(next);
+      if (requestedVoiceFlow || next.source === "VOICE") setStep(getFirstIncompleteStep(next));
+    }
+    setDraftHydrated(true);
+  }, [requestedVoiceFlow]);
 
   useEffect(() => {
     const address = customerQuery.data?.defaultAddress;
-    if (!address) return;
-    setFormData((prev) => prev.addressLine || prev.latitude !== undefined ? prev : ({
-      ...prev, addressLine: address.addressLine, city: address.city, state: address.state,
+    if (!address || formData.addressLine || formData.latitude !== undefined) return;
+    const next = {
+      ...formData, addressLine: address.addressLine, locality: address.city, city: address.city, state: address.state,
       pincode: address.pincode, longitude: address.coordinates?.[0], latitude: address.coordinates?.[1],
-    }));
-  }, [customerQuery.data]);
+    };
+    setFormData(next);
+    if (next.source === "VOICE") setStep(getFirstIncompleteStep(next));
+  }, [customerQuery.data, formData]);
 
   useEffect(() => {
+    if (!draftHydrated) return;
     writeJobDraft(formData);
-  }, [formData]);
+  }, [draftHydrated, formData]);
 
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -221,6 +232,7 @@ export function JobCreationWizard() {
 
   const totalSteps = 6;
   const progressPercent = Math.round((step / totalSteps) * 100);
+  const voiceCompleteness = getVoiceBookingCompleteness(formData);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -239,6 +251,13 @@ export function JobCreationWizard() {
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-2">
           <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
           <span>{submitError}</span>
+        </div>
+      )}
+
+      {formData.source === "VOICE" && !voiceCompleteness.canReview && (
+        <div className="rounded-xl border border-primary/25 bg-primary/5 p-3 text-sm text-foreground">
+          <span className="font-semibold">Voice booking saved.</span>{" "}
+          {voiceCompleteness.missing.includes("problem") ? "Tell us a little more about the problem." : "Confirm the remaining booking detail to continue."}
         </div>
       )}
 

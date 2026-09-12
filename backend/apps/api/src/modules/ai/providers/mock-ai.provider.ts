@@ -94,6 +94,17 @@ export class MockAIProvider implements IAIProvider {
       : lower.includes('today') || lower.includes('आज') || lower.includes('aaj') ? 'TODAY'
       : lower.includes('asap') || lower.includes('immediate') || lower.includes('jaldi') ? 'ASAP' : undefined;
     const firstSentence = text.split(/[.?!।]/)[0]?.trim();
+    const conciseTitle = lower.match(/kitchen.*sink.*(leak|drip)|sink.*(leak|drip)/)
+      ? 'Kitchen sink leaking'
+      : lower.match(/bathroom.*(tap|pipe).*(leak|drip)|tap.*(leak|drip)/)
+        ? 'Bathroom tap leaking'
+        : lower.match(/fan.*(not working|stopped|broken)/)
+          ? 'Fan not working'
+          : categorySlug === 'plumbing'
+            ? 'Plumbing repair needed'
+            : categorySlug === 'electrical'
+              ? 'Electrical repair needed'
+              : undefined;
 
     return {
       categorySlug,
@@ -102,7 +113,7 @@ export class MockAIProvider implements IAIProvider {
       urgency,
       estimatedPrice,
       timingIntent,
-      title: categorySlug && firstSentence ? firstSentence.slice(0, 160) : undefined,
+      title: conciseTitle ?? (categorySlug && firstSentence ? firstSentence.slice(0, 80) : undefined),
       description: text.trim(),
       problemSummary: firstSentence,
       confidence: categorySlug ? 0.88 : 0.2,

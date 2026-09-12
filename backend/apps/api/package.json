@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/database/seeds/run-seed.ts",
+    "seed:goa": "tsx src/database/seeds/goa-demo/goa-demo.runner.ts seed",
+    "seed:goa:reset": "tsx src/database/seeds/goa-demo/goa-demo.runner.ts reset",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

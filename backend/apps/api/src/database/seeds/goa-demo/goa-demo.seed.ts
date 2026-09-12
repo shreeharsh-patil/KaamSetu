@@ -369,7 +369,6 @@ async function seedJobs(ctx: Ctx): Promise<void> {
     const customerId = ctx.users.get(`c${def.customer}`)!;
     const category = ctx.categories.get(def.category)!;
     const skillIds = def.skills.map((s) => ctx.skills.get(s)!.id);
-    const loc = GOA_LOCATIONS[def.town];
     const coords = jitteredCoordinates(def.town, def.customer * 7 + (def.addressIndex ?? 0));
     const createdAt = minutesAgo(def.createdMinutesAgo, ctx.now);
     const assignedAt =
@@ -459,21 +458,30 @@ async function seedJobs(ctx: Ctx): Promise<void> {
       reason?: string;
     }> = [];
     const customerKey = `c${def.customer}`;
-    events.push({ eventType: 'CREATED', actor: customerKey, at: createdAt });
+    // Deterministic event ids keyed by type+seq (NOT by timestamp — relative
+    // times change between runs and would otherwise duplicate events).
+    const eventSeq = new Map<string, number>();
+    const pushEvent = (e: Omit<(typeof events)[number], never>) => {
+      const seq = eventSeq.get(e.eventType) ?? 0;
+      eventSeq.set(e.eventType, seq + 1);
+      events.push({ ...e, idSuffix: `${e.eventType}:${seq}` });
+    };
+
+    pushEvent({ eventType: 'CREATED', actor: customerKey, at: createdAt });
     if (def.status !== JobStatus.DRAFT) {
-      events.push({ eventType: 'PUBLISHED', actor: customerKey, at: minutesAgo(def.createdMinutesAgo - 2, ctx.now), previousState: JobStatus.DRAFT, newState: JobStatus.OPEN });
+      pushEvent({ eventType: 'PUBLISHED', actor: customerKey, at: minutesAgo(def.createdMinutesAgo - 2, ctx.now), previousState: JobStatus.DRAFT, newState: JobStatus.OPEN });
     }
     if (def.status !== JobStatus.DRAFT && def.status !== JobStatus.CANCELLED) {
-      events.push({ eventType: 'MATCHING_STARTED', actor: customerKey, at: minutesAgo(def.createdMinutesAgo - 4, ctx.now), previousState: JobStatus.OPEN, newState: JobStatus.MATCHING });
+      pushEvent({ eventType: 'MATCHING_STARTED', actor: customerKey, at: minutesAgo(def.createdMinutesAgo - 4, ctx.now), previousState: JobStatus.OPEN, newState: JobStatus.MATCHING });
     }
     for (const [offerIdx, offer] of offerPlan.entries()) {
       const offerAt = minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offerIdx, ctx.now);
-      events.push({ eventType: 'OFFER_CREATED', actor: customerKey, at: offerAt });
+      pushEvent({ eventType: 'OFFER_CREATED', actor: customerKey, at: offerAt });
       if (offer.status === JobOfferStatus.ACCEPTED) {
-        events.push({ eventType: 'OFFER_ACCEPTED', actor: `w${offer.workerN}`, at: minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offer.respondedAfterMinutes!, ctx.now), previousState: JobStatus.OFFERED, newState: JobStatus.ACCEPTED });
-        events.push({ eventType: 'WORKER_ASSIGNED', actor: `w${offer.workerN}`, at: minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offer.respondedAfterMinutes!, ctx.now), previousState: JobStatus.OFFERED, newState: JobStatus.ACCEPTED });
+        pushEvent({ eventType: 'OFFER_ACCEPTED', actor: `w${offer.workerN}`, at: minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offer.respondedAfterMinutes!, ctx.now), previousState: JobStatus.OFFERED, newState: JobStatus.ACCEPTED });
+        pushEvent({ eventType: 'WORKER_ASSIGNED', actor: `w${offer.workerN}`, at: minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offer.respondedAfterMinutes!, ctx.now), previousState: JobStatus.OFFERED, newState: JobStatus.ACCEPTED });
       } else if (offer.status === JobOfferStatus.REJECTED) {
-        events.push({ eventType: 'OFFER_REJECTED', actor: `w${offer.workerN}`, at: minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offer.respondedAfterMinutes!, ctx.now));
+        pushEvent({ eventType: 'OFFER_REJECTED', actor: `w${offer.workerN}`, at: minutesAgo(def.createdMinutesAgo - def.assignedAfterMinutes! - offer.respondedAfterMinutes!, ctx.now) });
       }
       // WITHDRAWN/EXPIRED offer events omitted: the job-level history remains coherent.
     }
@@ -488,32 +496,34 @@ async function seedJobs(ctx: Ctx): Promise<void> {
     const chain = travelChain[st as JobStatus] ?? [];
     const segStart = assignedAt ?? createdAt;
     const segEnd = ctx.now;
+    const chainStateMap: Record<string, { prev: JobStatus; next: JobStatus }> = {
+      TRAVEL_STARTED: { prev: JobStatus.ACCEPTED, next: JobStatus.EN_ROUTE },
+      WORKER_ARRIVED: { prev: JobStatus.EN_ROUTE, next: JobStatus.ARRIVED },
+      JOB_STARTED: { prev: JobStatus.ARRIVED, next: JobStatus.IN_PROGRESS },
+      JOB_COMPLETED: { prev: JobStatus.IN_PROGRESS, next: JobStatus.COMPLETED },
+    };
     chain.forEach((evt, i) => {
       const at = new Date(segStart.getTime() + ((segEnd.getTime() - segStart.getTime()) * (i + 1)) / (chain.length + 1));
-      const map: Record<string, { prev: JobStatus; next: JobStatus }> = {
-        TRAVEL_STARTED: { prev: JobStatus.ACCEPTED, prev2: undefined, next: JobStatus.EN_ROUTE } as never,
-        WORKER_ARRIVED: { prev: JobStatus.EN_ROUTE, next: JobStatus.ARRIVED },
-        JOB_STARTED: { prev: JobStatus.ARRIVED, next: JobStatus.IN_PROGRESS },
-        JOB_COMPLETED: { prev: JobStatus.IN_PROGRESS, next: JobStatus.COMPLETED },
-      };
-      const m = map[evt];
-      events.push({ eventType: evt, actor: `w${def.workerN}`, at, previousState: m?.prev ?? null, newState: m?.next ?? null });
+      const m = chainStateMap[evt];
+      pushEvent({ eventType: evt, actor: `w${def.workerN}`, at, previousState: m.prev, newState: m.next });
     });
     if (st === JobStatus.CANCELLED) {
-      events.push({ eventType: 'CANCELLED', actor: customerKey, at: minutesAgo(Math.max(1, def.createdMinutesAgo - 30), ctx.now), previousState: JobStatus.OPEN, newState: JobStatus.CANCELLED, reason: 'Customer cancelled the request' });
+      pushEvent({ eventType: 'CANCELLED', actor: customerKey, at: minutesAgo(Math.max(1, def.createdMinutesAgo - 30), ctx.now), previousState: JobStatus.OPEN, newState: JobStatus.CANCELLED, reason: 'Customer cancelled the request' });
     }
     if (st === JobStatus.EXPIRED) {
-      events.push({ eventType: 'STATUS_CHANGED', actor: customerKey, at: minutesAgo(Math.max(1, def.createdMinutesAgo - 90), ctx.now), previousState: JobStatus.MATCHING, newState: JobStatus.EXPIRED, reason: 'No worker accepted within the offer window' });
+      pushEvent({ eventType: 'STATUS_CHANGED', actor: customerKey, at: minutesAgo(Math.max(1, def.createdMinutesAgo - 90), ctx.now), previousState: JobStatus.MATCHING, newState: JobStatus.EXPIRED, reason: 'No worker accepted within the offer window' });
     }
     if (st === JobStatus.DISPUTED) {
-      events.push({ eventType: 'DISPUTE_RAISED', actor: customerKey, at: minutesAgo(60, ctx.now), previousState: JobStatus.COMPLETED, newState: JobStatus.DISPUTED, reason: 'Issue returned after completion' });
+      pushEvent({ eventType: 'DISPUTE_RAISED', actor: customerKey, at: minutesAgo(60, ctx.now), previousState: JobStatus.COMPLETED, newState: JobStatus.DISPUTED, reason: 'Issue returned after completion' });
     }
 
     for (const e of events) {
+      const eventId = deterministicId('job-event', def.key, e.idSuffix);
       await JobEventModel.findOneAndUpdate(
-        { jobId, eventType: e.eventType, createdAt: e.at },
+        { _id: eventId },
         {
           $setOnInsert: {
+            _id: eventId,
             jobId,
             actorId: ctx.users.get(e.actor)!,
             actorRole: e.actor.startsWith('w') ? UserRole.WORKER : e.actor.startsWith('c') ? UserRole.CUSTOMER : UserRole.ADMIN,
@@ -527,7 +537,6 @@ async function seedJobs(ctx: Ctx): Promise<void> {
         },
         { upsert: true }
       );
-      // Guard against duplicate PUBLISHED etc. — dedupe by type+time handled by upsert filter.
     }
   }
 }
@@ -697,7 +706,10 @@ async function seedLedger(ctx: Ctx): Promise<void> {
           type: TransactionType.JOB_REVENUE,
           amount: Math.round(def.estimatedPrice * 100), // rupees → integer paise
           currency: 'INR',
-          referenceId: `job:${jobId.toString()}:revenue`,
+          // Seed-owned referenceId prefix: mirrors production idempotency intent
+          // while remaining distinct from live `job:<id>:revenue` rows and from
+          // shared-test cleanup filters (which match ^(job|expense)).
+          referenceId: `goa-demo:revenue:${jobId.toString()}`,
           metadata: { jobTitle: def.title, completedAt: completedAt.toISOString(), seeded: 'GOA_DEMO_V1' },
         },
       },
@@ -744,7 +756,7 @@ async function seedLedger(ctx: Ctx): Promise<void> {
           type: TransactionType.EXPENSE,
           amount: amountPaise,
           currency: 'INR',
-          referenceId: `expense:${expenseId.toString()}`,
+          referenceId: `goa-demo:expense:${expenseId.toString()}`,
           metadata: { expenseId: expenseId.toString(), category: e.category, note: e.note },
         },
       },
@@ -1048,13 +1060,16 @@ export async function resetGoaDemoData(): Promise<void> {
   const userIds = users.map((u) => u._id);
   const jobs = await JobModel.find({ customerId: { $in: userIds } }).select('_id');
   const jobIds = jobs.map((j) => j._id);
+  const conversationIds = (
+    await ConversationModel.find({ jobId: { $in: jobIds } }).select('_id')
+  ).map((c) => c._id);
 
   // Jobs are identified via customerId ∈ demo users (only demo customers own them).
+  await MessageModel.deleteMany({ conversationId: { $in: conversationIds } });
   await JobModel.deleteMany({ customerId: { $in: userIds } });
   await JobOfferModel.deleteMany({ jobId: { $in: jobIds } });
   await JobEventModel.deleteMany({ jobId: { $in: jobIds } });
   await ConversationModel.deleteMany({ jobId: { $in: jobIds } });
-  await MessageModel.deleteMany({ conversationId: { $in: await ConversationModel.find({ jobId: { $in: jobIds } }).select('_id').then((r) => r.map((c) => c._id)) } });
 
   // Reviews/disputes/reports are job-linked; expenses/ledger/notifications are user-linked.
   await ReviewModel.deleteMany({ jobId: { $in: jobIds } });

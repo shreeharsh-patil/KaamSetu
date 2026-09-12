@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRecorder } from "@/components/voice/voice-recorder";
 import { writeJobDraft } from "@/features/customer/draft-storage";
-import { classificationToDraft, classifyTranscript } from "@/features/voice-booking/classification";
+import { processVoiceBooking } from "@/features/voice-booking/classification";
 import type { ResolvedVoiceBooking } from "@/features/voice-booking/types";
 
 export function VoiceAssistantFAB() {
@@ -20,9 +20,8 @@ export function VoiceAssistantFAB() {
   const understand = async (transcript: string) => {
     setState("UNDERSTANDING"); setError(null);
     try {
-      const resolved = await classifyTranscript(transcript);
+      const { resolved } = await processVoiceBooking(transcript);
       setResult(resolved);
-      writeJobDraft(classificationToDraft(resolved));
       setState(resolved.confidenceState === "READY" ? "READY" : "LOW_CONFIDENCE");
     } catch {
       writeJobDraft({ source: "VOICE", originalTranscript: transcript, description: transcript });
