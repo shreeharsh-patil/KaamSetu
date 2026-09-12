@@ -1,385 +1,261 @@
-# KaamSetu (कामसेतु) 🛠️
+Markdown<div align="center">
 
-> **Hyperlocal skilled-worker service platform connecting customers with verified local service professionals.**
+# 🛠️ Hunar (हुनर)
 
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?logo=node.js)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D11.0.0-F69220?logo=pnpm)](https://pnpm.io/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.1.6-000000?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0.0-61DAFB?logo=react)](https://react.dev/)
-[![Express.js](https://img.shields.io/badge/Express-5.x-000000?logo=express)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?logo=mongodb)](https://www.mongodb.com/)
-[![Redis](https://img.shields.io/badge/Redis-7.0-DC382D?logo=redis)](https://redis.io/)
-[![BullMQ](https://img.shields.io/badge/BullMQ-Background%20Queues-E0234E)](https://bullmq.io/)
-[![Socket.IO](https://img.shields.io/badge/Socket.IO-Realtime-010101?logo=socket.io)](https://socket.io/)
+### Hyperlocal Skilled-Worker Marketplace, Deterministic Geospatial Matching & Concurrency-Safe Service Architecture
+
+**Hunar** is an enterprise-grade, voice-first hyperlocal service marketplace engineered to connect customers with verified, skilled trade professionals (electricians, plumbers, carpenters, mechanics, appliance technicians, and masons). Built on a modern full-stack monorepo featuring Next.js 16 (React 19), Express 5, MongoDB 7.0 (GeoJSON `2dsphere`), Redis 7.0, and BullMQ background workers, Hunar pairs accessibility-first regional voice onboarding with race-condition-safe atomic state transitions and net-profit financial ledgers.
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/pnpm-%3E%3D11.0.0-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm" />
+  <img src="https://img.shields.io/badge/Next.js-16.1.6-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/Express.js-5.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express 5" />
+  <img src="https://img.shields.io/badge/MongoDB-7.0-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Redis-7.0-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/BullMQ-Background_Queues-E0234E?style=for-the-badge" alt="BullMQ" />
+  <img src="https://img.shields.io/badge/Socket.IO-Realtime-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/shreeharsh-patil/hunar/stargazers"><img alt="Stars" src="https://badgen.net/github/stars/shreeharsh-patil/hunar?color=F69220&icon=github"></a>
+  <a href="https://github.com/shreeharsh-patil/hunar/issues"><img alt="Issues" src="https://badgen.net/github/issues/shreeharsh-patil/hunar?color=F69220&icon=github"></a>
+  <a href="LICENSE"><img alt="License" src="https://badgen.net/badge/license/MIT/F69220"></a>
+</p>
+
+</div>
 
 ---
 
 ## 📖 Table of Contents
 
-- [Overview & Vision](#-overview--vision)
-- [Target Use Cases](#-target-use-cases)
-- [Core User Flows](#-core-user-flows)
+- [🏛️ System Architecture & Service Mesh](#-system-architecture--service-mesh)
+- [🔄 Core User Lifecycles](#-core-user-lifecycles)
   - [1. Customer Flow (Problem to Completed Service)](#1-customer-flow-problem-to-completed-service)
   - [2. Worker Flow (Onboarding to Net Earnings)](#2-worker-flow-onboarding-to-net-earnings)
-  - [3. Admin & Safety Flow](#3-admin--safety-flow)
-- [Key Features](#-key-features)
-- [Architecture & Tech Stack](#-architecture--tech-stack)
-- [Repository Structure](#-repository-structure)
-- [Getting Started](#-getting-started)
+  - [3. Admin, Verification & Safety Flow](#3-admin-verification--safety-flow)
+- [🛠️ Production Pipeline Implementation](#️-production-pipeline-implementation)
+- [🎯 Target Use Cases](#-target-use-cases)
+- [⚡ Key System Features](#-key-system-features)
+- [🎨 Interface Showcase](#-interface-showcase)
+- [📁 Monorepo Directory Architecture](#-monorepo-directory-architecture)
+- [🚀 Local Deployment & Quick Start](#-local-deployment--quick-start)
   - [Prerequisites](#prerequisites)
-  - [Option A: Docker Local Stack (Recommended)](#option-a-docker-local-stack-recommended)
-  - [Option B: Manual Local Setup](#option-b-manual-local-setup)
-- [Automated Testing & Concurrency Validation](#-automated-testing--concurrency-validation)
-- [Security & Production Hardening](#-security--production-hardening)
-- [Documentation Index](#-documentation-index)
+  - [Option A: Containerized Local Stack (Docker Compose)](#option-a-containerized-local-stack-docker-compose)
+  - [Option B: Manual Development Environment](#option-b-manual-development-environment)
+- [🧪 Automated Testing & Concurrency Validation](#-automated-testing--concurrency-validation)
+- [🔒 Security Architecture & Hardening](#-security-architecture--hardening)
+- [📚 Documentation Index](#-documentation-index)
+- [👤 Project Author](#-project-author)
 
 ---
 
-## 🌟 Overview & Vision
+## 🏛️ System Architecture & Service Mesh
 
-In many emerging markets, skilled and semi-skilled blue-collar workers—such as electricians, plumbers, carpenters, mechanics, appliance repairers, and masons—face severe barriers when accessing digital work platforms due to complex English-only text interfaces, opaque fee structures, and lack of verified digital reputation.
+In many emerging markets, skilled and semi-skilled blue-collar workers face severe barriers when accessing digital work platforms due to complex English-only text interfaces, opaque fee structures, and lack of verified digital reputation.
 
-**KaamSetu** bridges this gap as an accessible, voice-first, hyperlocal marketplace:
-1. **Accessibility First**: Phone-first authentication (OTP), regional languages, and voice-assisted problem description and job translation.
-2. **Deterministic Matching**: Geospatial matching (Haversine & MongoDB 2dsphere) scored against proximity, verified skills, availability, ratings, and rates.
-3. **Net Profit Transparency**: Built-in financial ledger tracking not just gross job revenue, but worker materials, fuel, and travel expenses to show **actual take-home profit**.
-4. **Reliability & Concurrency Safety**: Guaranteed finite state transitions, atomic acceptance locks (preventing race conditions when multiple workers accept simultaneously), and realtime Socket.IO status updates.
-
----
-
-## 🎯 Target Use Cases
-
-| Persona | Scenario | How KaamSetu Solves It |
-|---|---|---|
-| **Homeowner / Customer** | *Urgent plumbing leak or broken AC on a hot weekend.* | Uses voice or photo to describe the problem. AI auto-classifies the service, sets urgency, and broadcasts to available verified workers within 5–10 km. Customer tracks the worker en route in real time. |
-| **Skilled Worker (Electrician / Plumber)** | *Needs steady local job requests without platform exploitation.* | Signs up in minutes using phone OTP and regional voice prompt. Sets availability toggle (`AVAILABLE` / `BUSY`). Reviews incoming jobs translated to preferred language, accepts work, and logs project expenses to see actual daily net profit. |
-| **Local Commercial Vendor** | *Facility manager needing multiple carpentry and repair tasks.* | Posts itemized task lists, reviews worker identity verification badges, sets scheduled time slots, and settles records transparently. |
-| **Platform Moderator / Admin** | *Identity verification and dispute resolution.* | Reviews worker ID documents, inspects audit logs for suspicious activity, and arbitrates disputed jobs with complete state transition logs. |
-
----
-
-## 🔄 Core User Flows
-
-### 1. Customer Flow (Problem to Completed Service)
+**Hunar** solves these systemic problems through a **Decoupled Event-Driven Marketplace Architecture**. The stateless Express 5 API handles high-throughput HTTP/WebSocket requests, while Redis-backed BullMQ workers isolate asynchronous background processing (notifications, SMS alerts, audio synthesis, and AI classification). Database persistence is partitioned across MongoDB 7.0 for document and geospatial vector models, and Redis for distributed atomic locks, session state, and rate limiting.
 
 ```mermaid
-flowchart LR
-    A[Describe Issue\nVoice / Text / Photos] --> B[AI Classification\nCategory & Urgency]
-    B --> C[Publish Job\nGeospatial Radius]
-    C --> D[Matching Engine\nScores Nearby Workers]
-    D --> E[Worker Accepts\nAtomic Lock]
-    E --> F[Realtime Tracking\nEn Route ➔ Arrived]
-    F --> G[Execution & Completion\nSecure OTP Handshake]
-    G --> H[Payment & Review\nReputation Updated]
-```
+graph TD
+    subgraph Client Application Layer
+        A1["📱 Next.js 16 PWA <br><i>(React 19 / Customer Portal)</i>"]
+        A2["🛠️ Worker Mobile Web <br><i>(Voice-First / Offline Fallback)</i>"]
+        A3["🛡️ Admin Moderation Console <br><i>(Audit Logs / Verification)</i>"]
+    end
 
-1. **Create Job**: Customer enters issue via voice note or text. AI parses and extracts required skills, urgency, and estimated cost.
-2. **Matching & Dispatch**: System discovers verified, available workers nearby and emits job offers.
-3. **Acceptance**: The first worker to accept secures the job via an atomic lock. Both parties enter a private messaging and realtime tracking room.
-4. **Execution & OTP Completion**: The worker transitions state (`EN_ROUTE` $\to$ `ARRIVED` $\to$ `IN_PROGRESS`). Upon finishing, customer verifies completion via an OTP handshake.
-5. **Review & Payment**: Customer rates the worker (1–5 stars with review tags) and records payment method.
+    subgraph Ingress & Gateway Layer
+        B["🌐 Ingress / Reverse Proxy <br><i>(TLS Termination / Port 443)</i>"]
+        C["⚡ Express.js 5 API Cluster <br><i>(Stateless REST & Socket.IO Gateway)</i>"]
+    end
 
----
+    subgraph Domain Engine & State Verification
+        D1["🎙️ Voice & AI Intelligence Core <br><i>(Circuit Breaker / Speech Extraction)</i>"]
+        D2["📍 7-Factor Geospatial Matcher <br><i>(Haversine / GeoJSON 2dsphere)</i>"]
+        D3["🔒 Atomic Concurrency Guard <br><i>(Conditional findOneAndUpdate Lock)</i>"]
+        D4["📊 Double-Entry Integer Ledger <br><i>(Exact Net Profit in Paise)</i>"]
+    end
 
-### 2. Worker Flow (Onboarding to Net Earnings)
+    subgraph Datastores & Worker Queue
+        E["💾 MongoDB 7.0 Cluster <br><i>(Replica Set / Spatial Indexes)</i>"]
+        F["⚡ Redis 7.0 Cache & Lock Manager <br><i>(Rate Limits / Session Vault)</i>"]
+        G["⚙️ BullMQ Worker Engine <br><i>(Headless Task Pipeline)</i>"]
+        H["📦 S3 / R2 Object Storage <br><i>(Presigned Image & Audio Store)</i>"]
+    end
 
-```mermaid
-flowchart LR
-    W1[Phone OTP Sign-In] --> W2[Profile & Skills Setup\nRadius & Rates]
-    W2 --> W3[Set Availability\nAVAILABLE / BUSY / OFFLINE]
-    W3 --> W4[Receive Push / Audio Alerts\nIncoming Job Offers]
+    A1 & A2 & A3 <-->|HTTPS / WSS| B
+    B --> C
+    C <--> D1 & D2 & D3 & D4
+    D3 <-->|Distributed State Validation| F
+    D2 & D3 & D4 <-->|ACID Transactions| E
+    C -->|Dispatch Async Tasks| F
+    F -->|Poll Task Streams| G
+    A1 & A2 <-->|Direct Presigned PUT/GET| H
+
+    style A1 fill:#000000,stroke:#333,stroke-width:2px,color:#fff
+    style A2 fill:#F69220,stroke:#c47214,stroke-width:2px,color:#fff
+    style A3 fill:#003B57,stroke:#002538,stroke-width:2px,color:#fff
+    style B fill:#333333,stroke:#666,stroke-width:2px,color:#fff
+    style C fill:#000000,stroke:#333,stroke-width:2px,color:#fff
+    style D1 fill:#8E44AD,stroke:#6c3483,stroke-width:2px,color:#fff
+    style D2 fill:#34B7F1,stroke:#209CEE,stroke-width:2px,color:#fff
+    style D3 fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
+    style D4 fill:#47A248,stroke:#2d662e,stroke-width:2px,color:#fff
+    style E fill:#47A248,stroke:#3f8a40,stroke-width:2px,color:#fff
+    style F fill:#DC382D,stroke:#a62319,stroke-width:2px,color:#fff
+    style G fill:#E0234E,stroke:#aa1638,stroke-width:2px,color:#fff
+    style H fill:#FF6F00,stroke:#cc5800,stroke-width:2px,color:#fff
+[!NOTE]Sub-50ms Lock Assertion: Job assignment concurrency is governed by conditional MongoDB document version checks (findOneAndUpdate({ _id: jobId, status: 'OPEN' }, { $set: { status: 'ACCEPTED', workerId } })). This entirely eliminates duplicate assignments across high-traffic broadcast channels.🔄 Core User Lifecycles1. Customer Flow (Problem to Completed Service)Code snippetflowchart LR
+    A[Describe Issue<br><i>Voice / Text / Photos</i>] --> B[AI Classification<br><i>Category & Urgency</i>]
+    B --> C[Publish Job<br><i>Geospatial Radius</i>]
+    C --> D[Matching Engine<br><i>Scores Nearby Workers</i>]
+    D --> E[Worker Accepts<br><i>Atomic Lock</i>]
+    E --> F[Realtime Tracking<br><i>En Route ➔ Arrived</i>]
+    F --> G[Execution & Completion<br><i>Secure OTP Handshake</i>]
+    G --> H[Payment & Review<br><i>Reputation Updated</i>]
+The sequence blueprint below details the complete communication and execution lifecycle:Code snippetsequenceDiagram
+    autonumber
+    actor Cust as Customer
+    actor Work as Skilled Professional
+    participant API as Hunar Express Gateway
+    participant AI as Audio & Speech Parser
+    participant DB as MongoDB 7.0 Cluster
+    participant RT as Socket.IO Hub
+
+    Cust->>API: Submit Problem (Voice Audio Note / Photo)
+    API->>AI: Transcribe Speech & Extract Parameters
+    AI-->>API: Yield Category (Plumbing), Urgency (High), Base Budget
+    API->>DB: Save Job Document (Status: 'OPEN')
+    
+    rect rgb(20, 30, 20)
+        note over API,Work: Geospatial Broadcast Window
+        API->>DB: Run 2dsphere Spatial Scan + 7-Factor Ranking
+        DB-->>API: Return Top-K Ranked Eligible Workers
+        API->>RT: Emit Targeted Job Offer Alert
+        RT-->>Work: Broadcast Incoming Work Notification
+    end
+
+    Work->>API: POST /api/v1/jobs/:id/accept
+    alt First Worker to Respond
+        API->>DB: Atomic Conditional Lock (Status: 'ACCEPTED')
+        DB-->>API: Lock Confirmed
+        API-->>Work: Return 200 OK (Job Assignment Assigned)
+        API->>RT: Establish Private Communication Room & Broadcast Status
+        RT-->>Cust: Push Alert: Worker Assigned & En Route
+    else Concurrent Contenders (Subsequent Taps)
+        API->>DB: Atomic Lock Attempt Fails (Status != 'OPEN')
+        DB-->>API: Zero Matched Records
+        API-->>Work: Return 409 Conflict ("Job already accepted")
+    end
+
+    Work->>API: Update Status: 'ARRIVED' ➔ 'IN_PROGRESS'
+    Work->>API: Request Completion Verification Handshake
+    API->>Cust: Generate 6-Digit Secure Completion OTP
+    Cust->>Work: Provide Physical Completion Code
+    Work->>API: POST /api/v1/jobs/:id/verify-otp (Code)
+    API->>DB: Validate OTP, Mutate Status to 'COMPLETED'
+    API-->>Cust: Prompt Review, Star Rating & Settle Invoice
+2. Worker Flow (Onboarding to Net Earnings)Code snippetflowchart LR
+    W1[Phone OTP Sign-In] --> W2[Profile & Skills Setup<br><i>Radius & Rates</i>]
+    W2 --> W3[Set Availability<br><i>AVAILABLE / BUSY / OFFLINE</i>]
+    W3 --> W4[Receive Push / Audio Alerts<br><i>Incoming Job Offers</i>]
     W4 --> W5[Review & Accept Job]
     W5 --> W6[Navigate & Perform Work]
-    W6 --> W7[Record Job Expenses\nMaterials & Travel]
-    W7 --> W8[Net Earnings Calculated\nImmutable Ledger]
-```
-
-1. **Fast Onboarding**: Login with phone number + OTP; set trade skills, hourly/flat rates, and travel radius.
-2. **Availability Toggle**: Workers switch to `AVAILABLE` to start receiving nearby broadcast offers.
-3. **Offer Review**: Worker inspects job location, distance, estimated price, and simplified audio description.
-4. **Expense Logging**: After job completion, worker logs expenses (e.g., replacement pipes, wire spools, toll fees).
-5. **Ledger & Payout**: The system computes net profit:
-   $$\text{Net Profit} = \text{Total Received} - \text{Total Material \& Travel Expenses}$$
-
----
-
-### 3. Admin & Safety Flow
-
-- **Document Verification**: Admins review government ID proofs and trade certificates.
-- **Dispute Resolution**: If a job is marked `DISPUTED`, admins inspect conversation history, timestamps, and job events before resolving.
-- **Append-Only Audit Logs**: Every administrative action (suspension, verification, role modification) is recorded in immutable audit logs.
-
----
-
-## ⚡ Key Features
-
-### 🎙️ Voice-First & Regional Language AI
-- **Voice Descriptions**: Speech-to-text integration transcribes customer voice recordings and extracts job parameters.
-- **Circuit Breaker Resilience**: AI calls are protected by a circuit breaker (`ai/circuit-breaker.ts`) with deterministic fallbacks, ensuring the marketplace works even if third-party AI APIs are down.
-- **Multilingual Support**: Supports job translation into major Indian regional languages.
-
-### 📍 Deterministic 7-Factor Geospatial Matching
-Candidates are filtered via MongoDB GeoJSON `2dsphere` indexes and ranked by a deterministic scoring formula:
-1. **Skill Match (30%)** — Exact match of required certifications/skills.
-2. **Distance Proximity (25%)** — Calculated via Haversine great-circle distance.
-3. **Availability Status (15%)** — Realtime status (`AVAILABLE` = 100%, `BUSY` = 30%, `OFFLINE` = 0%).
-4. **Customer Rating (10%)** — Historical review score average.
-5. **Job Completion Rate (10%)** — Ratio of successfully completed vs. cancelled jobs.
-6. **Offer Acceptance Rate (5%)** — Worker responsiveness to previous offers.
-7. **Price Compatibility (5%)** — Worker hourly/base rate alignment with customer budget.
-
-### 🛡️ High-Concurrency Race Condition Safety
-- Tested and proven against **50 concurrent workers** tapping "Accept" simultaneously on the same job.
-- Utilizes MongoDB atomic conditional `findOneAndUpdate` queries ensuring **exactly 1 winner (200 OK)** and **49 conflicts (409 Conflict)**, eliminating double-assignment bugs.
-
-### 📊 Double-Entry Financial Ledger
-- All currency values stored as integer **paise** (1 INR = 100 paise) to eliminate JavaScript IEEE-754 floating-point errors.
-- Realtime tracking of Gross Earnings, Deductions, Material Expenses, and Net Profit.
-
-### 🔌 Realtime WebSockets (Socket.IO)
-- Authenticated JWT socket connections.
-- Instant alerts for new matching offers, status transitions (`EN_ROUTE`, `ARRIVED`), and in-job chat with delivery receipts.
-
-### 📱 Progressive Web App (PWA)
-- Next.js 16 PWA with offline fallback caching (`/offline`) designed for budget Android devices on unstable 3G/4G connections.
-
----
-
-## 🏛️ Architecture & Tech Stack
-
-```
-                              Client Devices (Next.js 16 PWA)
-                                             │
-                                     HTTPS / WSS (Port 443)
-                                             ▼
-                              ┌─────────────────────────────┐
-                              │  Reverse Proxy / Ingress    │
-                              └──────────────┬──────────────┘
-                                             │
-                     ┌───────────────────────┴───────────────────────┐
-                     ▼                                               ▼
-         ┌────────────────────────┐                     ┌────────────────────────┐
-         │   Express API Pod 1    │                     │   Express API Pod N    │
-         │ (Stateless HTTP/WSS)   │                     │ (Stateless HTTP/WSS)   │
-         └───────────┬────────────┘                     └───────────┬────────────┘
-                     │                                               │
-        ┌────────────┼───────────────────────────┬───────────────────┘
-        │            │                           │
-        ▼            ▼                           ▼
-  ┌───────────┐┌─────────────┐         ┌───────────────────┐
-  │  MongoDB  ││    Redis    │         │  Object Storage   │
-  │   Atlas   ││ (Cache/MQ)  │         │  (S3 / R2 / Mock) │
-  └───────────┘└──────┬──────┘         └───────────────────┘
-                      │ BullMQ Queues
-                      ▼
-         ┌────────────────────────┐
-         │    BullMQ Worker Pod   │
-         │ (Headless Background)  │
-         └────────────────────────┘
-```
-
-| Component | Technology | Role |
-|---|---|---|
-| **Frontend** | Next.js 16 (React 19), Tailwind CSS, Radix UI, TanStack Query | Progressive Web App for Customers, Workers, and Admins |
-| **Backend API** | Node.js 22, Express.js 5, TypeScript | Stateless REST API + Socket.IO realtime server |
-| **Worker Process** | BullMQ + Redis | Dedicated background process for notifications and audio tasks |
-| **Database** | MongoDB 7.0 + Mongoose | Primary document store with GeoJSON `2dsphere` spatial indexing |
-| **Cache & Queue** | Redis 7.0 | Rate-limiting, session tokens, and BullMQ task queues |
-| **Validation** | Zod | End-to-end runtime request validation and env parsing |
-| **Logging** | Pino | Structured JSON logging with automatic PII redaction |
-
----
-
-## 📁 Repository Structure
-
-```
-.
-├── backend/                       # Backend Monorepo Services
+    W6 --> W7[Record Job Expenses<br><i>Materials & Travel</i>]
+    W7 --> W8[Net Earnings Calculated<br><i>Immutable Ledger</i>]
+Fast Onboarding: Login with phone number + OTP; configure trade skills, hourly/flat rates, and target travel radius.Availability Control: Workers toggle AVAILABLE to participate in regional dispatch channels.Audio-Assisted Review: Workers inspect distance, rate compatibility, and listen to synthesized voice descriptions in regional dialects.Expense Logging: After completion, workers enter out-of-pocket expenses (replacement fixtures, wire spools, toll receipts).Net Profit Computation:$$\text{Net Take-Home Profit} = \text{Gross Settled Revenue} - (\text{Material Outlays} + \text{Fuel \& Transit Overhead})$$3. Admin, Verification & Safety FlowIdentity Verification: Administrators review Aadhaar/voter ID documents and trade credentials prior to issuing verified digital trust badges.Dispute Arbitration: Jobs flagged as DISPUTED provide admins with historical conversation transcripts, location timestamps, and image proofs.Immutable Audit Trail: System modifications, suspensions, and verifications append to an immutable log collection.🛠️ Production Pipeline ImplementationPipeline ComponentTechnical ChallengeEnterprise Engineering Solution🛡️ 50-Worker Race ConditionHigh-density job broadcasts cause race conditions when dozens of workers tap "Accept" simultaneously.Uses atomic conditional queries (findOneAndUpdate) in MongoDB. Benchmarked against 50 concurrent requests: yields exactly 1 winner (200 OK) and 49 clean rejections (409 Conflict) without duplicate assignments.🎙️ AI Third-Party OutagesCloud speech-to-text API latency or network timeouts can halt job creation pipelines.Implements a resilient Circuit Breaker (ai/circuit-breaker.ts) that falls back to rule-based keyword matchers if third-party AI APIs become unresponsive.💰 Financial PrecisionJavaScript IEEE-754 floating-point calculations cause rounding discrepancies across financial accounting.Stores all currency values as 64-bit integer paise ($1\text{ INR} = 100\text{ paise}$), computing net take-home margins without precision loss.📍 Offline ResiliencyWorkers on budget devices frequently lose connectivity in basements or remote rural locales.Deploys a Progressive Web App (PWA) with client-side service worker caches (/offline) allowing continuous access to active job addresses and offline logging.🎯 Target Use CasesPersonaOperational ScenarioHow Hunar Solves ItHomeowner / CustomerUrgent plumbing leak or electrical failure on a weekend.Submit problem via voice note or photo. System automatically classifies problem parameters and broadcasts to verified technicians within 5–10 km with real-time tracking.Skilled Worker (Electrician / Plumber)Needs steady job requests without platform fee exploitation.One-tap phone OTP sign-up. Reviews incoming jobs translated to preferred regional language, accepts work instantly, and logs raw expenses to track true net profit.Commercial Facility VendorFacility manager requiring routine maintenance across properties.Posts itemized task catalogs, verifies technician accreditation badges, books designated arrival windows, and reconciles digital ledger invoices.Platform ModeratorIdentity authentication and transactional dispute arbitration.Validates government IDs, audits state transition timestamps, and arbitrates disputes using complete audit trails.⚡ Key System Features📍 Deterministic 7-Factor Geospatial Matching MatrixNearby candidate pools are filtered via MongoDB GeoJSON 2dsphere spatial indexes and scored dynamically:Metric WeightEvaluation FactorAlgorithmic Scrutiny & Criteria30%Skill MatchExact match on certified competencies and trade credentials.25%Distance ProximityGreat-circle distance calculated via the Haversine formula.15%Availability StatusRealtime worker flag (AVAILABLE = 100%, BUSY = 30%, OFFLINE = 0%).10%Customer RatingHistorical rating average weighted by Bayesian confidence intervals.10%Completion VelocityHistorical ratio of successfully verified jobs against cancellations.5%Acceptance ResponsivenessWorker response speed to recent dispatch offers.5%Budget CompatibilityAlignment between worker hourly/base rates and customer budget caps.🎨 Interface Showcase📁 Monorepo Directory Architecturehunar/
+├── backend/                        (Backend Microservices Architecture)
 │   ├── apps/
-│   │   ├── api/                   # Express HTTP API & Socket.IO Gateway
+│   │   ├── api/                    (Express HTTP REST & Socket.IO Gateway)
 │   │   │   ├── src/
-│   │   │   │   ├── modules/       # 28 Domain modules (jobs, auth, matching, ledger, etc.)
-│   │   │   │   ├── database/      # Mongoose and Redis connection managers
-│   │   │   │   ├── middlewares/   # Security, RBAC auth, rate limiting, error handlers
-│   │   │   │   ├── realtime/      # Socket.IO gateway and room management
-│   │   │   │   └── server.ts      # API bootstrap & graceful shutdown
-│   │   │   └── test/              # 26 Vitest test suites (concurrency, unit, E2E)
-│   │   └── worker/                # Headless BullMQ worker process (notifications, AI)
-│   ├── packages/                  # Internal Shared Packages
-│   │   ├── config/                # Environment validation schemas (Zod)
-│   │   ├── logger/                # Pino logger with redaction
-│   │   ├── types/                 # Shared domain interfaces, enums, DTOs
-│   │   └── validation/            # Zod request validators
-│   ├── load-tests/                # k6 progressive load test scenarios
-│   ├── Dockerfile                 # Multi-stage production container build
-│   └── docker-compose.yml         # Backend container orchestration
+│   │   │   │   ├── modules/        (28 Domain Modules: jobs, matching, ledger, auth, etc.)
+│   │   │   │   ├── database/       (Mongoose ODM & Redis client managers)
+│   │   │   │   ├── middlewares/    (RBAC, JWT family validation, rate-limiters)
+│   │   │   │   ├── realtime/       (Socket.IO room gateways & geolocation broadcasts)
+│   │   │   │   └── server.ts       (Server bootstrap & graceful shutdown hooks)
+│   │   │   └── test/               (26 Vitest test suites: race conditions, units, E2E)
+│   │   └── worker/                 (Headless BullMQ background processing service)
+│   ├── packages/                   (Shared Internal Workspace Packages)
+│   │   ├── config/                 (Zod environment validation schemas)
+│   │   ├── logger/                 (Structured Pino logging with automated PII masking)
+│   │   ├── types/                  (Domain models, DTOs, status enumerations)
+│   │   └── validation/             (Zod request schemas & payload contracts)
+│   ├── load-tests/                 (k6 load scenarios: 500 to 5,000 virtual users)
+│   ├── Dockerfile                  (Multi-stage optimized container build)
+│   └── docker-compose.yml          (Backend container orchestration)
 │
-├── frontend/                      # Next.js 16 Progressive Web App
+├── frontend/                       (Next.js 16 Presentation Layer)
 │   ├── src/
-│   │   ├── app/                   # App Router pages
-│   │   │   ├── (auth)/            # Login & OTP verification routes
-│   │   │   ├── (public)/          # Marketing, services list, voice AI demo
-│   │   │   ├── customer/          # Customer dashboard, job creation, matching
-│   │   │   ├── worker/            # Worker portal, offers, active jobs, earnings
-│   │   │   ├── admin/             # Verification, disputes, user control, audit
-│   │   │   └── offline/           # PWA offline fallback
-│   │   ├── components/            # UI components (Radix, Tailwind, custom dialogs)
-│   │   ├── features/              # Modular domain UI logic (auth, jobs, matching, reviews)
-│   │   ├── hooks/                 # Custom React hooks (geolocation, socket, audio)
-│   │   ├── lib/                   # API HTTP client, React Query config
-│   │   └── providers/             # Global Context Providers (Auth, Socket, Query)
-│   └── public/                    # PWA manifest, icons, static assets
+│   │   ├── app/                    (App Router layouts, routes, and error boundaries)
+│   │   │   ├── (auth)/             (Phone OTP authentication routes)
+│   │   │   ├── (public)/           (Landing page, service catalog, voice demo)
+│   │   │   ├── customer/           (Customer portal: create jobs, track workers, review)
+│   │   │   ├── worker/             (Worker workspace: broadcast radar, active jobs, ledger)
+│   │   │   ├── admin/              (Admin dashboard: verification, disputes, audit logs)
+│   │   │   └── offline/            (PWA offline fallback view)
+│   │   ├── components/             (Radix UI primitives & responsive components)
+│   │   ├── features/               (Feature logic: matching, audio recording, ledgers)
+│   │   ├── hooks/                  (Custom hooks: useGeolocation, useSocket, useVoiceAI)
+│   │   ├── lib/                    (Axios client, TanStack Query providers)
+│   │   └── providers/              (Auth Context, Realtime Socket Context)
+│   └── public/                     (PWA manifest, icons, static assets)
 │
-├── docker-compose.yml             # Root local orchestration
-├── TRD_Local_Service_Platform.md  # Detailed Technical Requirements Document
-├── DEPLOYMENT.md                  # Cloud deployment runbooks
-├── TESTING.md                     # Concurrency proofs & testing catalog
-└── SECURITY.md                    # Security policies & audit documentation
-```
+├── docker-compose.yml              (Root container orchestration)
+├── TRD_Local_Service_Platform.md   (Technical Requirements Document)
+├── DEPLOYMENT.md                   (Production cloud deployment runbooks)
+├── TESTING.md                      (Test catalog & concurrency verification guide)
+└── SECURITY.md                     (Security architecture & audit documentation)
+🚀 Local Deployment & Quick StartPrerequisitesRuntime: Node.js >= 22.0.0Package Manager: pnpm >= 11.0.0Container Engine: Docker & Docker Compose (recommended for local dependencies)Databases (if running bare-metal): MongoDB 7.0+, Redis 7.0+Option A: Containerized Local Stack (Docker Compose)Launch the entire stack (MongoDB, Redis, Express API on :5000, and Worker on :5001) with a single command:Bash# 1. Clone repository
+git clone [https://github.com/shreeharsh-patil/hunar.git](https://github.com/shreeharsh-patil/hunar.git)
+cd hunar
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- **Node.js**: `>= 22.0.0`
-- **pnpm**: `>= 11.0.0`
-- **Docker & Docker Compose**: (Optional, for running containers)
-- **MongoDB**: `7.0+` (if running locally without Docker)
-- **Redis**: `7.0+` (if running locally without Docker)
-
----
-
-### Option A: Docker Local Stack (Recommended)
-
-Spins up MongoDB, Redis, the Express API (`:5000`), and the Background Worker (`:5001`) with a single command:
-
-```bash
-# 1. Clone repository
-git clone https://github.com/your-org/kaamsetu.git
-cd kaamsetu
-
-# 2. Start all backend services in containers
+# 2. Spin up containerized infrastructure
 docker compose up --build -d
 
-# 3. Check health of services
+# 3. Verify service health
 docker compose ps
 
-# 4. In a separate terminal, launch the frontend
+# 4. Launch Next.js frontend
 cd frontend
-npm install
-npm run dev
-```
-
-Visit:
-- **Frontend App**: [http://localhost:3000](http://localhost:3000)
-- **Backend Health Check**: [http://localhost:5000/health](http://localhost:5000/health)
-- **Worker Health Check**: [http://localhost:5001/health](http://localhost:5001/health)
-
----
-
-### Option B: Manual Local Setup
-
-#### 1. Configure Environment Variables
-Copy `.env.example` in both root and `frontend/`:
-```bash
-cp .env.example .env
+pnpm install
+pnpm dev
+Frontend Web Application: http://localhost:3000Backend Health Check: http://localhost:5000/healthBackground Worker Health: http://localhost:5001/healthOption B: Manual Development Environment1. Allocate Environment VariablesBashcp .env.example .env
 cp frontend/.env.example frontend/.env.local
-```
-
-Key environment variables:
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/kaamsetu
-REDIS_URL=redis://localhost:6379
-JWT_ACCESS_SECRET=your_super_secret_jwt_access_key_min_32_chars_long
-JWT_REFRESH_SECRET=your_super_secret_jwt_refresh_key_min_32_chars_long
-CORS_ORIGINS=http://localhost:3000
-STORAGE_PROVIDER=mock
-```
-
-#### 2. Install & Start Backend Services
-```bash
-# From repository root
+Key environment configurations:Ini, TOMLPORT=5000
+MONGODB_URI="mongodb://localhost:27017/hunar"
+REDIS_URL="redis://localhost:6379"
+JWT_ACCESS_SECRET="your_secure_random_jwt_access_secret_min_32_chars"
+JWT_REFRESH_SECRET="your_secure_random_jwt_refresh_secret_min_32_chars"
+CORS_ORIGINS="http://localhost:3000"
+STORAGE_PROVIDER="mock"
+2. Install Dependencies & Launch BackendBash# Install root monorepo dependencies
 pnpm install
 
-# Start Express API in dev mode (hot reload)
+# Start Express API in hot-reload mode
 pnpm dev:backend
 
-# (Optional) In another terminal, run background worker
+# (Optional Terminal 2) Start BullMQ background worker
 cd backend/apps/worker
 pnpm dev
-```
-
-#### 3. Start Frontend Development Server
-```bash
-# In another terminal
+3. Launch Frontend Development ServerBash# Terminal 3
 cd frontend
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## 🧪 Automated Testing & Concurrency Validation
-
-The platform includes exhaustive testing across domain unit logic, finite state transitions, high-concurrency race conditions, and load limits.
-
-```bash
-# Run all backend Vitest suites (450+ tests across 26 test suites)
+pnpm install
+pnpm dev
+Application runs live at: http://localhost:3000🧪 Automated Testing & Concurrency ValidationHunar is backed by over 450+ automated unit, integration, and high-concurrency test suites:Bash# Run all backend Vitest suites
 pnpm test:backend
 
-# Run test coverage report
-pnpm --filter @kaamsetu/api test:coverage
+# Generate backend test coverage reports
+pnpm --filter @hunar/api test:coverage
 
 # Run frontend tests
 pnpm test:frontend
-```
-
-### Concurrency Race Condition Proof
-Located at [`backend/apps/api/test/concurrency-race-conditions.test.ts`](file:///c:/Users/kenne/Desktop/kamsettu/KaamSetu/backend/apps/api/test/concurrency-race-conditions.test.ts):
-- Simulates **50 workers simultaneously accepting the exact same job offer** via `Promise.all`.
-- Asserts that MongoDB's atomic find-and-modify permits **exactly 1 winner (200 OK)** and **49 conflicts (409 Conflict)** without duplicate assignments or orphaned state.
-
-### Progressive Load Testing (k6)
-```bash
-# Run full marketplace lifecycle load test (500 -> 1k -> 5k VUs)
+Race Condition Validation SuiteLocated at backend/apps/api/test/concurrency-race-conditions.test.ts:Simulates 50 workers simultaneously accepting the exact same job offer via Promise.all.Confirms that MongoDB's atomic find-and-modify permits exactly 1 winner (200 OK) and 49 conflicts (409 Conflict), avoiding duplicate assignments and orphaned states.Progressive Load Testing (k6)Bash# Execute end-to-end load tests (scaling from 500 to 5,000 virtual users)
 pnpm load-test
 
-# Individual scenario load tests
+# Target individual endpoints
 pnpm load-test:health
 pnpm load-test:auth
 pnpm load-test:jobs
 pnpm load-test:concurrency
-```
-
----
-
-## 🔒 Security & Production Hardening
-
-- **Stateless Tokens with Family Tracking**: Short-lived JWTs (15 min) + Refresh Tokens stored with rotation families to invalidate hijacked sessions immediately.
-- **Strict Input Validation**: Every request body, query parameter, and route param is strictly verified with Zod schemas; unknown keys are stripped.
-- **Direct-to-Storage Uploads**: Files never stream through the Express web server; clients request a presigned S3/R2 PUT URL (`POST /api/v1/uploads/presign`).
-- **Rate Limiting**: Tiered Redis rate limiters protect OTP generation, authentication endpoints, and public searches.
-- **Structured PII Redaction**: Pino loggers automatically redact phone numbers, auth headers, and tokens from disk and stdout logs.
-
----
-
-## 📚 Documentation Index
-
-For in-depth architectural and operational guides, consult:
-
-- **[Technical Requirements Document (TRD)](./TRD_Local_Service_Platform.md)**: Full product vision, data dictionary, matching weights, and non-functional requirements.
-- **[Backend Development Plan](./Backend_Development_Plan_Phase_Wise.md)**: Phase-by-phase implementation roadmap (Phases 0 through 16).
-- **[Frontend Development Plan](./Frontend_Development_Plan_Phase_Wise.md)**: Frontend UX roadmap (Phases 0 through 22).
-- **[Production Deployment Runbook](./DEPLOYMENT.md)**: Kubernetes, Docker, AWS/GCP architecture, HPA guidelines, and zero-downtime rollouts.
-- **[Testing & Concurrency Guide](./TESTING.md)**: Details on Vitest test suites, race conditions, and k6 thresholds.
-- **[Security Architecture & Audit](./SECURITY.md)**: Threat modeling, RBAC boundaries, and vulnerability mitigations.
-
----
-
-<div align="center">
-Built with ❤️ for skilled trade professionals and customers.
-</div>
+🔒 Security Architecture & HardeningToken Family Revocation: Short-lived access tokens (15 minutes) paired with refresh tokens tracked in rotation families; detecting reuse immediately invalidates all active sessions.Strict Runtime Verification: Request payloads, route parameters, and query strings are sanitized with Zod schemas; unrecognized properties are discarded.Direct-to-Storage Presigned Uploads: Client media streams directly to S3/R2 object storage using presigned upload URLs (POST /api/v1/uploads/presign), keeping the web application server off the binary data path.Automated PII Redaction: The structured Pino logger automatically masks phone numbers, authentication headers, and session tokens from stdout and log streams.📚 Documentation IndexTechnical Requirements Document (TRD): Architectural specifications, matching weights, and non-functional requirements.Backend Development Roadmap: Step-by-step backend phases (Phases 0 through 16).Frontend Development Roadmap: UI implementation phases (Phases 0 through 22).Production Deployment Runbook: Container setup, Kubernetes manifests, and zero-downtime deployment guidance.Testing & Concurrency Guide: Race condition test documentation and k6 load testing configurations.Security Architecture & Audit: Threat modeling, RBAC validation rules, and vulnerability mitigations.⚖️ Legal Guidelines & License[!WARNING]This platform is distributed under the terms of the MIT License. It is an independent engineering project built for hyperlocal marketplace research, distributed concurrency evaluations, and software portfolio benchmarks.
