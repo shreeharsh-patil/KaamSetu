@@ -28,24 +28,27 @@ async function bootstrap(): Promise<void> {
   } catch (error) {
     logger.fatal(
       { err: error instanceof Error ? error.message : String(error) },
-      'MongoDB initial connection failed'
+      'MongoDB initial connection failed - Cannot start server without database'
     );
-    if (env.NODE_ENV === 'production') {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 
   // 2. Connect to Redis
   try {
     await connectRedis(env.REDIS_URL);
   } catch (error) {
-    logger.fatal(
-      { err: error instanceof Error ? error.message : String(error) },
-      'Redis initial connection failed'
-    );
+    const message = error instanceof Error ? error.message : String(error);
     if (env.NODE_ENV === 'production') {
+      logger.fatal(
+        { err: message },
+        'Redis initial connection failed - Cannot start server without cache'
+      );
       process.exit(1);
     }
+    logger.warn(
+      { err: message },
+      'Redis unavailable; starting API with development fallbacks'
+    );
   }
 
   // 3. Create HTTP Server & Initialize Socket.IO Realtime Gateway

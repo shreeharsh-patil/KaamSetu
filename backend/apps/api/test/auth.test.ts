@@ -46,8 +46,7 @@ describe('Authentication & Session Management (Phase 2)', () => {
     expect(res.body.data.cooldownSeconds).toBe(60);
 
     const sentOtp = DevOTPProvider.getLastSentOTP('+919888800001');
-    expect(sentOtp).toBeDefined();
-    expect(sentOtp).toMatch(/^\d{6}$/);
+    expect(sentOtp).toBe('123456');
   });
 
   it('should block resending OTP during cooldown period', async () => {
@@ -102,6 +101,27 @@ describe('Authentication & Session Management (Phase 2)', () => {
     expect(session).not.toBeNull();
     expect(session?.deviceName).toBe('Pixel 8 Chrome');
     expect(session?.revokedAt).toBeNull();
+  });
+
+  it('should accept oversized device metadata and cap it safely', async () => {
+    await request(app)
+      .post('/api/v1/auth/request-otp')
+      .send({ phone: '9888800013' });
+
+    const longDeviceName = 'Browser '.repeat(30);
+    const res = await request(app)
+      .post('/api/v1/auth/verify-otp')
+      .send({
+        phone: '9888800013',
+        otp: DevOTPProvider.getLastSentOTP('+919888800013'),
+        deviceName: longDeviceName,
+      });
+
+    expect(res.status).toBe(200);
+    const session = await SessionModel.findOne({
+      userId: res.body.data.user.id,
+    });
+    expect(session?.deviceName).toHaveLength(100);
   });
 
   it('should reject wrong OTP and decrement attempts remaining', async () => {

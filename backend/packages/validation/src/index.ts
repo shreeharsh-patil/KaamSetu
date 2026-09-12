@@ -745,7 +745,9 @@ export const requestOtpSchema = z.object({
 export const verifyOtpSchema = z.object({
   phone: phoneSchema,
   otp: z.string().regex(/^\d{6}$/, 'OTP must be a 6-digit numeric code'),
-  deviceName: z.string().max(100).optional(),
+  // Device metadata is non-essential; normalize browser-provided values so
+  // long User-Agent strings cannot block OTP verification.
+  deviceName: z.string().transform((value) => value.trim().slice(0, 100)).optional(),
 });
 
 export const refreshTokenSchema = z.object({

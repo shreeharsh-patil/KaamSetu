@@ -2,7 +2,7 @@ import { createHash, randomInt } from 'crypto';
 import { getRedisClient } from '../../database/redis.js';
 import { getOTPProvider, IOTPProvider } from './otp.provider.js';
 import { BadRequestError } from '../../errors/index.js';
-import { logger } from '../../config/index.js';
+import { env, logger } from '../../config/index.js';
 import { normalizePhoneNumber } from '@kaamsetu/validation';
 
 export interface OTPState {
@@ -131,8 +131,12 @@ export class OTPService {
       throw new BadRequestError('Please wait before requesting another OTP.');
     }
 
-    // 4. Generate cryptographically secure 6-digit OTP
-    const otp = randomInt(100000, 1000000).toString();
+    // Keep local development and tests easy to exercise, but never use a
+    // predictable OTP in production.
+    const otp =
+      env.NODE_ENV === 'production'
+        ? randomInt(100000, 1000000).toString()
+        : '123456';
     const codeHash = this.hashOTP(otp);
 
     const state: OTPState = {
