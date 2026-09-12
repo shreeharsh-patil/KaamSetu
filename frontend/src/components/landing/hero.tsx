@@ -1,0 +1,293 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Wrench,
+  Hammer,
+  Search,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
+
+interface HeroProps {
+  onSearch?: (query: string) => void;
+}
+
+const QUICK_TRADES = [
+  { id: "electrical", label: "Electrician", icon: Zap, count: "48 online" },
+  { id: "plumbing", label: "Plumbing", icon: Wrench, count: "62 online" },
+  { id: "carpentry", label: "Carpentry", icon: Hammer, count: "31 online" },
+  { id: "appliances", label: "AC Repair", icon: Sparkles, count: "29 online" },
+];
+
+export function Hero({ onSearch }: HeroProps) {
+  const titleText = "Connecting skilled hands with homes that need them";
+  const words = titleText.split(" ");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [opacity, setOpacity] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const maxScroll = 450;
+      const calculatedOpacity = Math.min(1, scrollPosition / maxScroll);
+      setOpacity(calculatedOpacity);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", checkDesktop);
+    };
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSearch) {
+      onSearch(searchQuery);
+    }
+  };
+
+  return (
+    <section className="min-h-[90vh] flex flex-col justify-center pt-8 md:pt-14 relative overflow-hidden">
+      {/* 3D Rotating Glowing Orb Asset from portfolio */}
+      <div className="absolute -right-32 md:-right-48 top-12 md:top-20 w-[460px] h-[460px] md:w-[740px] md:h-[740px] pointer-events-none animate-orb-rotate -z-10 scale-110 opacity-90">
+        <Image
+          src="/images/orb.png"
+          alt=""
+          width={740}
+          height={740}
+          className="w-full h-full object-contain"
+          priority
+        />
+      </div>
+
+      {/* Ambient background blur blobs */}
+      <div className="absolute top-1/4 -left-48 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-12 md:py-20 w-full">
+        <div className="max-w-4xl">
+          {/* Eyebrow badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/80 border border-border/80 text-xs sm:text-sm font-medium mb-6 backdrop-blur-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-muted-foreground">Hyperlocal Skilled Trades</span>
+            <span className="text-border">•</span>
+            <span className="text-foreground font-semibold flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 inline" />
+              100% Escrow Protected
+            </span>
+          </div>
+
+          {/* Main Title with word-by-word reveal */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-[82px] font-semibold tracking-tight leading-[1.08] text-balance">
+            {words.map((word, index) => {
+              const isAccent = word.toLowerCase().includes("skilled") || word.toLowerCase().includes("hands");
+              return (
+                <span
+                  key={index}
+                  className={`hero-word my-0 py-1 ${isAccent ? "ai-gradient-word font-bold" : ""}`}
+                  style={{
+                    animationDelay: `${index * 0.08}s`,
+                    marginRight: index < words.length - 1 ? "0.26em" : "0",
+                    ...(isAccent
+                      ? {
+                          background:
+                            "linear-gradient(135deg, #ff006e 0%, #8b5cf6 35%, #203eec 70%, #00d4ff 100%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                          filter:
+                            "drop-shadow(0 0 16px rgba(139, 92, 246, 0.25)) drop-shadow(0 0 32px rgba(32, 62, 236, 0.2))",
+                        }
+                      : {}),
+                  }}
+                >
+                  {word}
+                </span>
+              );
+            })}
+          </h1>
+
+          <p className="mt-7 max-w-2xl leading-relaxed text-base sm:text-lg text-muted-foreground">
+            KaamSetu bridges home emergencies with verified local tradespeople in 15 minutes.
+            Zero middleman markups, fair wage guarantee, and automated escrow payouts upon work completion.
+          </p>
+
+          {/* Interactive Search Bar */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="mt-8 flex flex-col sm:flex-row items-center gap-3 p-2 bg-card/80 backdrop-blur-md rounded-2xl border border-border shadow-lg max-w-xl"
+          >
+            <div className="flex items-center gap-3 px-3 py-2 w-full">
+              <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+              <input
+                type="text"
+                placeholder="What help do you need? (e.g. MCB tripping, leaking pipe)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-sm sm:text-base outline-none text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+            <Link
+              href={searchQuery ? `/customer/jobs/new?query=${encodeURIComponent(searchQuery)}` : "/customer/jobs/new"}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-semibold text-white shrink-0 text-center transition-all duration-200"
+              style={{
+                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                boxShadow: "0 4px 18px rgba(32, 62, 236, 0.35)",
+              }}
+            >
+              Find Pro
+            </Link>
+          </form>
+
+          {/* Quick Trade Badges */}
+          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
+            <span className="text-muted-foreground font-medium mr-1">Popular:</span>
+            {QUICK_TRADES.map((trade) => {
+              const Icon = trade.icon;
+              return (
+                <Link
+                  key={trade.id}
+                  href={`/customer/jobs/new?trade=${trade.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/80 hover:bg-secondary border border-border/70 text-foreground transition-all duration-150 hover:-translate-y-0.5"
+                >
+                  <Icon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span className="font-medium">{trade.label}</span>
+                  <span className="text-[10px] text-muted-foreground ml-0.5">({trade.count})</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Primary & Secondary Dual CTAs */}
+          <div className="flex flex-wrap items-center gap-4 mt-8">
+            <Link
+              href="/customer/jobs/new"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all relative overflow-hidden group"
+              style={{
+                background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
+                boxShadow: "0 4px 20px rgba(32, 62, 236, 0.35)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 8px 30px rgba(32, 62, 236, 0.55), 0 0 35px rgba(0, 212, 255, 0.35)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(32, 62, 236, 0.35)";
+              }}
+            >
+              Post a Job in 60s
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              href="/worker"
+              className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+            >
+              Join as Worker & Earn
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Platform Live Snapshot with parallax reveal */}
+      <div className="w-full max-w-[1280px] mx-auto px-6 md:px-12 mt-4 md:mt-8">
+        <div
+          className="relative rounded-2xl md:rounded-3xl border border-border bg-card/60 backdrop-blur-xl overflow-hidden shadow-2xl transition-all duration-300"
+          style={{
+            opacity: isDesktop ? Math.max(0.65, opacity) : 1,
+            transform: isDesktop ? `translateY(${(1 - Math.max(0.65, opacity)) * 20}px)` : "none",
+          }}
+        >
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:px-6 border-b border-border/80 bg-muted/40">
+            <div className="flex items-center gap-3">
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+              </span>
+              <span className="font-semibold text-xs sm:text-sm">Live Hyperlocal Marketplace Pulse</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                Active in Mumbai • Bengaluru • Delhi NCR
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+              <span>Avg Match Time: 82s</span>
+              <span>•</span>
+              <span>100% Escrow Protected</span>
+            </div>
+          </div>
+
+          {/* Showcase Content */}
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+            {/* Stat 1 */}
+            <div className="p-6 flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">15 Mins</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
+                  Geospatial Dispatch Wave
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Multi-ring geo-fencing alerts the nearest 5 verified technicians simultaneously.
+                </p>
+              </div>
+            </div>
+
+            {/* Stat 2 */}
+            <div className="p-6 flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">Zero Fraud</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
+                  Aadhaar & Police Verified
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Every technician undergoes biometric Aadhaar verification and skill benchmarking.
+                </p>
+              </div>
+            </div>
+
+            {/* Stat 3 */}
+            <div className="p-6 flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">100% Escrow</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">
+                  Direct Bank UPI Payouts
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Customer funds stay safe in escrow until completion OTP is exchanged at your doorstep.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
