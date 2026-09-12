@@ -13,7 +13,6 @@ import {
   LogOut,
   Edit3,
 } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +41,9 @@ export default function CustomerProfilePage() {
     : "—";
 
   return (
-    <div className="py-4 sm:py-8 space-y-6">
-      <Container className="space-y-6">
-        <PageHeader
-          title="My Profile"
+    <div className="max-w-4xl space-y-6">
+      <PageHeader
+        title="My Profile"
           subtitle="Manage your account details and preferences"
         />
 
@@ -230,7 +228,6 @@ export default function CustomerProfilePage() {
             Sign Out
           </Button>
         </div>
-      </Container>
     </div>
   );
 }

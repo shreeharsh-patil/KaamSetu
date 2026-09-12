@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle, Search, Clock, ArrowRight, Briefcase } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,7 +43,7 @@ export default function CustomerJobsListPage() {
   });
 
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">My Service Requests</h1>
@@ -167,6 +166,6 @@ export default function CustomerJobsListPage() {
           })}
         </div>
       )}
-    </Container>
+    </div>
   );
 }

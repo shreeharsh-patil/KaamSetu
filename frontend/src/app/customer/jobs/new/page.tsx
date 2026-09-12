@@ -3,13 +3,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JobCreationWizard } from "@/features/customer/components/job-creation-wizard";
 
 export default function NewJobPage() {
   return (
-    <Container className="py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="icon">
           <Link href="/customer">
@@ -27,6 +26,6 @@ export default function NewJobPage() {
       <Suspense fallback={<div className="h-96 rounded-2xl bg-muted/40 animate-pulse" />}>
         <JobCreationWizard />
       </Suspense>
-    </Container>
+    </div>
   );
 }
