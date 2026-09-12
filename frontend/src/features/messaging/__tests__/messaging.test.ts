@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { ApiMessage, MessageViewModel, ConversationSummary, MessagesPageResponse } from "../types";
+import type { ApiMessage, MessageViewModel, ConversationSummary } from "../types";
 
 /**
  * Pure functions mirroring the business logic in the messaging components:
@@ -260,8 +260,8 @@ describe("Messaging Logic & Contracts", () => {
 
       const deduplicated = deduplicateAndSortMessages([msg1, msg2], [msg1]);
       expect(deduplicated.length).toBe(2);
-      expect(deduplicated[0].id).toBe("msg_1");
-      expect(deduplicated[1].id).toBe("msg_2");
+      expect(deduplicated[0]!.id).toBe("msg_1");
+      expect(deduplicated[1]!.id).toBe("msg_2");
     });
 
     it("orders messages strictly by createdAt ascending", () => {
@@ -285,8 +285,8 @@ describe("Messaging Logic & Contracts", () => {
       };
 
       const sorted = deduplicateAndSortMessages([late], [early]);
-      expect(sorted[0].id).toBe("m_early");
-      expect(sorted[1].id).toBe("m_late");
+      expect(sorted[0]!.id).toBe("m_early");
+      expect(sorted[1]!.id).toBe("m_late");
     });
   });
 
