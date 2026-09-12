@@ -1,5 +1,6 @@
 import type { IAIProvider } from '@kaamsetu/types';
 import { mockAIProvider } from './mock-ai.provider.js';
+import { geminiAIProvider } from './gemini-ai.provider.js';
 
 export class AIProviderRegistry {
   private providers: Map<string, IAIProvider> = new Map();
@@ -7,6 +8,12 @@ export class AIProviderRegistry {
 
   constructor() {
     this.register(mockAIProvider);
+    this.register(geminiAIProvider);
+
+    // If GEMINI_API_KEY is configured, activate Gemini AI provider by default
+    if (process.env['GEMINI_API_KEY'] && process.env['GEMINI_API_KEY'].trim().length > 0) {
+      this.activeProviderName = 'gemini-ai';
+    }
   }
 
   public register(provider: IAIProvider): void {
@@ -26,6 +33,10 @@ export class AIProviderRegistry {
       return mockAIProvider;
     }
     return provider;
+  }
+
+  public getActiveProviderName(): string {
+    return this.activeProviderName;
   }
 }
 

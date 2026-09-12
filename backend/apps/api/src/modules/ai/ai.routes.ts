@@ -5,17 +5,20 @@ import {
   translateText,
   extractProfile,
   getAIStatus,
+  explainMatches,
 } from './ai.controller.js';
-import { authenticate } from '../../middlewares/auth.middleware.js';
+import { optionalAuth } from '../../middlewares/auth.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 
 export const aiRoutes = Router();
 
-// AI endpoints (authenticated)
-aiRoutes.post('/classify-job', authenticate(), asyncHandler(classifyJob));
-aiRoutes.post('/simplify-description', authenticate(), asyncHandler(simplifyDescription));
-aiRoutes.post('/translate', authenticate(), asyncHandler(translateText));
-aiRoutes.post('/extract-profile', authenticate(), asyncHandler(extractProfile));
+// AI endpoints (optionalAuth allows guest & authenticated users)
+aiRoutes.post('/classify-job', optionalAuth(), asyncHandler(classifyJob));
+aiRoutes.post('/simplify-description', optionalAuth(), asyncHandler(simplifyDescription));
+aiRoutes.post('/translate', optionalAuth(), asyncHandler(translateText));
+aiRoutes.post('/extract-profile', optionalAuth(), asyncHandler(extractProfile));
+aiRoutes.post('/matching/best-match', optionalAuth(), asyncHandler(explainMatches));
 
 // AI provider & circuit breaker health status
 aiRoutes.get('/status', asyncHandler(getAIStatus));
+

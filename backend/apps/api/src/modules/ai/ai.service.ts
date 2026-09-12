@@ -158,6 +158,27 @@ export class AIService {
   }
 
   /**
+   * Generates AI-assisted matching recommendations and highlights for worker candidates.
+   */
+  async explainBestMatches(
+    jobDescription: string,
+    candidates: Array<{ workerId: string; name: string; skills: string[]; distanceKm: number; rating: number; completedJobs: number }>
+  ) {
+    const provider = this.getProvider();
+    if ('explainBestMatches' in provider && typeof (provider as any).explainBestMatches === 'function') {
+      return (provider as any).explainBestMatches(jobDescription, candidates);
+    }
+    return candidates.map((c, i) => ({
+      workerId: c.workerId,
+      workerName: c.name,
+      bestFitSummary: `${c.distanceKm.toFixed(1)} km away with ${c.rating}★ rating and ${c.completedJobs} completed jobs.`,
+      strengths: [`${c.distanceKm.toFixed(1)} km distance`, `${c.rating}★ rating`, ...c.skills.slice(0, 2)],
+      recommendedBadge: i === 0 ? 'Top Match' : undefined,
+    }));
+  }
+
+
+  /**
    * Guardrail: Strict prevention of AI taking unauthorized actions.
    */
   public assertNoDirectAdministrativeAction(action: string): void {

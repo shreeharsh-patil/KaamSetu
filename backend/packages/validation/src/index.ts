@@ -727,6 +727,7 @@ export const transcribeAudioInputSchema = z.object({
   audio: z.string().min(10, 'Audio base64 string is required'),
   mimeType: z.string().max(100).optional().default('audio/wav'),
   language: z.string().max(10).optional(),
+  hintText: z.string().optional(),
 });
 export type TranscribeAudioInputDto = z.infer<typeof transcribeAudioInputSchema>;
 

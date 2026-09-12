@@ -9,6 +9,7 @@ RUN apk add --no-cache libc6-compat python3 make g++
 # Enable corepack and activate pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV CI=true
 RUN corepack enable && corepack prepare pnpm@11.21.0 --activate
 
 WORKDIR /app
@@ -17,6 +18,8 @@ WORKDIR /app
 # Stage 2: Dependencies & Build Stage
 # ==============================================================================
 FROM base AS builder
+
+ENV CI=true
 
 # Copy monorepo configuration and package descriptors
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -39,7 +42,7 @@ COPY apps/ ./apps/
 RUN pnpm build
 
 # Prune devDependencies to keep runtime lightweight
-RUN pnpm prune --prod
+RUN pnpm config set confirmModulesPurge false && CI=true pnpm prune --prod
 
 # ==============================================================================
 # Stage 3: Production Express API Image (Default Target)

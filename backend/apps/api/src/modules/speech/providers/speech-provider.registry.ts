@@ -1,5 +1,6 @@
 import type { ISpeechProvider } from '@kaamsetu/types';
 import { mockSpeechProvider } from './mock-speech.provider.js';
+import { geminiSpeechProvider } from './gemini-speech.provider.js';
 
 export class SpeechProviderRegistry {
   private providers: Map<string, ISpeechProvider> = new Map();
@@ -7,6 +8,12 @@ export class SpeechProviderRegistry {
 
   constructor() {
     this.register(mockSpeechProvider);
+    this.register(geminiSpeechProvider);
+
+    // If GEMINI_API_KEY is configured, activate Gemini Speech provider by default
+    if (process.env['GEMINI_API_KEY'] && process.env['GEMINI_API_KEY'].trim().length > 0) {
+      this.activeProviderName = 'gemini-speech';
+    }
   }
 
   public register(provider: ISpeechProvider): void {
@@ -26,6 +33,10 @@ export class SpeechProviderRegistry {
       return mockSpeechProvider;
     }
     return provider;
+  }
+
+  public getActiveProviderName(): string {
+    return this.activeProviderName;
   }
 }
 

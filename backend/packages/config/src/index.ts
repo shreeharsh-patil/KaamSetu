@@ -84,6 +84,9 @@ const envSchema = z.object({
   SENTRY_ENVIRONMENT: z.string().default(process.env['NODE_ENV'] || 'development'),
   METRICS_ENABLED: z.coerce.boolean().default(true),
   WORKER_HEALTH_PORT: z.coerce.number().default(5001),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
+  GEMINI_BACKUP_MODEL: z.string().default('gemini-3.5-flash'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

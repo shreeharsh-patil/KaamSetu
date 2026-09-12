@@ -21,11 +21,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { VoiceRecorder } from "@/components/voice/voice-recorder";
 
 export default function VoiceAiPage() {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [parsedAnalysis, setParsedAnalysis] = useState<{
     category: string;
     urgency: string;
     locality: string;
     summary: string;
+    confidence?: string;
+    estimatedPrice?: number;
+    suggestedSkills?: string[];
   } | null>(null);
 
   const samplePrompts = [
@@ -63,31 +67,63 @@ export default function VoiceAiPage() {
     },
   ];
 
-  const handleApplyVoiceText = (text: string) => {
-    const lower = text.toLowerCase();
+  const handleApplyVoiceText = async (text: string) => {
+    setIsAnalyzing(true);
     let category = "Plumbing";
     let urgency = "FLEXIBLE";
+    let confidence = "98.4%";
+    let estimatedPrice: number | undefined;
+    let suggestedSkills: string[] = [];
 
-    if (lower.includes("light") || lower.includes("स्वीच") || lower.includes("wire") || lower.includes("electric")) {
-      category = "Electrical";
-    } else if (lower.includes("ac") || lower.includes("cooling") || lower.includes("fridge")) {
-      category = "Appliances";
-    } else if (lower.includes("door") || lower.includes("lock") || lower.includes("carpenter")) {
-      category = "Carpentry";
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"}/ai/classify-job`;
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          category = json.data.suggestedCategoryName || json.data.categorySlug || category;
+          urgency = json.data.urgency || urgency;
+          if (json.data.confidence) {
+            confidence = `${Math.round(json.data.confidence * 100)}%`;
+          }
+          estimatedPrice = json.data.estimatedPrice;
+          suggestedSkills = json.data.suggestedSkills || [];
+        }
+      }
+    } catch (err) {
+      console.warn("AI classify-job fallback:", err);
+      // Heuristic fallback
+      const lower = text.toLowerCase();
+      if (lower.includes("light") || lower.includes("स्वीच") || lower.includes("wire") || lower.includes("electric")) {
+        category = "Electrical";
+      } else if (lower.includes("ac") || lower.includes("cooling") || lower.includes("fridge")) {
+        category = "Appliances";
+      } else if (lower.includes("door") || lower.includes("lock") || lower.includes("carpenter")) {
+        category = "Carpentry";
+      }
+
+      if (lower.includes("emergency") || lower.includes("tut") || lower.includes("ठिणग्या")) {
+        urgency = "EMERGENCY";
+      } else if (lower.includes("jaldi") || lower.includes("urgent") || lower.includes("jam")) {
+        urgency = "TODAY";
+      }
+    } finally {
+      setIsAnalyzing(false);
+      setParsedAnalysis({
+        category,
+        urgency,
+        locality: "Bandra West, Mumbai (400050)",
+        summary: text,
+        confidence,
+        estimatedPrice,
+        suggestedSkills,
+      });
     }
-
-    if (lower.includes("emergency") || lower.includes("tut") || lower.includes("ठिणग्या")) {
-      urgency = "EMERGENCY";
-    } else if (lower.includes("jaldi") || lower.includes("urgent") || lower.includes("jam")) {
-      urgency = "TODAY";
-    }
-
-    setParsedAnalysis({
-      category,
-      urgency,
-      locality: "Bandra West, Mumbai (400050)",
-      summary: text,
-    });
   };
 
   const handleSelectSample = (sample: typeof samplePrompts[0]) => {
@@ -207,20 +243,27 @@ export default function VoiceAiPage() {
               />
             </div>
 
+            {isAnalyzing && (
+              <div className="flex items-center justify-center gap-2 p-4 text-xs text-primary animate-pulse font-medium bg-primary/5 rounded-xl border border-primary/20 max-w-xl mx-auto">
+                <Sparkles className="h-4 w-4 animate-spin" />
+                Analyzing voice intent with Gemini AI...
+              </div>
+            )}
+
             {/* AI Breakdown Card */}
-            {parsedAnalysis && (
+            {parsedAnalysis && !isAnalyzing && (
               <Card className="border-emerald-500/30 bg-emerald-500/5 animate-in fade-in slide-in-from-bottom-3">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                      <CheckCircle2 className="h-4 w-4" /> AI Intent Recognition Result
+                      <CheckCircle2 className="h-4 w-4" /> Gemini AI Intent Recognition Result
                     </CardTitle>
                     <Badge variant="outline" className="text-[10px] bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400">
-                      Confidence 98.4%
+                      Confidence {parsedAnalysis.confidence || "98%"}
                     </Badge>
                   </div>
                   <CardDescription className="text-xs">
-                    Here is how KaamSetu&apos;s Voice AI converts spoken speech into structured job parameters:
+                    Here is how KaamSetu&apos;s Voice AI converts your spoken words into structured job parameters:
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -228,7 +271,7 @@ export default function VoiceAiPage() {
                     &ldquo;{parsedAnalysis.summary}&rdquo;
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
                       <span className="text-[10px] text-muted-foreground block font-medium uppercase">
                         Matched Category
@@ -255,11 +298,35 @@ export default function VoiceAiPage() {
 
                     <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
                       <span className="text-[10px] text-muted-foreground block font-medium uppercase">
+                        Est. Budget
+                      </span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {parsedAnalysis.estimatedPrice ? `₹${parsedAnalysis.estimatedPrice}` : "₹450 - ₹900"}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-background border space-y-1 text-center">
+                      <span className="text-[10px] text-muted-foreground block font-medium uppercase">
                         Dispatch Radius
                       </span>
                       <span className="font-bold text-foreground">3.5 km</span>
                     </div>
                   </div>
+
+                  {parsedAnalysis.suggestedSkills && parsedAnalysis.suggestedSkills.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                        AI Recommended Skills:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {parsedAnalysis.suggestedSkills.map((skill, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-[10px] py-0.5">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-2 pt-2">
                     <Link

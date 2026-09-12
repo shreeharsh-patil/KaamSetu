@@ -8,7 +8,11 @@ import { BadRequestError } from '../../errors/index.js';
 
 export async function transcribeAudio(req: Request, res: Response): Promise<void> {
   const validated = transcribeAudioInputSchema.parse(req.body);
-  const result = await speechService.speechToText(validated.audio, validated.mimeType);
+  const result = await speechService.speechToText(
+    validated.audio,
+    validated.mimeType,
+    { hintText: validated.hintText, language: validated.language } as unknown as any
+  );
 
   res.status(200).json({
     success: true,

@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Container } from "./container";
-import { siteConfig } from "@/config/site";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 export function AppFooter() {
   return (
     <footer className="mt-auto border-t bg-muted/30 py-8 text-xs text-muted-foreground">
       <Container className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <div className="flex flex-col items-center gap-1 sm:items-start">
-          <p className="font-semibold text-foreground">{siteConfig.name}</p>
-          <p>Phase 0: Production Baseline & Architecture Ready</p>
+        <div className="flex flex-col items-center gap-1.5 sm:items-start">
+          <BrandLogo height={32} />
+          <p className="text-[11px] text-muted-foreground">Next-Gen Hyperlocal Trade Platform</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-4">

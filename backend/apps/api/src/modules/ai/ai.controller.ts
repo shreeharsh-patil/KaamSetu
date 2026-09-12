@@ -59,3 +59,27 @@ export async function getAIStatus(_req: Request, res: Response): Promise<void> {
     data: status,
   });
 }
+
+export async function explainMatches(req: Request, res: Response): Promise<void> {
+  const jobDescription = req.body['jobDescription'];
+  const candidates = req.body['candidates'];
+
+  if (!jobDescription || typeof jobDescription !== 'string') {
+    res.status(400).json({
+      success: false,
+      error: { message: 'jobDescription string is required' },
+    });
+    return;
+  }
+
+  const result = await aiService.explainBestMatches(
+    jobDescription,
+    Array.isArray(candidates) ? candidates : []
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+}
+

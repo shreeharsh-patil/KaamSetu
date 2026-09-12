@@ -94,8 +94,30 @@
 }
 
 @layer base {
+  /* Globally hide scrollbars across all browsers while preserving smooth scrolling */
+  html,
+  body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge, Opera */
+    width: 0;
+    height: 0;
+  }
+
   * {
     @apply border-border;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge, Opera */
+    width: 0;
+    height: 0;
   }
 
   body {

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Hammer,
   Wifi,
   WifiOff,
   Sun,
@@ -33,6 +32,7 @@ import { useNetwork } from "@/providers/network-provider";
 import { useTheme } from "@/providers/theme-provider";
 import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 import { useTranslation } from "@/lib/i18n/i18n-context";
 
@@ -94,18 +94,10 @@ export function AppHeader() {
         <div className="flex items-center gap-3 sm:gap-6 shrink-0">
           <Link
             href="/"
-            className="flex flex-row items-center gap-2.5 font-bold text-lg text-primary tracking-tight transition-opacity hover:opacity-90 shrink-0 whitespace-nowrap min-w-max"
-            aria-label="KaamSetu Home"
+            className="flex flex-row items-center transition-opacity hover:opacity-90 shrink-0 whitespace-nowrap min-w-max"
+            aria-label="Hunar Home"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-              <Hammer className="h-5 w-5 shrink-0" />
-            </div>
-            <div className="flex flex-col shrink-0 text-left">
-              <span className="font-display leading-tight font-extrabold text-foreground text-base sm:text-lg whitespace-nowrap">KaamSetu</span>
-              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase whitespace-nowrap">
-                {t("header.sub", "Hyperlocal Bazaar")}
-              </span>
-            </div>
+            <BrandLogo height={42} className="shrink-0" />
           </Link>
 
           {/* Location Chip */}

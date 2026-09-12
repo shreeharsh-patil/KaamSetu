@@ -79,8 +79,34 @@ export function VoiceProfileBuilder({ onProfileExtracted, className = "" }: Voic
     return { trade, yearsExperience, skills, bio };
   };
 
-  const handleSpeechRecorded = (rawText: string) => {
-    const parsed = parseWorkerSpeech(rawText);
+  const handleSpeechRecorded = async (rawText: string) => {
+    let parsed = parseWorkerSpeech(rawText);
+
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"}/ai/extract-profile`;
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: rawText }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          parsed = {
+            trade: parsed.trade,
+            yearsExperience: typeof json.data.experienceYears === "number" ? json.data.experienceYears : parsed.yearsExperience,
+            skills: Array.isArray(json.data.suggestedSkills) && json.data.suggestedSkills.length > 0
+              ? json.data.suggestedSkills
+              : parsed.skills,
+            bio: json.data.bio || parsed.bio,
+          };
+        }
+      }
+    } catch (err) {
+      console.warn("AI extract-profile fallback:", err);
+    }
+
     setExtractedData(parsed);
     setIsDone(false);
   };

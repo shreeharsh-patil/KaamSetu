@@ -1,6 +1,17 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import { logger } from '../config/index.js';
 import type { ServiceConnectionStatus } from '@kaamsetu/types';
+
+// Fix for Node.js / c-ares on Windows when DNS resolver defaults to loopback 127.0.0.1
+try {
+  const currentServers = dns.getServers();
+  if (!currentServers.length || currentServers.every((s) => s === '127.0.0.1' || s === '::1')) {
+    dns.setServers(['192.168.0.1', '8.8.8.8', '1.1.1.1']);
+  }
+} catch {
+  // ignore
+}
 
 export interface MongoConfig {
   uri: string;

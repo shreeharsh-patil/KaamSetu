@@ -1470,6 +1470,8 @@ export interface IAIProvider {
 export interface SpeechRequestOptions {
   timeoutMs?: number | undefined;
   audioFormat?: string | undefined;
+  language?: string | undefined;
+  hintText?: string | undefined;
 }
 
 export interface SpeechToTextResult {

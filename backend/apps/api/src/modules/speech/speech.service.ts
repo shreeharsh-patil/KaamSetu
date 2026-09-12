@@ -21,7 +21,7 @@ export class SpeechService {
 
   constructor(
     private readonly providerRegistry = speechProviderRegistry,
-    breakerOptions = { name: 'SpeechService', failureThreshold: 3, cooldownPeriodMs: 20000, timeoutMs: 8000 }
+    breakerOptions = { name: 'SpeechService', failureThreshold: 10, cooldownPeriodMs: 5000, timeoutMs: 25000 }
   ) {
     this.breaker = new CircuitBreaker(breakerOptions);
   }

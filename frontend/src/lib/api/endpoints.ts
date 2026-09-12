@@ -78,4 +78,18 @@ export const API_ENDPOINTS = {
     CATEGORIES: "/admin/categories",
     AUDIT_LOGS: "/admin/audit-logs",
   },
+  SPEECH: {
+    TRANSCRIBE: "/speech/transcribe",
+    SYNTHESIZE: "/speech/synthesize",
+    DETECT_LANGUAGE: "/speech/detect-language",
+    STATUS: "/speech/status",
+  },
+  AI: {
+    CLASSIFY_JOB: "/ai/classify-job",
+    EXTRACT_PROFILE: "/ai/extract-profile",
+    SIMPLIFY_DESCRIPTION: "/ai/simplify-description",
+    TRANSLATE: "/ai/translate",
+    BEST_MATCH: "/ai/matching/best-match",
+    STATUS: "/ai/status",
+  },
 } as const;
