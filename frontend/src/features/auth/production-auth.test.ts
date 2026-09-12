@@ -10,4 +10,12 @@ describe("production authentication boundary", () => {
     expect(authContext).not.toContain("kaamsetu_token");
     expect(authContext).not.toContain("localStorage.setItem");
   });
+
+  it("safely provides defaults when environment variables are omitted during build", async () => {
+    const { env } = await import("../../config/env");
+    expect(env.NEXT_PUBLIC_API_URL).toBeDefined();
+    expect(env.NEXT_PUBLIC_APP_URL).toBeDefined();
+    expect(env.NEXT_PUBLIC_SOCKET_URL).toBeDefined();
+    expect(env.NEXT_PUBLIC_MAP_PROVIDER).toBe("osm");
+  });
 });
