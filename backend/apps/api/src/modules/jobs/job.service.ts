@@ -138,16 +138,6 @@ export class JobService {
           immediate: true,
         },
       });
-
-      // Automatically kick off matching in the background (skipped in test runner for determinism)
-      if (process.env.NODE_ENV !== 'test') {
-        void matchingService.startMatching(job.id).catch((err) => {
-          logger.error(
-            { err: err instanceof Error ? err.message : String(err), jobId: job.id },
-            'Background matching auto-start failed on createJob'
-          );
-        });
-      }
     }
 
     return job;
@@ -308,16 +298,6 @@ export class JobService {
       previousState: job.status,
       newState: JobStatus.OPEN,
     });
-
-    // Automatically kick off matching in the background (skipped in test runner for determinism)
-    if (process.env.NODE_ENV !== 'test') {
-      void matchingService.startMatching(jobId).catch((err) => {
-        logger.error(
-          { err: err instanceof Error ? err.message : String(err), jobId },
-          'Background matching auto-start failed on publishJob'
-        );
-      });
-    }
 
     return updated;
   }

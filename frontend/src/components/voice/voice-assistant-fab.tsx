@@ -15,14 +15,14 @@ export function VoiceAssistantFAB() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState<"IDLE" | "UNDERSTANDING" | "READY" | "LOW_CONFIDENCE" | "ERROR">("IDLE");
+  const [result, setResult] = useState<ResolvedVoiceBooking | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const isAuthRoute = ["/login", "/signup", "/verify-otp", "/complete-profile"].some(
     (root) => pathname === root || pathname.startsWith(`${root}/`)
   );
 
   if (isAuthRoute) return null;
-  const [result, setResult] = useState<ResolvedVoiceBooking | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const understand = async (transcript: string) => {
     setState("UNDERSTANDING"); setError(null);
