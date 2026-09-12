@@ -153,8 +153,8 @@ function CompleteProfileContent() {
           </Alert>
         )}
 
-        {/* Name Fields */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Name Fields (stacked on mobile, 2-column on tablet+) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label
               htmlFor="first-name-input"

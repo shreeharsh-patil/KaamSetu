@@ -73,7 +73,7 @@ export function OtpInputField({
   };
 
   return (
-    <div className="flex justify-center gap-2 sm:gap-2.5 my-2">
+    <div className="flex justify-center gap-1 xs:gap-2 sm:gap-2.5 my-2">
       {Array.from({ length }).map((_, idx) => (
         <input
           key={idx}
@@ -93,7 +93,7 @@ export function OtpInputField({
           autoComplete={idx === 0 ? "one-time-code" : "off"}
           aria-label={`Digit ${idx + 1} of ${length}`}
           className={cn(
-            "h-12 w-11 sm:h-13 sm:w-12 rounded-xl border text-center text-xl font-bold transition-all shadow-2xs",
+            "h-11 w-8 xs:w-10 sm:h-13 sm:w-12 rounded-lg sm:rounded-xl border text-center text-lg sm:text-xl font-bold transition-all shadow-2xs",
             "focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20",
             error
               ? "border-destructive text-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"

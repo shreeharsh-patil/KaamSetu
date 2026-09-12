@@ -60,14 +60,14 @@ export function DashboardTopbar({ title = "Dashboard", breadcrumbs, onOpenMobile
 
   return (
     <TooltipProvider delayDuration={200}>
-      <header className="sticky top-0 z-30 flex h-[60px] shrink-0 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur sm:px-6">
+      <header className="sticky top-0 z-30 flex h-[60px] shrink-0 items-center gap-1.5 xs:gap-3 border-b border-border bg-background/95 px-3 xs:px-4 backdrop-blur sm:px-6">
         {/* Mobile drawer toggle */}
         {onOpenMobileNav && (
           <button
             type="button"
             onClick={onOpenMobileNav}
             aria-label="Open navigation menu"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
           >
             <Menu className="h-5 w-5" aria-hidden />
           </button>
@@ -76,13 +76,13 @@ export function DashboardTopbar({ title = "Dashboard", breadcrumbs, onOpenMobile
         {/* Mobile brand (sidebar is hidden on phones) */}
         <Link
           href="/"
-          className="flex items-center gap-2 md:hidden"
+          className="flex shrink-0 items-center gap-1.5 xs:gap-2 md:hidden"
           aria-label="KaamSetu home"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BrandMark size={32} className="h-8 w-8 rounded-md object-cover" />
+          <span className="flex h-7 w-7 xs:h-8 xs:w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+            <BrandMark size={32} className="h-full w-full rounded-md object-cover" />
           </span>
-          <span className="text-base font-bold tracking-tight text-foreground">KaamSetu</span>
+          <span className="text-sm xs:text-base font-bold tracking-tight text-foreground">KaamSetu</span>
         </Link>
 
         {/* Page title / breadcrumb — hidden on mobile (bottom nav is primary there) */}
@@ -113,8 +113,8 @@ export function DashboardTopbar({ title = "Dashboard", breadcrumbs, onOpenMobile
         </div>
 
         {/* Right cluster */}
-        <div className="ml-auto flex items-center gap-1">
-          <LanguageSelector className="scale-95" />
+        <div className="ml-auto flex items-center gap-0.5 xs:gap-1 shrink-0">
+          <LanguageSelector className="scale-90 xs:scale-95" />
 
           <Tooltip>
             <TooltipTrigger asChild>

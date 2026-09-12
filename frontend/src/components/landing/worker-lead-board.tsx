@@ -75,8 +75,8 @@ export function WorkerLeadBoard() {
   });
 
   return (
-    <section id="worker-leads" className="py-12 md:py-20">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+    <section id="worker-leads" className="py-16 md:py-24 border-t border-border/60 bg-muted/20">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
@@ -128,7 +128,7 @@ export function WorkerLeadBoard() {
           {filteredOpportunities.map((trade) => (
             <article
               key={trade.id}
-              className="p-6 rounded-2xl md:rounded-3xl border border-border bg-card hover:border-foreground/20 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+              className="p-4 xs:p-6 rounded-2xl md:rounded-3xl border border-border bg-card hover:border-foreground/20 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">

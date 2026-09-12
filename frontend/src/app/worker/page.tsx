@@ -46,7 +46,7 @@ export default function WorkerDashboardPage() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {(["AVAILABLE", "BUSY", "OFFLINE"] as WorkerAvailability[]).map((status) => (
               <Button
                 key={status}
@@ -54,6 +54,7 @@ export default function WorkerDashboardPage() {
                 variant={profile.data.availabilityStatus === status ? "default" : "outline"}
                 disabled={availability.isPending}
                 onClick={() => availability.mutate(status)}
+                className="flex-1 sm:flex-initial text-xs"
               >
                 {status}
               </Button>
@@ -74,13 +75,13 @@ export default function WorkerDashboardPage() {
         </div>
         {activeJob ? (
           <Card className="border-primary/40 shadow-xs">
-            <CardContent className="p-5 flex justify-between items-center gap-4">
+            <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
                 <Badge>{activeJob.status}</Badge>
                 <h3 className="mt-2 font-bold text-foreground">{activeJob.title}</h3>
                 <p className="text-xs text-muted-foreground">{activeJob.location.city}</p>
               </div>
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="w-full sm:w-auto">
                 <Link href={`/worker/jobs/${activeJob.id}`}>Manage job</Link>
               </Button>
             </CardContent>
@@ -104,7 +105,7 @@ export default function WorkerDashboardPage() {
         </div>
         {(offers.data?.filter((offer) => offer.status === "PENDING").slice(0, 3) ?? []).map((offer) => (
           <Card key={offer.id} className="hover:border-primary/30 transition-colors">
-            <CardContent className="p-5 flex justify-between items-center gap-4">
+            <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
                 <Badge variant={offer.urgency === "EMERGENCY" ? "destructive" : "secondary"}>
                   {offer.urgency}
@@ -114,7 +115,7 @@ export default function WorkerDashboardPage() {
                   {offer.approximateLocality} · {offer.distanceKm.toFixed(1)} km away
                 </p>
               </div>
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="w-full sm:w-auto">
                 <Link href={`/worker/offers/${offer.id}`}>Review Offer</Link>
               </Button>
             </CardContent>

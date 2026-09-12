@@ -47,14 +47,14 @@ export default function AdminWorkersPage() {
             Monitor registered tradespeople, skills and verification status
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
           {["", "APPROVED", "PENDING", "REJECTED"].map((s) => (
             <Button
               key={s}
               variant={filter === s ? "default" : "outline"}
               size="sm"
               onClick={() => setFilter(s)}
-              className="text-xs"
+              className="text-xs shrink-0"
             >
               {s || "All"}
             </Button>
@@ -63,7 +63,7 @@ export default function AdminWorkersPage() {
       </div>
 
       <Card>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="p-8 space-y-3">
               {[1, 2, 3, 4].map((i) => (
@@ -79,7 +79,8 @@ export default function AdminWorkersPage() {
               No workers found under this filter.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[650px]">
               <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
                 <tr>
                   <th className="p-4">Professional</th>
@@ -158,6 +159,7 @@ export default function AdminWorkersPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

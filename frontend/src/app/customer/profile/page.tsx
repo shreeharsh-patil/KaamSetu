@@ -48,7 +48,7 @@ export default function CustomerProfilePage() {
         />
 
         {/* Profile Header Card */}
-        <Card className="p-6 sm:p-8">
+        <Card className="p-4 xs:p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
             {/* Avatar */}
             <div className="relative">
@@ -84,7 +84,7 @@ export default function CustomerProfilePage() {
             </div>
 
             {/* Edit Button */}
-            <Button variant="outline" size="sm" className="rounded-xl gap-1.5 shrink-0">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto rounded-xl gap-1.5 shrink-0">
               <Edit3 className="h-3.5 w-3.5" />
               <span>Edit Profile</span>
             </Button>

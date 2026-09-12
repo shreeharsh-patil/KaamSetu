@@ -108,10 +108,10 @@ export function DashboardShell({
         <DashboardTopbar title={title} />
 
         <main id="main-content" className="flex-1">
-          {/* pb-24 md:pb-6: clears the fixed mobile bottom navigation. */}
+          {/* pb clears the fixed mobile bottom navigation incl. its safe-area pad. */}
           <div
             className={cn(
-              "mx-auto w-full max-w-[1400px] px-4 py-6 pb-24 sm:px-6 lg:px-8 md:pb-6",
+              "mx-auto w-full max-w-[1400px] px-4 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 md:pb-6",
               contentClassName
             )}
           >

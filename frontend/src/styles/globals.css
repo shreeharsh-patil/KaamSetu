@@ -111,6 +111,8 @@ html {
 
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -118,6 +120,15 @@ html {
     font-feature-settings: "rlig" 1, "calt" 1;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS Safari: keep font-size >= 16px on focus so the page never zoom-jumps */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 
   /* Accessible focus indicators */
@@ -371,6 +382,23 @@ html {
   animation: orb-rotate 22s linear infinite;
 }
 
+/* On phones the orb costs real battery/CPU — hue-rotate re-filters a huge
+   bitmap every frame, so keep only the slow rotate there. */
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .animate-orb-rotate {
+    animation-name: orb-rotate-cheap;
+  }
+}
+
+@keyframes orb-rotate-cheap {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .bottom-gradient-bar {
   position: fixed;
   top: 64px;
@@ -426,6 +454,17 @@ html {
   .marker-stroke::after {
     transform: scaleX(1) !important;
     opacity: 1 !important;
+  }
+}
+
+/* Safe-area helpers — need `viewportFit=cover` (set in root layout).
+   Home-indicator phones: fixed UI must clear the gesture bar. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
   }
 }
 

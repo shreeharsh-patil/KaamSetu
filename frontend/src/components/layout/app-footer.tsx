@@ -35,7 +35,7 @@ export function AppFooter() {
 
   return (
     <footer className="border-t border-border bg-card/50 backdrop-blur-xs text-sm">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-16 md:py-20">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 py-12 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           {/* Column 1: Brand & Mission */}
           <div className="md:col-span-1">
@@ -140,7 +140,7 @@ export function AppFooter() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="px-4 py-2.5 text-xs bg-secondary rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-foreground"
+                  className="px-4 py-2.5 text-[16px] sm:text-xs bg-secondary rounded-xl border border-border focus:ring-2 focus:ring-primary outline-none transition-all text-foreground"
                 />
                 <button
                   type="submit"
@@ -160,12 +160,14 @@ export function AppFooter() {
 
         {/* Bottom Bar */}
         <div className="mt-16 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} KaamSetu Technologies Pvt. Ltd. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <Link href="#" className="hover:text-foreground transition-colors">
+          <p className="text-center sm:text-left">
+            © {new Date().getFullYear()} KaamSetu Technologies Pvt. Ltd. All rights reserved.
+          </p>
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-5 gap-y-2">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link href="#" className="hover:text-foreground transition-colors">
+            <Link href="/terms" className="hover:text-foreground transition-colors">
               Terms of Service
             </Link>
             <Link href="#" className="hover:text-foreground transition-colors">

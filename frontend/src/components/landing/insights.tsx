@@ -38,7 +38,7 @@ const INSIGHTS = [
 export function Insights() {
   return (
     <section id="insights" className="py-20 md:py-24 border-t border-border/60">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-12 md:mb-16">
           <div>

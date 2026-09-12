@@ -59,7 +59,8 @@ export default function AdminJobsMonitorPage() {
               No jobs found matching the selected status.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[700px]">
               <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
                 <tr>
                   <th className="p-4">Job Title</th>
@@ -97,6 +98,7 @@ export default function AdminJobsMonitorPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

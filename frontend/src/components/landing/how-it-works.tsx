@@ -52,7 +52,7 @@ const WORKER_STEPS = [
 export function HowItWorks() {
   return (
     <section id="how-it-works" className="py-16 md:py-24 border-t border-border/60">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-xs font-semibold uppercase tracking-widest text-[#203eec] dark:text-blue-400">

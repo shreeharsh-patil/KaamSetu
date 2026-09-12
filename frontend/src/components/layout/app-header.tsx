@@ -67,8 +67,9 @@ export function AppHeader() {
   const isHomePage = pathname === "/";
 
   useEffect(() => {
+    // passive: this listener never calls preventDefault; keeps mobile scrolling smooth
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -83,6 +84,17 @@ export function AppHeader() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileMenuOpen]);
+
+  // Lock body scroll while the mobile menu is open so the page behind it
+  // doesn't scroll on touch devices (and the menu can scroll internally).
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = overflow;
+    };
   }, [mobileMenuOpen]);
 
   const handleSmoothScroll = (
@@ -122,21 +134,21 @@ export function AppHeader() {
           : "bg-background/85 backdrop-blur-sm border-b border-border/40"
       )}
     >
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="flex items-center justify-between h-16 lg:h-[68px] gap-4">
+      <div className="max-w-[1440px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
+        <nav className="flex items-center justify-between h-16 lg:h-[68px] gap-2 xs:gap-3 sm:gap-4">
           {/* Brand Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 font-semibold text-lg tracking-tight group shrink-0"
+            className="flex items-center gap-2 font-semibold text-lg tracking-tight group shrink-0"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-background shadow-xs transition-transform group-hover:scale-105">
+            <span className="flex h-8 w-8 xs:h-9 xs:w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-background shadow-xs transition-transform group-hover:scale-105">
               <BrandMark size={36} className="h-full w-full object-cover" />
             </span>
             <div className="flex flex-col shrink-0">
-              <span className="font-sans font-bold text-lg sm:text-xl tracking-tight text-foreground leading-tight whitespace-nowrap">
+              <span className="font-sans font-bold text-base xs:text-lg sm:text-xl tracking-tight text-foreground leading-tight whitespace-nowrap">
                 KaamSetu
               </span>
-              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase whitespace-nowrap leading-none mt-0.5">
+              <span className="hidden sm:block text-[9px] font-semibold tracking-wider text-muted-foreground uppercase whitespace-nowrap leading-none mt-0.5">
                 Hyperlocal Marketplace
               </span>
             </div>
@@ -215,20 +227,22 @@ export function AppHeader() {
                 </Link>
                 <Link
                   href="/customer/jobs/new"
-                  className="inline-flex items-center justify-center h-9 sm:h-10 px-3.5 sm:px-4 text-xs sm:text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap shadow-xs"
+                  className="inline-flex items-center justify-center h-9 sm:h-10 px-2.5 xs:px-3.5 sm:px-4 text-xs sm:text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap shadow-xs"
                 >
-                  <span>Book Service</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 ml-1 shrink-0" />
+                  <span>Book</span>
+                  <span className="hidden xs:inline">&nbsp;Service</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 ml-0.5 xs:ml-1 shrink-0" />
                 </Link>
               </div>
             )}
 
-            {/* Mobile Hamburger */}
+            {/* Mobile Hamburger — 44px square for touch ergonomics */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              className="lg:hidden inline-flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
                 <X className="h-5 w-5" />
@@ -240,16 +254,19 @@ export function AppHeader() {
         </nav>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown — scrollable, sized to the phone viewport */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-border bg-background/95 backdrop-blur-xl px-6 py-6 space-y-4 animate-menu-drop">
+        <div
+          id="mobile-menu"
+          className="lg:hidden overflow-y-auto overscroll-contain border-b border-border bg-background/95 backdrop-blur-xl px-6 py-6 space-y-4 animate-menu-drop max-h-[calc(100dvh-4rem)] pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        >
           <div className="flex flex-col space-y-2">
             {mobileNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={(e) => handleSmoothScroll(e, item.href)}
-                className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-2 border-b border-border/40 whitespace-nowrap"
+                className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-2.5 border-b border-border/40"
               >
                 <span>{item.label}</span>
               </Link>
@@ -264,7 +281,7 @@ export function AppHeader() {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-semibold"
+                className="w-full flex items-center justify-center gap-2 min-h-touch py-2.5 rounded-lg border border-border text-sm font-semibold"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -274,14 +291,14 @@ export function AppHeader() {
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center py-2.5 rounded-lg border border-border text-sm font-semibold"
+                  className="w-full flex items-center justify-center min-h-touch py-2.5 rounded-lg border border-border text-sm font-semibold"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/customer/jobs/new"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-xs"
+                  className="w-full flex items-center justify-center min-h-touch py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-xs"
                 >
                   Book Service
                 </Link>

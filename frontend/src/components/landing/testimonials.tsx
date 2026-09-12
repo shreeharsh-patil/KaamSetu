@@ -90,7 +90,7 @@ export function Testimonials() {
 
   return (
     <section id="reviews" className="py-20 md:py-28 overflow-hidden relative">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12 mb-12 md:mb-16">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
         <span className="text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400">
           Verified Reviews
         </span>
@@ -102,13 +102,14 @@ export function Testimonials() {
         </p>
       </div>
 
-      {/* Row 1: Scrolling Left */}
+      {/* Row 1: Scrolling Left — translate3d keeps rows on the GPU; no
+          backdrop-blur here (14 big blurred cards tank low-end phones) */}
       <div className="relative mb-6">
-        <div className="flex gap-6 animate-scroll-left hover:[animation-play-state:paused] w-max">
+        <div className="flex gap-4 sm:gap-6 animate-scroll-left hover:[animation-play-state:paused] w-max [transform:translate3d(0,0,0)]">
           {row1.map((item, index) => (
             <div
               key={`row1-${item.id}-${index}`}
-              className="w-[340px] sm:w-[420px] p-6 rounded-2xl md:rounded-3xl border border-border bg-card/90 backdrop-blur-md shrink-0 transition-all duration-300 hover:shadow-xl hover:border-foreground/20 relative group"
+              className="w-[280px] xs:w-[320px] sm:w-[420px] p-4 xs:p-6 rounded-2xl md:rounded-3xl border border-border bg-card shrink-0 transition-all duration-300 hover:shadow-xl hover:border-foreground/20 relative group"
             >
               {/* Colored ambient glow */}
               <div
@@ -155,11 +156,11 @@ export function Testimonials() {
 
       {/* Row 2: Scrolling Right */}
       <div className="relative">
-        <div className="flex gap-6 animate-scroll-right hover:[animation-play-state:paused] w-max">
+        <div className="flex gap-4 sm:gap-6 animate-scroll-right hover:[animation-play-state:paused] w-max [transform:translate3d(0,0,0)]">
           {row2.map((item, index) => (
             <div
               key={`row2-${item.id}-${index}`}
-              className="w-[340px] sm:w-[420px] p-6 rounded-2xl md:rounded-3xl border border-border bg-card/90 backdrop-blur-md shrink-0 transition-all duration-300 hover:shadow-xl hover:border-foreground/20 relative group"
+              className="w-[280px] xs:w-[320px] sm:w-[420px] p-4 xs:p-6 rounded-2xl md:rounded-3xl border border-border bg-card shrink-0 transition-all duration-300 hover:shadow-xl hover:border-foreground/20 relative group"
             >
               {/* Colored ambient glow */}
               <div

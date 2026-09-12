@@ -5,7 +5,7 @@ import { SectionTitle } from "@/components/landing/section-title";
 export function FinalCTA() {
   return (
     <section id="book-now" className="py-20 md:py-24 border-t border-border/60 bg-secondary/30">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#203eec]/10 text-[#203eec] dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-6">
             Get Started Today
@@ -37,7 +37,7 @@ export function FinalCTA() {
             </Link>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-xs text-muted-foreground font-medium">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mt-10 text-xs text-muted-foreground font-medium">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               Verified Technician Profiles

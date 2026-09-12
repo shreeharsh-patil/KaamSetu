@@ -60,14 +60,14 @@ export default function AdminUsersPage() {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
           {["", "CUSTOMER", "WORKER", "ADMIN"].map((r) => (
             <Button
               key={r}
               variant={roleFilter === r ? "default" : "outline"}
               size="sm"
               onClick={() => setRoleFilter(r)}
-              className="text-xs"
+              className="text-xs shrink-0"
             >
               {r || "All Roles"}
             </Button>
@@ -76,7 +76,7 @@ export default function AdminUsersPage() {
       </div>
 
       <Card>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="p-8 space-y-3">
               {[1, 2, 3, 4].map((i) => (
@@ -92,7 +92,8 @@ export default function AdminUsersPage() {
               No user accounts found matching your filter criteria.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[600px]">
               <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
                 <tr>
                   <th className="p-4">User</th>
@@ -154,6 +155,7 @@ export default function AdminUsersPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

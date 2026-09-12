@@ -120,7 +120,7 @@ export function FeaturedServices() {
 
   return (
     <section id="services" className="py-16 md:py-24 border-t border-border/60 relative">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 gap-4">
           <div>
@@ -144,8 +144,8 @@ export function FeaturedServices() {
           </Link>
         </div>
 
-        {/* Stacked Sticky Work Cards on Scroll (ai-product-portfolio interaction) */}
-        <div className="relative space-y-6">
+        {/* Stacked Sticky Showcase */}
+        <div className="space-y-6 md:space-y-8 relative">
           {activeCategories.map((category, index) => {
             const slugKey = category.slug.toLowerCase();
             const metaKey = ({ electrician: "electrical", "appliance-repair": "appliances", "home-cleaning": "cleaning" } as Record<string, string>)[slugKey] ?? slugKey;
@@ -168,11 +168,11 @@ export function FeaturedServices() {
                   zIndex: index + 1,
                 }}
               >
-                <article className="overflow-hidden rounded-2xl md:rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:border-[#203eec]/40 p-6 md:p-8">
+                <article className="overflow-hidden rounded-2xl md:rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:border-[#203eec]/40 p-4 xs:p-6 md:p-8">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     {/* Left: service image & details */}
-                    <div className="flex items-start gap-5 flex-1">
-                      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-2xl sm:w-[150px] sm:aspect-auto sm:h-[132px] md:h-[150px] md:w-[170px]">
+                    <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 flex-1">
+                      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl sm:rounded-2xl sm:w-[150px] sm:aspect-auto sm:h-[132px] md:h-[150px] md:w-[170px]">
                         <Image src={meta.imageUrl} alt={`${category.name} professional at work`} fill sizes="(max-width: 640px) 100vw, (max-width: 768px) 150px, 170px" className="object-cover object-center" />
                       </div>
 

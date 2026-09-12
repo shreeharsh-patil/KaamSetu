@@ -136,8 +136,8 @@ function SignupContent() {
 
       {/* Signup Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5 pt-1">
-        {/* Name Fields (2-column layout) */}
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* Name Fields (stacked on mobile, 2-column on tablet+) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <label
               htmlFor="signup-first-name"

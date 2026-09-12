@@ -129,8 +129,8 @@ export default function WorkerActiveJobPage({
               <p className="text-xs text-muted-foreground">
                 Customer is notified that you are travelling. Tap below once you reach the premises.
               </p>
-              <div className="flex gap-2">
-                <Button asChild variant="outline" className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button asChild variant="outline" className="w-full sm:flex-1">
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${job.location.latitude},${job.location.longitude}`}
                     target="_blank"
@@ -140,7 +140,7 @@ export default function WorkerActiveJobPage({
                   </a>
                 </Button>
                 <Button
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                   disabled={advanceMutation.isPending}
                   onClick={() => advanceMutation.mutate("arrive")}
                 >

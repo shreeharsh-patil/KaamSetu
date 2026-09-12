@@ -72,7 +72,7 @@ export function BottomNavigation({ role = "customer" }: BottomNavigationProps) {
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="md:hidden fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-safe"
+      className="md:hidden fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]"
     >
       <div
         className="grid items-center"
@@ -88,7 +88,7 @@ export function BottomNavigation({ role = "customer" }: BottomNavigationProps) {
               href={item.href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium transition-all select-none min-h-touch",
+                "relative flex flex-col items-center justify-center gap-0.5 py-1.5 pt-2 text-[11px] font-medium transition-all select-none min-h-touch",
                 isActive
                   ? "text-primary font-bold"
                   : "text-muted-foreground hover:text-foreground"

@@ -53,7 +53,8 @@ export function LanguageSelector({
         aria-label={`Language selector. Current language: ${activeLang.nativeName}`}
       >
         <Languages className="h-3.5 w-3.5 text-primary shrink-0" />
-        <span className="font-semibold text-xs whitespace-nowrap">{activeLang.nativeName}</span>
+        <span className="font-semibold text-xs whitespace-nowrap hidden xs:inline">{activeLang.nativeName}</span>
+        <span className="font-semibold text-xs whitespace-nowrap xs:hidden">{activeLang.code.toUpperCase()}</span>
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

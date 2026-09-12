@@ -40,7 +40,8 @@ export default function AdminAuditLogsPage() {
               No audit log entries recorded yet.
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[600px]">
               <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
                 <tr>
                   <th className="p-4">Timestamp</th>
@@ -70,6 +71,7 @@ export default function AdminAuditLogsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

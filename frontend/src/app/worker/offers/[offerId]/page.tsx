@@ -154,7 +154,7 @@ export default function WorkerOfferDetailPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-3 rounded-lg border bg-card space-y-1">
               <span className="text-xs text-muted-foreground">Approximate Locality</span>
               <p className="font-semibold text-sm text-foreground">{offer.approximateLocality}</p>

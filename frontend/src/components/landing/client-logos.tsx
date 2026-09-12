@@ -15,7 +15,7 @@ const PARTNERS = [
 export function ClientLogos() {
   return (
     <section className="py-12 border-y border-border/60 overflow-hidden bg-muted/20">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12 mb-6">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 mb-6">
         <p className="text-xs sm:text-sm font-semibold text-muted-foreground text-center uppercase tracking-wider">
           Secured by Industry-Leading Infrastructure & Protocols
         </p>

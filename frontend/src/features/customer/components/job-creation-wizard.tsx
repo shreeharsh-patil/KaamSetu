@@ -354,7 +354,7 @@ export function JobCreationWizard() {
             </div>
           </CardContent>
           <CardFooter className="justify-end">
-            <Button disabled={!formData.categoryId} onClick={() => setStep(2)} className="rounded-xl font-bold">
+            <Button disabled={!formData.categoryId} onClick={() => setStep(2)} className="w-full sm:w-auto rounded-xl font-bold">
               Next: Describe Problem <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardFooter>
@@ -442,7 +442,7 @@ export function JobCreationWizard() {
 
             <div className="space-y-2 pt-2">
               <label className="text-sm font-medium text-foreground">Urgency Level</label>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 xs:grid-cols-3 gap-2.5">
                 {(
                   [
                     { id: "FLEXIBLE", label: "Flexible", desc: "Schedule within your preferred window" },
@@ -467,13 +467,14 @@ export function JobCreationWizard() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(1)}>
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <Button variant="outline" onClick={() => setStep(1)} className="w-full sm:w-auto">
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
             <Button
               disabled={!formData.title.trim() || !formData.description.trim()}
               onClick={() => setStep(3)}
+              className="w-full sm:w-auto"
             >
               Next: Add Photos <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
@@ -524,11 +525,11 @@ export function JobCreationWizard() {
             </div>
             <p className="text-xs text-muted-foreground">Up to 5 images (JPG, PNG, WebP). Max 5MB each.</p>
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(2)}>
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <Button variant="outline" onClick={() => setStep(2)} className="w-full sm:w-auto">
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button onClick={() => setStep(4)}>
+            <Button onClick={() => setStep(4)} className="w-full sm:w-auto">
               Next: Service Location <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardFooter>
@@ -612,13 +613,14 @@ export function JobCreationWizard() {
               />
             </div>
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(3)}>
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <Button variant="outline" onClick={() => setStep(3)} className="w-full sm:w-auto">
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
             <Button
               disabled={!formData.locality.trim() || !formData.addressLine.trim() || !formData.city.trim() || !formData.state.trim() || !/^\d{6}$/.test(formData.pincode) || formData.latitude === undefined || formData.longitude === undefined}
               onClick={() => setStep(5)}
+              className="w-full sm:w-auto"
             >
               Next: Choose Timing <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
@@ -672,11 +674,11 @@ export function JobCreationWizard() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(4)} className="rounded-xl">
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <Button variant="outline" onClick={() => setStep(4)} className="w-full sm:w-auto rounded-xl">
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button onClick={() => setStep(6)} className="rounded-xl font-bold">
+            <Button onClick={() => setStep(6)} className="w-full sm:w-auto rounded-xl font-bold">
               Next: Review & Publish <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardFooter>
@@ -712,7 +714,7 @@ export function JobCreationWizard() {
                 {formData.description}
               </p>
 
-              <div className="border-t pt-3 grid grid-cols-2 gap-2 text-xs">
+              <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-muted-foreground">Location:</span>
                   <p className="font-medium text-foreground">
@@ -754,11 +756,11 @@ export function JobCreationWizard() {
               </p>
             </div>
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => setStep(voiceReview ? 1 : 5)} disabled={isSubmitting}>
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <Button variant="outline" onClick={() => setStep(voiceReview ? 1 : 5)} disabled={isSubmitting} className="w-full sm:w-auto">
               <ChevronLeft className="mr-1 h-4 w-4" /> {voiceReview ? "Edit details" : "Back"}
             </Button>
-            <Button onClick={handlePublish} disabled={isSubmitting} size="lg">
+            <Button onClick={handlePublish} disabled={isSubmitting} size="lg" className="w-full sm:w-auto">
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...
