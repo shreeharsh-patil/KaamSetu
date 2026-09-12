@@ -18,7 +18,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="flex-1 py-8">
+    <div className="flex-1 py-8 w-full">
       <Container>
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
           <div>

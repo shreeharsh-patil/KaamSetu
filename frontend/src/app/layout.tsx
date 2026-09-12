@@ -53,7 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
+      <body className="font-sans antialiased min-h-screen flex flex-col w-full bg-background text-foreground">
         {/* Accessible Skip Link */}
         <a
           href="#main-content"
@@ -65,7 +65,7 @@ export default function RootLayout({
         <RootProviders>
           <AppHeader />
           <OfflineBanner />
-          <main id="main-content" className="flex-1 flex flex-col">
+          <main id="main-content" className="flex-1 flex flex-col w-full items-center">
             {children}
           </main>
           <VoiceAssistantFAB />

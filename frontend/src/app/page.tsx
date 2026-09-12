@@ -44,12 +44,12 @@ export default function HomePage() {
   }
 
   return (
-    <>
+    <div className="w-full flex flex-col items-center">
       {/* Subtle floating animated gradient bar */}
       <GradientBar />
 
       {/* Role Switcher Pill pinned near the top of the content */}
-      <div className="pt-6 sm:pt-8 flex justify-center px-4 relative z-20">
+      <div className="pt-6 sm:pt-8 flex justify-center px-4 relative z-20 w-full">
         <div className="inline-flex p-1 rounded-full bg-secondary/80 backdrop-blur-md border border-border shadow-xs">
           <button
             type="button"
@@ -78,7 +78,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main className="flex flex-col">
+      <div className="w-full flex flex-col">
         {/* Hero Section */}
         <Hero />
 
@@ -123,7 +123,7 @@ export default function HomePage() {
             <FinalCTA />
           </>
         )}
-      </main>
-    </>
+      </div>
+    </div>
   );
 }

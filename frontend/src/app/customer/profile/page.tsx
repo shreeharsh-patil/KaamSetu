@@ -42,7 +42,7 @@ export default function CustomerProfilePage() {
     : "—";
 
   return (
-    <div className="py-4 sm:py-8 space-y-6">
+    <div className="w-full py-4 sm:py-8 space-y-6">
       <Container className="space-y-6">
         <PageHeader
           title="My Profile"

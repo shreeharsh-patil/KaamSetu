@@ -95,7 +95,7 @@ export default function VoiceAiPage() {
   };
 
   return (
-    <div className="flex-1 py-10 sm:py-16 overflow-hidden">
+    <div className="flex-1 w-full py-10 sm:py-16 overflow-hidden">
       <Container>
         {/* Hero Section */}
         <div className="text-center max-w-3xl mx-auto space-y-6 mb-16">

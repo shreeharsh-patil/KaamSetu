@@ -98,8 +98,15 @@
     @apply border-border;
   }
 
+  html {
+    @apply w-full max-w-full;
+    overflow-x: clip;
+    scrollbar-gutter: stable;
+  }
+
   body {
-    @apply bg-background text-foreground antialiased min-h-screen flex flex-col font-sans;
+    @apply bg-background text-foreground antialiased min-h-screen flex flex-col font-sans w-full max-w-full;
+    overflow-x: clip;
     font-feature-settings: "rlig" 1, "calt" 1;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
