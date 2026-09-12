@@ -25,16 +25,6 @@ jobs:
     timeout-minutes: 20
 
     services:
-      mongodb:
-        image: mongo:7.0
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
       redis:
         image: redis:7-alpine
         ports:
@@ -50,7 +40,7 @@ jobs:
       PORT: 5000
       API_PREFIX: /api/v1
       APP_VERSION: 1.0.0
-      MONGODB_URI: mongodb://localhost:27017/kaamsetu_test
+      MONGODB_URI: mongodb://localhost:27017/kaamsetu_test?replicaSet=rs0
       REDIS_URL: redis://localhost:6379
       JWT_ACCESS_SECRET: test_jwt_access_secret_key_minimum_32_characters_long
       JWT_REFRESH_SECRET: test_jwt_refresh_secret_key_minimum_32_characters_long
@@ -58,10 +48,27 @@ jobs:
       LOG_LEVEL: fatal
       STORAGE_PROVIDER: mock
       METRICS_ENABLED: true
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:5000
 
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
+
+      - name: 🍃 Start transaction-capable MongoDB replica set
+        run: |
+          docker run --detach --name kaamsetu-mongodb --publish 27017:27017 mongo:7.0 --replSet rs0 --bind_ip_all
+          for attempt in {1..30}; do
+            if docker exec kaamsetu-mongodb mongosh --quiet --eval 'db.adminCommand({ping: 1}).ok' | grep -q 1; then break; fi
+            sleep 1
+          done
+          docker exec kaamsetu-mongodb mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]})'
+          for attempt in {1..30}; do
+            if docker exec kaamsetu-mongodb mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; then exit 0; fi
+            sleep 1
+          done
+          exit 1
 
       - name: ⚡ Setup pnpm
         uses: pnpm/action-setup@v4
@@ -86,6 +93,26 @@ jobs:
 
       - name: 🧪 4. Run automated test suite (Unit & Integration)
         run: pnpm test
+
+      - name: 📦 Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🔍 Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: 🛡️ Typecheck frontend
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: 🧪 Test frontend
+        working-directory: frontend
+        run: npm test
+
+      - name: 🏗️ Build frontend
+        working-directory: frontend
+        run: npm run build
 
       - name: 🏗️ 5. Build all workspace packages and applications
         run: pnpm build

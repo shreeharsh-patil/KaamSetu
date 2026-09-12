@@ -243,6 +243,15 @@ Configure CORS on the bucket to allow authenticated client browsers/apps to dire
 
 ## 8. Environment Variables Reference Matrix
 
+### Refresh-cookie topology requirement
+
+The web app and API must be deployed on the same site (for example,
+`app.kaamsetu.com` and `api.kaamsetu.com`). The refresh cookie intentionally
+uses `SameSite=Lax; Secure` in production and is scoped to `/api/v1/auth`.
+Deploying the frontend and API on unrelated registrable domains is unsupported:
+that topology requires `SameSite=None; Secure` together with explicit CSRF-token
+and Origin validation before it can be enabled safely.
+
 | Variable | Type | Default | Production Requirement | Description |
 |---|---|---|---|---|
 | `NODE_ENV` | String | `development` | `production` | Enables production optimizations and strict mode |
