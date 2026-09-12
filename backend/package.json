@@ -1,0 +1,33 @@
+{
+  "name": "kaamsetu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KaamSetu - Hyperlocal skilled-worker service platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @kaamsetu/api dev",
+    "seed": "pnpm --filter @kaamsetu/api seed",
+    "build": "pnpm --filter \"@kaamsetu/*\" build",
+    "start": "pnpm --filter @kaamsetu/api start",
+    "test": "pnpm --filter @kaamsetu/api test",
+    "test:coverage": "pnpm --filter @kaamsetu/api test:coverage",
+    "lint": "pnpm --filter @kaamsetu/api lint",
+    "lint:fix": "pnpm --filter @kaamsetu/api lint:fix",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "typecheck": "pnpm --filter \"@kaamsetu/*\" typecheck",
+    "load-test": "k6 run load-tests/scenarios/06-full-marketplace-lifecycle.js",
+    "load-test:health": "k6 run load-tests/scenarios/01-health.js",
+    "load-test:auth": "k6 run load-tests/scenarios/02-auth-flow.js",
+    "load-test:jobs": "k6 run load-tests/scenarios/03-job-listing.js",
+    "load-test:create": "k6 run load-tests/scenarios/04-job-creation.js",
+    "load-test:concurrency": "k6 run load-tests/scenarios/05-offers-acceptance.js"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "packageManager": "pnpm@11.21.0"
+}

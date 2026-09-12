@@ -4,8 +4,8 @@
   "private": true,
   "description": "KaamSetu - Hyperlocal skilled-worker service platform",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "backend/apps/*",
+    "backend/packages/*"
   ],
   "scripts": {
     "dev": "pnpm --filter @kaamsetu/api dev",
@@ -18,12 +18,20 @@
     "lint:fix": "pnpm --filter @kaamsetu/api lint:fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "typecheck": "pnpm --filter \"@kaamsetu/*\" typecheck",
-    "load-test": "k6 run load-tests/scenarios/06-full-marketplace-lifecycle.js",
-    "load-test:health": "k6 run load-tests/scenarios/01-health.js",
-    "load-test:auth": "k6 run load-tests/scenarios/02-auth-flow.js",
-    "load-test:jobs": "k6 run load-tests/scenarios/03-job-listing.js",
-    "load-test:create": "k6 run load-tests/scenarios/04-job-creation.js",
-    "load-test:concurrency": "k6 run load-tests/scenarios/05-offers-acceptance.js"
+    "load-test": "k6 run backend/load-tests/scenarios/06-full-marketplace-lifecycle.js",
+    "load-test:health": "k6 run backend/load-tests/scenarios/01-health.js",
+    "load-test:auth": "k6 run backend/load-tests/scenarios/02-auth-flow.js",
+    "load-test:jobs": "k6 run backend/load-tests/scenarios/03-job-listing.js",
+    "load-test:create": "k6 run backend/load-tests/scenarios/04-job-creation.js",
+    "load-test:concurrency": "k6 run backend/load-tests/scenarios/05-offers-acceptance.js",
+    "dev:backend": "pnpm --filter @kaamsetu/api dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "pnpm --filter \"@kaamsetu/*\" build",
+    "build:frontend": "npm --prefix frontend run build",
+    "test:backend": "pnpm --filter @kaamsetu/api test",
+    "test:frontend": "npm --prefix frontend run test",
+    "lint:backend": "pnpm --filter @kaamsetu/api lint",
+    "lint:frontend": "npm --prefix frontend run lint"
   },
   "devDependencies": {
     "prettier": "^3.5.3",

@@ -1,6 +1,6 @@
 packages:
-  - 'backend/apps/*'
-  - 'backend/packages/*'
+  - 'apps/*'
+  - 'packages/*'
 
 overrides:
   tar: '>=7.5.21'

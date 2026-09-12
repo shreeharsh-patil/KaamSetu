@@ -1,0 +1,42 @@
+# Dependency directories
+node_modules
+**/node_modules
+
+# Build artifacts
+dist
+**/dist
+.turbo
+.next
+
+# Version control
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Test and coverage artifacts
+coverage
+**/coverage
+load-tests
+.nyc_output
+
+# Temporary and log files
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS and Editor artifacts
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+*.swo

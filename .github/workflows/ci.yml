@@ -114,8 +114,8 @@ jobs:
       - name: 🏗️ Build API Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           target: api
           push: false
           tags: kaamsetu-api:latest
@@ -123,8 +123,8 @@ jobs:
       - name: 🏗️ Build Worker Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           target: worker
           push: false
           tags: kaamsetu-worker:latest

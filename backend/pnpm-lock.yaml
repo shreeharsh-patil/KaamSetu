@@ -19,7 +19,7 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  backend/apps/api:
+  apps/api:
     dependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.1130.0
@@ -143,7 +143,7 @@ importers:
         specifier: ^3.0.8
         version: 3.2.7(@types/node@22.20.2)(supports-color@7.2.0)(tsx@4.23.13)
 
-  backend/apps/worker:
+  apps/worker:
     dependencies:
       '@kaamsetu/config':
         specifier: workspace:*
@@ -177,7 +177,7 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  backend/packages/config:
+  packages/config:
     dependencies:
       dotenv:
         specifier: ^16.4.7
@@ -193,7 +193,7 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  backend/packages/logger:
+  packages/logger:
     dependencies:
       pino:
         specifier: ^9.6.0
@@ -206,13 +206,13 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  backend/packages/types:
+  packages/types:
     devDependencies:
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
 
-  backend/packages/validation:
+  packages/validation:
     dependencies:
       zod:
         specifier: ^3.24.2

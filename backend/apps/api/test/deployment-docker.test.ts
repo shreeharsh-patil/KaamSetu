@@ -78,7 +78,9 @@ describe('Phase 16: Docker, CI/CD, and Production Deployment Suite', () => {
   });
 
   it('provides GitHub Actions CI workflow covering all 7 pipeline gates', () => {
-    const ciPath = path.join(rootDir, '.github/workflows/ci.yml');
+    const ciPath = fs.existsSync(path.join(rootDir, '.github/workflows/ci.yml'))
+      ? path.join(rootDir, '.github/workflows/ci.yml')
+      : path.join(rootDir, '../.github/workflows/ci.yml');
     expect(fs.existsSync(ciPath)).toBe(true);
 
     const content = fs.readFileSync(ciPath, 'utf-8');
