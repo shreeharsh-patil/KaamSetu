@@ -1,5 +1,5 @@
-export type UserRole = "customer" | "worker" | "admin";
-export type UserStatus = "active" | "suspended" | "pending";
+export type UserRole = "CUSTOMER" | "WORKER" | "SUPPORT" | "ADMIN";
+export type UserStatus = "ACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION" | "DELETED";
 
 export interface User {
   id: string;
@@ -25,8 +25,8 @@ export interface RequestOtpPayload {
 }
 
 export interface RequestOtpResponse {
-  phone: string;
-  expiresIn: number;
+  message: string;
+  cooldownSeconds: number;
 }
 
 export interface VerifyOtpPayload {

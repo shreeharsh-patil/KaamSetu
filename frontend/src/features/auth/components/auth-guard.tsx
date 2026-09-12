@@ -10,12 +10,14 @@ import type { UserRole } from "../types";
 export interface AuthGuardProps {
   children: ReactNode;
   requiredRole?: UserRole;
+  allowedRoles?: UserRole[];
   fallbackUrl?: string;
 }
 
 export function AuthGuard({
   children,
   requiredRole,
+  allowedRoles,
   fallbackUrl = "/login",
 }: AuthGuardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -37,13 +39,14 @@ export function AuthGuard({
     return null;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  const permittedRoles = allowedRoles ?? (requiredRole ? [requiredRole] : undefined);
+  if (permittedRoles && (!user || !permittedRoles.includes(user.role))) {
     return (
       <div className="py-12">
         <ForbiddenState
           title="Role Access Restricted"
-          description={`Your account is registered as a ${user?.role || "user"}. This section requires ${requiredRole} credentials.`}
-          requiredRole={requiredRole}
+          description={`Your account is registered as ${user?.role || "user"}. This section requires ${permittedRoles.join(" or ")} access.`}
+          requiredRole={permittedRoles.join(" or ")}
         />
       </div>
     );

@@ -1,7 +1,6 @@
 import { env } from "@/config/env";
 import { ApiError, type ApiErrorPayload } from "./errors";
 import { API_ENDPOINTS } from "./endpoints";
-import { handleOfflineMockResponse } from "./mock-fallback";
 
 export interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -73,14 +72,19 @@ export async function apiClient<T>(
     headers.set("Accept", "application/json");
   }
 
-  // Inject Bearer access token
-  if (!skipAuth && inMemoryAccessToken && !headers.has("Authorization")) {
+  const apiOrigin = new URL(env.NEXT_PUBLIC_API_URL).origin;
+  const requestOrigin = new URL(url).origin;
+  // Never leak bearer credentials to an arbitrary absolute URL.
+  if (!skipAuth && requestOrigin === apiOrigin && inMemoryAccessToken && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${inMemoryAccessToken}`);
   }
 
   // Generate request ID for traceability
   if (!headers.has("X-Request-Id")) {
-    headers.set("X-Request-Id", `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    const requestId = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    headers.set("X-Request-Id", `web-${requestId}`);
   }
 
   try {
@@ -104,19 +108,35 @@ export async function apiClient<T>(
     // Handle 401 Unauthorized with automatic silent token refresh
     if (response.status === 401 && !skipAuth && !endpoint.includes("/auth/")) {
       const refreshedToken = await handleSilentTokenRefresh();
-      if (refreshedToken) {
+      const method = (fetchOptions.method ?? "GET").toUpperCase();
+      const mayReplay = ["GET", "HEAD", "OPTIONS"].includes(method) || headers.has("Idempotency-Key");
+      if (refreshedToken && mayReplay) {
         // Retry the original request with the fresh token
         headers.set("Authorization", `Bearer ${refreshedToken}`);
-        const retryResponse = await fetch(url, {
-          ...fetchOptions,
-          headers,
-          credentials: "include",
-          body: body instanceof FormData || typeof body === "string" ? body : body ? JSON.stringify(body) : undefined,
-        });
-
-        if (retryResponse.ok) {
-          const retryData = await retryResponse.json();
-          return (retryData.data ?? retryData) as T;
+        const retryController = new AbortController();
+        const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
+        try {
+          const retryResponse = await fetch(url, {
+            ...fetchOptions,
+            headers,
+            credentials: "include",
+            body: body instanceof FormData || typeof body === "string" ? body : body ? JSON.stringify(body) : undefined,
+            signal: retryController.signal,
+          });
+          const retryRequestId = retryResponse.headers.get("x-request-id") || undefined;
+          const retryType = retryResponse.headers.get("content-type") || "";
+          const retryData = retryResponse.status === 204
+            ? {}
+            : retryType.includes("application/json") ? await retryResponse.json() : await retryResponse.text();
+          if (!retryResponse.ok) {
+            const payload = (retryData as ApiErrorPayload) || {};
+            throw new ApiError(payload.error?.message || payload.message || `Request failed with status ${retryResponse.status}`, retryResponse.status, payload.error?.code || `HTTP_${retryResponse.status}`, payload.error?.details || payload.errors, retryRequestId);
+          }
+          return (retryData && typeof retryData === "object" && "data" in retryData
+            ? (retryData as { data: T }).data
+            : retryData) as T;
+        } finally {
+          clearTimeout(retryTimeoutId);
         }
       } else {
         onAuthFailureCallback?.();
@@ -159,12 +179,6 @@ export async function apiClient<T>(
 
     if (err instanceof DOMException && err.name === "AbortError") {
       throw new ApiError("Request timed out", 408, "REQUEST_TIMEOUT");
-    }
-
-    // If backend is offline / unreachable, gracefully check for mock fallback
-    const mockResponse = handleOfflineMockResponse<T>(endpoint, fetchOptions.method || "GET", body);
-    if (mockResponse !== null) {
-      return mockResponse;
     }
 
     throw new ApiError(
@@ -210,11 +224,6 @@ async function handleSilentTokenRefresh(): Promise<string | null> {
       setAccessToken(null);
       return null;
     } catch {
-      const mock = handleOfflineMockResponse<{ accessToken: string }>(API_ENDPOINTS.AUTH.REFRESH);
-      if (mock?.accessToken) {
-        setAccessToken(mock.accessToken);
-        return mock.accessToken;
-      }
       setAccessToken(null);
       return null;
     } finally {

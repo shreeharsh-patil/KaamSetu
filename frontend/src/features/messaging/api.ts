@@ -12,10 +12,11 @@ export const messagingApi = {
   },
 
   sendMessage: async (
-    jobId: string,
+    conversationId: string,
     payload: { content: string; type?: string; mediaUrl?: string }
   ): Promise<ChatMessage> => {
-    return apiClient.post<ChatMessage>(API_ENDPOINTS.MESSAGES.SEND(jobId), payload);
+    const response = await apiClient.post<{ message: ChatMessage }>(API_ENDPOINTS.MESSAGES.SEND(conversationId), payload);
+    return response.message;
   },
 
   getConversations: async (): Promise<ConversationSummary[]> => {

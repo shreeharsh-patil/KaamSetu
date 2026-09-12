@@ -1,81 +1,59 @@
 import { apiClient } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import type { Job, CreateJobInput, JobOffer } from "./types";
+import { mapApiJobToView, mapApiOfferToView } from "./mappers";
+import type { ApiJobOfferView, ApiJobView, CreateJobApiRequest, Job, JobOffer, ServiceCategory, ServiceSkill } from "./types";
 
-export interface JobsResponse {
-  jobs: Job[];
-  total: number;
-}
+interface JobsResponse { jobs: ApiJobView[]; nextCursor: string | null; hasMore: boolean }
+interface JobResponse { job: ApiJobView }
+interface OffersResponse { offers: ApiJobOfferView[]; nextCursor: string | null; hasMore: boolean }
+interface OfferResponse { offer: ApiJobOfferView }
+interface AcceptOfferResponse { offer: ApiJobOfferView; job: ApiJobView }
 
 export const jobsApi = {
-  getJobs: async (params?: { role?: "customer" | "worker"; status?: string }): Promise<Job[]> => {
-    const query = new URLSearchParams();
-    if (params?.role) query.append("role", params.role);
-    if (params?.status) query.append("status", params.status);
-    const url = `${API_ENDPOINTS.JOBS.LIST}${query.toString() ? `?${query.toString()}` : ""}`;
-    const res = await apiClient.get<JobsResponse | Job[]>(url);
-    if (Array.isArray(res)) return res;
-    return res.jobs ?? [];
+  getCategories: async (): Promise<ServiceCategory[]> => {
+    const response = await apiClient.get<{ categories: ServiceCategory[] }>(API_ENDPOINTS.CATEGORIES.LIST, { skipAuth: true });
+    return response.categories;
   },
-
+  getSkills: async (categoryId: string): Promise<ServiceSkill[]> => {
+    const response = await apiClient.get<{ skills: ServiceSkill[] }>(API_ENDPOINTS.CATEGORIES.SKILLS(categoryId), { skipAuth: true });
+    return response.skills;
+  },
+  getJobs: async (params?: { status?: string }): Promise<Job[]> => {
+    const response = await apiClient.get<JobsResponse>(API_ENDPOINTS.JOBS.LIST, { params });
+    return response.jobs.map(mapApiJobToView);
+  },
   getJobById: async (id: string): Promise<Job> => {
-    return apiClient.get<Job>(API_ENDPOINTS.JOBS.DETAIL(id));
+    const response = await apiClient.get<JobResponse>(API_ENDPOINTS.JOBS.DETAIL(id));
+    return mapApiJobToView(response.job);
   },
-
-  createJob: async (data: CreateJobInput): Promise<Job> => {
-    return apiClient.post<Job>(API_ENDPOINTS.JOBS.CREATE, data);
+  createJob: async (request: CreateJobApiRequest): Promise<Job> => {
+    const response = await apiClient.post<JobResponse>(API_ENDPOINTS.JOBS.CREATE, request);
+    return mapApiJobToView(response.job);
   },
-
-  cancelJob: async (id: string, reason: string): Promise<{ success: boolean; job: Job }> => {
-    return apiClient.post<{ success: boolean; job: Job }>(API_ENDPOINTS.JOBS.CANCEL(id), { reason });
+  cancelJob: async (id: string, reason: string): Promise<Job> => {
+    const response = await apiClient.post<JobResponse>(API_ENDPOINTS.JOBS.CANCEL(id), { reason });
+    return mapApiJobToView(response.job);
   },
-
-  getJobMatchingStatus: async (jobId: string): Promise<{ status: Job["status"]; job: Job }> => {
-    return apiClient.get<{ status: Job["status"]; job: Job }>(API_ENDPOINTS.JOBS.MATCHING(jobId));
-  },
-
+  getJobMatchingStatus: async (jobId: string): Promise<Job> => jobsApi.getJobById(jobId),
   getWorkerOffers: async (): Promise<JobOffer[]> => {
-    const res = await apiClient.get<{ offers: JobOffer[] } | JobOffer[]>(API_ENDPOINTS.OFFERS.LIST);
-    if (Array.isArray(res)) return res;
-    return res.offers ?? [];
+    const response = await apiClient.get<OffersResponse>(API_ENDPOINTS.OFFERS.LIST);
+    return response.offers.map(mapApiOfferToView);
   },
-
   getOfferById: async (offerId: string): Promise<JobOffer> => {
-    return apiClient.get<JobOffer>(API_ENDPOINTS.OFFERS.DETAIL(offerId));
+    const response = await apiClient.get<OfferResponse>(API_ENDPOINTS.OFFERS.DETAIL(offerId));
+    return mapApiOfferToView(response.offer);
   },
-
-  acceptOffer: async (offerId: string): Promise<{ success: boolean; jobId: string }> => {
-    return apiClient.post<{ success: boolean; jobId: string }>(API_ENDPOINTS.OFFERS.ACCEPT(offerId), {});
+  acceptOffer: async (offerId: string): Promise<{ offer: JobOffer; job: Job }> => {
+    const response = await apiClient.post<AcceptOfferResponse>(API_ENDPOINTS.OFFERS.ACCEPT(offerId), {});
+    return { offer: mapApiOfferToView(response.offer), job: mapApiJobToView(response.job) };
   },
-
-  declineOffer: async (offerId: string): Promise<{ success: boolean }> => {
-    return apiClient.post<{ success: boolean }>(API_ENDPOINTS.OFFERS.DECLINE(offerId), {});
+  declineOffer: async (offerId: string, reason?: string): Promise<JobOffer> => {
+    const response = await apiClient.post<OfferResponse>(API_ENDPOINTS.OFFERS.DECLINE(offerId), { reason });
+    return mapApiOfferToView(response.offer);
   },
-
-  advanceJobState: async (
-    jobId: string,
-    action: "start-travel" | "arrive" | "start-work" | "complete",
-    payload?: Record<string, unknown>
-  ): Promise<Job> => {
-    let endpoint: string;
-    switch (action) {
-      case "start-travel":
-        endpoint = API_ENDPOINTS.JOBS.START_TRAVEL(jobId);
-        break;
-      case "arrive":
-        endpoint = API_ENDPOINTS.JOBS.ARRIVE(jobId);
-        break;
-      case "start-work":
-        endpoint = API_ENDPOINTS.JOBS.START_WORK(jobId);
-        break;
-      case "complete":
-        endpoint = API_ENDPOINTS.JOBS.COMPLETE(jobId);
-        break;
-    }
-    return apiClient.post<Job>(endpoint, payload ?? {});
-  },
-
-  verifyOtp: async (jobId: string, otp: string, type: "start" | "complete"): Promise<{ verified: boolean; job: Job }> => {
-    return apiClient.post<{ verified: boolean; job: Job }>(API_ENDPOINTS.JOBS.VERIFY_OTP(jobId), { otp, type });
+  advanceJobState: async (jobId: string, action: "start-travel" | "arrive" | "start" | "complete"): Promise<Job> => {
+    const endpoint = action === "start-travel" ? API_ENDPOINTS.JOBS.START_TRAVEL(jobId) : action === "arrive" ? API_ENDPOINTS.JOBS.ARRIVE(jobId) : action === "start" ? API_ENDPOINTS.JOBS.START(jobId) : API_ENDPOINTS.JOBS.COMPLETE(jobId);
+    const response = await apiClient.post<JobResponse>(endpoint, {});
+    return mapApiJobToView(response.job);
   },
 };

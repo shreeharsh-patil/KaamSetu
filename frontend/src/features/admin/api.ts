@@ -20,9 +20,8 @@ export const adminApi = {
     if (search) q.append("search", search);
     if (role) q.append("role", role);
     const url = `${API_ENDPOINTS.ADMIN.USERS}${q.toString() ? `?${q.toString()}` : ""}`;
-    const res = await apiClient.get<{ users: AdminUser[] } | AdminUser[]>(url);
-    if (Array.isArray(res)) return res;
-    return res.users ?? [];
+    const res = await apiClient.get<{ items: AdminUser[] }>(url);
+    return res.items;
   },
 
   setUserSuspension: async (
@@ -30,9 +29,9 @@ export const adminApi = {
     suspended: boolean,
     reason?: string
   ): Promise<{ success: boolean }> => {
-    return apiClient.patch<{ success: boolean }>(
-      `${API_ENDPOINTS.ADMIN.USERS}/${userId}/suspension`,
-      { suspended, reason }
+    return apiClient.post<{ success: boolean }>(
+      `${API_ENDPOINTS.ADMIN.USERS}/${userId}/${suspended ? "suspend" : "restore"}`,
+      reason ? { reason } : {}
     );
   },
 
@@ -40,26 +39,23 @@ export const adminApi = {
     const q = new URLSearchParams();
     if (status) q.append("status", status);
     const url = `${API_ENDPOINTS.ADMIN.WORKERS}${q.toString() ? `?${q.toString()}` : ""}`;
-    const res = await apiClient.get<{ workers: AdminWorker[] } | AdminWorker[]>(url);
-    if (Array.isArray(res)) return res;
-    return res.workers ?? [];
+    const res = await apiClient.get<{ items: AdminWorker[] }>(url);
+    return res.items;
   },
 
   getJobs: async (status?: string): Promise<AdminJob[]> => {
     const q = new URLSearchParams();
     if (status) q.append("status", status);
     const url = `${API_ENDPOINTS.ADMIN.JOBS}${q.toString() ? `?${q.toString()}` : ""}`;
-    const res = await apiClient.get<{ jobs: AdminJob[] } | AdminJob[]>(url);
-    if (Array.isArray(res)) return res;
-    return res.jobs ?? [];
+    const res = await apiClient.get<{ items: AdminJob[] }>(url);
+    return res.items;
   },
 
   getVerifications: async (): Promise<AdminVerificationRequest[]> => {
     const res = await apiClient.get<
-      { verifications: AdminVerificationRequest[] } | AdminVerificationRequest[]
+      { items: AdminVerificationRequest[] }
     >(API_ENDPOINTS.ADMIN.VERIFICATIONS);
-    if (Array.isArray(res)) return res;
-    return res.verifications ?? [];
+    return res.items;
   },
 
   reviewVerification: async (
@@ -67,18 +63,17 @@ export const adminApi = {
     status: "APPROVED" | "REJECTED",
     rejectionReason?: string
   ): Promise<{ success: boolean }> => {
-    return apiClient.post<{ success: boolean }>(
+    return apiClient.patch<{ success: boolean }>(
       `${API_ENDPOINTS.ADMIN.VERIFICATIONS}/${verificationId}/review`,
-      { status, rejectionReason }
+      { status, reason: rejectionReason }
     );
   },
 
   getDisputes: async (): Promise<AdminDispute[]> => {
-    const res = await apiClient.get<{ disputes: AdminDispute[] } | AdminDispute[]>(
+    const res = await apiClient.get<{ items: AdminDispute[] }>(
       API_ENDPOINTS.ADMIN.DISPUTES
     );
-    if (Array.isArray(res)) return res;
-    return res.disputes ?? [];
+    return res.items;
   },
 
   resolveDispute: async (
@@ -86,17 +81,16 @@ export const adminApi = {
     resolution: "REFUND_CUSTOMER" | "RELEASE_TO_WORKER" | "SPLIT",
     notes: string
   ): Promise<{ success: boolean }> => {
-    return apiClient.post<{ success: boolean }>(
-      `${API_ENDPOINTS.ADMIN.DISPUTES}/${disputeId}/resolve`,
-      { resolution, notes }
+    return apiClient.patch<{ success: boolean }>(
+      API_ENDPOINTS.ADMIN.RESOLVE_DISPUTE(disputeId),
+      { resolution, resolutionNotes: notes }
     );
   },
 
   getAuditLogs: async (): Promise<AdminAuditLog[]> => {
-    const res = await apiClient.get<{ logs: AdminAuditLog[] } | AdminAuditLog[]>(
+    const res = await apiClient.get<{ items: AdminAuditLog[] }>(
       API_ENDPOINTS.ADMIN.AUDIT_LOGS
     );
-    if (Array.isArray(res)) return res;
-    return res.logs ?? [];
+    return res.items;
   },
 };

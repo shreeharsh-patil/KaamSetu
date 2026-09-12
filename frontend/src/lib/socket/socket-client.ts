@@ -8,7 +8,7 @@ let socketInstance: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socketInstance) {
-    const socketUrl = env.NEXT_PUBLIC_API_URL.replace(/\/api\/v1\/?$/, "");
+  const socketUrl = env.NEXT_PUBLIC_SOCKET_URL;
 
     socketInstance = io(socketUrl, {
       autoConnect: false,

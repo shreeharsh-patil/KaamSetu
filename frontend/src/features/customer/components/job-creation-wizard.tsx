@@ -1,14 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Wrench,
-  Zap,
-  Hammer,
-  Paintbrush,
-  Sparkles,
-  Tv,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -29,19 +24,24 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { VoiceRecorder } from "@/components/voice/voice-recorder";
 import { jobsApi } from "@/features/jobs/api";
-import type { CreateJobInput } from "@/features/jobs/types";
+import { mapJobCreationFormToApi } from "@/features/jobs/mappers";
+import type { JobCreationFormState } from "@/features/jobs/types";
+import { putPresignedFile, uploadsApi } from "@/features/uploads/api";
 
-const CATEGORIES = [
-  { id: "plumbing", name: "Plumbing", icon: Wrench },
-  { id: "electrical", name: "Electrical", icon: Zap },
-  { id: "carpentry", name: "Carpentry", icon: Hammer },
-  { id: "painting", name: "Painting", icon: Paintbrush },
-  { id: "cleaning", name: "Cleaning", icon: Sparkles },
-  { id: "appliances", name: "Appliances", icon: Tv },
-  { id: "masonry", name: "Masonry", icon: Building2 },
-];
+const STORAGE_KEY = "kaamsetu_job_draft_v2";
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGES = 5;
 
-const STORAGE_KEY = "kaamsetu_job_draft_v1";
+interface UploadItem {
+  file: File;
+  previewUrl: string;
+  uploadId?: string;
+  key?: string;
+  progress: number;
+  status: "uploading" | "complete" | "error";
+  error?: string;
+}
 
 export function JobCreationWizard() {
   const router = useRouter();
@@ -54,23 +54,36 @@ export function JobCreationWizard() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<CreateJobInput>({
-    category: preselectedCategory || "plumbing",
-    subCategory: "",
+  const [formData, setFormData] = useState<JobCreationFormState>({
+    categoryId: "",
+    requiredSkills: [],
     title: "",
     description: "",
-    urgency: "STANDARD",
+    urgency: "FLEXIBLE",
     timingOption: "ASAP",
     scheduledAt: "",
     addressLine: "",
     locality: "",
     city: "Mumbai",
+    state: "Maharashtra",
     pincode: "",
-    landmark: "",
-    latitude: 19.076,
-    longitude: 72.8777,
     images: [],
   });
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const previewUrls = useRef(new Set<string>());
+  const categoriesQuery = useQuery({ queryKey: ["service-categories"], queryFn: jobsApi.getCategories });
+  const skillsQuery = useQuery({ queryKey: ["service-skills", formData.categoryId], queryFn: () => jobsApi.getSkills(formData.categoryId), enabled: Boolean(formData.categoryId) });
+
+  useEffect(() => {
+    if (!preselectedCategory || formData.categoryId || !categoriesQuery.data) return;
+    const match = categoriesQuery.data.find((category) => category.id === preselectedCategory || category.slug === preselectedCategory);
+    if (match) setFormData((value) => ({ ...value, categoryId: match.id }));
+  }, [categoriesQuery.data, formData.categoryId, preselectedCategory]);
+
+  useEffect(() => () => {
+    previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    previewUrls.current.clear();
+  }, []);
 
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [voiceSuccessMsg, setVoiceSuccessMsg] = useState<string | null>(null);
@@ -91,7 +104,7 @@ export function JobCreationWizard() {
     if (lower.includes("emergency") || lower.includes("turant") || lower.includes("aag") || lower.includes("blast")) {
       detectedUrgency = "EMERGENCY";
     } else if (lower.includes("urgent") || lower.includes("jaldi") || lower.includes("leak") || lower.includes("paani beh")) {
-      detectedUrgency = "URGENT";
+      detectedUrgency = "TODAY";
     }
 
     setFormData((prev) => ({
@@ -140,7 +153,6 @@ export function JobCreationWizard() {
           ...prev,
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
-          locality: prev.locality || "Current Detected Location",
         }));
         setLocating(false);
       },
@@ -152,21 +164,48 @@ export function JobCreationWizard() {
     );
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files);
-    const newImages = files.map((file) => URL.createObjectURL(file));
-    setFormData((prev) => ({
-      ...prev,
-      images: [...(prev.images || []), ...newImages].slice(0, 4),
-    }));
+  const uploadImage = async (item: UploadItem) => {
+    let uploadId: string | undefined;
+    setUploads((items) => items.map((value) => value.previewUrl === item.previewUrl ? { ...value, status: "uploading", progress: 0, error: undefined } : value));
+    try {
+      const presigned = await uploadsApi.presign(item.file);
+      uploadId = presigned.uploadId;
+      setUploads((items) => items.map((value) => value.previewUrl === item.previewUrl ? { ...value, uploadId: presigned.uploadId } : value));
+      await putPresignedFile(item.file, presigned, (progress) => setUploads((items) => items.map((value) => value.previewUrl === item.previewUrl ? { ...value, progress } : value)));
+      const completed = await uploadsApi.complete(presigned.uploadId);
+      setUploads((items) => items.map((value) => value.previewUrl === item.previewUrl ? { ...value, key: completed.key, progress: 100, status: "complete" } : value));
+      setFormData((value) => ({ ...value, images: [...value.images, { key: completed.key, mimeType: completed.mimeType }] }));
+    } catch (reason) {
+      if (uploadId) {
+        try { await uploadsApi.remove(uploadId); } catch { /* cleanup is best effort */ }
+      }
+      setUploads((items) => items.map((value) => value.previewUrl === item.previewUrl ? { ...value, status: "error", error: reason instanceof Error ? reason.message : "Upload failed" } : value));
+    }
   };
 
-  const handleRemoveImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images?.filter((_, i) => i !== index),
-    }));
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files).slice(0, MAX_IMAGES - uploads.length);
+    const invalid = files.find((file) => !ALLOWED_IMAGE_TYPES.has(file.type) || file.size > MAX_IMAGE_BYTES);
+    if (invalid) { setSubmitError("Images must be JPG, PNG, or WebP and no larger than 5 MB."); return; }
+    const items = files.map((file) => {
+      const previewUrl = URL.createObjectURL(file);
+      previewUrls.current.add(previewUrl);
+      return { file, previewUrl, progress: 0, status: "uploading" as const };
+    });
+    setUploads((current) => [...current, ...items]);
+    items.forEach((item) => void uploadImage(item));
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    const item = uploads[index];
+    if (!item) return;
+    URL.revokeObjectURL(item.previewUrl);
+    previewUrls.current.delete(item.previewUrl);
+    setUploads((items) => items.filter((_, itemIndex) => itemIndex !== index));
+    if (item.key) setFormData((value) => ({ ...value, images: value.images.filter((image) => image.key !== item.key) }));
+    if (item.uploadId) { try { await uploadsApi.remove(item.uploadId); } catch { /* cleanup is best effort */ } }
   };
 
   const handlePublish = async () => {
@@ -174,14 +213,19 @@ export function JobCreationWizard() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const created = await jobsApi.createJob(formData);
+      if (uploads.some((item) => item.status === "uploading")) throw new Error("Wait for image uploads to finish.");
+      const created = await jobsApi.createJob(mapJobCreationFormToApi(formData));
       // Clear saved draft
       try {
         sessionStorage.removeItem(STORAGE_KEY);
       } catch {
         // ignore
       }
-      router.push(`/customer/jobs/${created._id}/matching`);
+      uploads.forEach((item) => {
+        URL.revokeObjectURL(item.previewUrl);
+        previewUrls.current.delete(item.previewUrl);
+      });
+      router.push(`/customer/jobs/${created.id}/matching`);
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg = err instanceof Error ? err.message : "Failed to publish job. Please try again.";
@@ -220,28 +264,34 @@ export function JobCreationWizard() {
             <CardDescription>What type of work do you need done today?</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              const isSelected = formData.category.toLowerCase() === cat.id;
+            {categoriesQuery.data?.map((cat) => {
+              const isSelected = formData.categoryId === cat.id;
               return (
                 <button
                   key={cat.id}
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, category: cat.id }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, categoryId: cat.id, requiredSkills: [] }))}
                   className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-xs font-bold"
                       : "border-border hover:bg-muted/40 text-foreground"
                   }`}
                 >
-                  <Icon className="h-6 w-6 mb-2" />
+                  <Building2 className="h-6 w-6 mb-2" />
                   <span className="text-sm font-semibold">{cat.name}</span>
                 </button>
               );
             })}
+            <div className="col-span-full flex flex-wrap gap-2">
+              {skillsQuery.data?.map((skill) => (
+                <button key={skill.id} type="button" onClick={() => setFormData((value) => ({ ...value, requiredSkills: value.requiredSkills.includes(skill.id) ? value.requiredSkills.filter((id) => id !== skill.id) : [...value.requiredSkills, skill.id] }))} className={`rounded-full border px-3 py-2 text-xs ${formData.requiredSkills.includes(skill.id) ? "bg-primary text-primary-foreground" : "bg-background"}`}>
+                  {skill.name}
+                </button>
+              ))}
+            </div>
           </CardContent>
           <CardFooter className="justify-end">
-            <Button onClick={() => setStep(2)} className="rounded-xl font-bold">
+            <Button disabled={!formData.categoryId} onClick={() => setStep(2)} className="rounded-xl font-bold">
               Next: Describe Problem <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardFooter>
@@ -332,8 +382,8 @@ export function JobCreationWizard() {
               <div className="grid grid-cols-3 gap-2.5">
                 {(
                   [
-                    { id: "STANDARD", label: "Standard", desc: "Regular service" },
-                    { id: "URGENT", label: "Urgent", desc: "Within 2-4 hours" },
+                    { id: "FLEXIBLE", label: "Flexible", desc: "Schedule within your preferred window" },
+                    { id: "TODAY", label: "Today", desc: "Service needed today" },
                     { id: "EMERGENCY", label: "Emergency", desc: "Immediate help needed" },
                   ] as const
                 ).map((u) => (
@@ -379,10 +429,12 @@ export function JobCreationWizard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {formData.images?.map((url, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border bg-muted">
+              {uploads.map((item, i) => (
+                <div key={item.previewUrl} className="relative aspect-square rounded-xl overflow-hidden border bg-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={item.previewUrl} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
+                  <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[10px] text-white">{item.status === "complete" ? "Uploaded" : item.status === "error" ? "Failed" : `${item.progress}%`}</span>
+                  {item.status === "error" ? <button type="button" onClick={() => void uploadImage({ ...item, status: "uploading", progress: 0 })} className="absolute bottom-1 right-1 rounded bg-white px-1 text-[10px] text-black">Retry</button> : null}
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(i)}
@@ -393,7 +445,7 @@ export function JobCreationWizard() {
                 </div>
               ))}
 
-              {(formData.images?.length || 0) < 4 && (
+              {uploads.length < MAX_IMAGES && (
                 <label className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 cursor-pointer transition-colors p-2 text-center bg-muted/20">
                   <Upload className="h-6 w-6 text-muted-foreground mb-1" />
                   <span className="text-xs font-medium text-muted-foreground">Upload Photo</span>
@@ -407,7 +459,7 @@ export function JobCreationWizard() {
                 </label>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">Up to 4 images (JPG, PNG). Max 5MB each.</p>
+            <p className="text-xs text-muted-foreground">Up to 5 images (JPG, PNG, WebP). Max 5MB each.</p>
           </CardContent>
           <CardFooter className="justify-between">
             <Button variant="outline" onClick={() => setStep(2)}>
@@ -479,11 +531,11 @@ export function JobCreationWizard() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Landmark</label>
+                <label className="text-xs font-medium text-foreground">State *</label>
                 <Input
-                  placeholder="e.g. Near Metro Station"
-                  value={formData.landmark}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, landmark: e.target.value }))}
+                  placeholder="State"
+                  value={formData.state}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, state: e.target.value }))}
                 />
               </div>
             </div>
@@ -502,7 +554,7 @@ export function JobCreationWizard() {
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
             <Button
-              disabled={!formData.locality.trim() || !formData.addressLine?.trim() || !formData.pincode.trim()}
+              disabled={!formData.locality.trim() || !formData.addressLine.trim() || !formData.city.trim() || !formData.state.trim() || !/^\d{6}$/.test(formData.pincode) || formData.latitude === undefined || formData.longitude === undefined}
               onClick={() => setStep(5)}
             >
               Next: Choose Timing <ChevronRight className="ml-1 h-4 w-4" />
@@ -582,7 +634,7 @@ export function JobCreationWizard() {
               <div className="flex justify-between items-start">
                 <div>
                   <Badge variant="outline" className="uppercase text-[10px] tracking-wider mb-1">
-                    {formData.category}
+                    {categoriesQuery.data?.find((category) => category.id === formData.categoryId)?.name ?? "Service"}
                   </Badge>
                   <h3 className="font-bold text-foreground text-base">{formData.title}</h3>
                 </div>
@@ -612,15 +664,15 @@ export function JobCreationWizard() {
                 </div>
               </div>
 
-              {formData.images && formData.images.length > 0 && (
+              {uploads.length > 0 && (
                 <div className="border-t pt-3">
                   <span className="text-xs text-muted-foreground block mb-1">Attached Photos:</span>
                   <div className="flex gap-2">
-                    {formData.images.map((url, i) => (
+                    {uploads.map((item) => (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
-                        key={i}
-                        src={url}
+                        key={item.previewUrl}
+                        src={item.previewUrl}
                         alt="attachment"
                         className="w-12 h-12 object-cover rounded-lg border"
                       />
@@ -635,7 +687,7 @@ export function JobCreationWizard() {
                 <Sparkle className="h-4 w-4" /> Safe Booking Guarantee
               </div>
               <p className="text-muted-foreground">
-                No advance charges required to post. You inspect the work and confirm completion using a 4-digit OTP.
+                No advance charges are required to post. Job progress is recorded by authenticated state transitions.
               </p>
             </div>
           </CardContent>

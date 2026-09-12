@@ -1,33 +1,25 @@
-export interface WorkerProfileData {
-  fullName: string;
-  primaryCategory: string;
-  skillIds: string[];
-  yearsExperience: number;
+export type WorkerAvailability = "AVAILABLE" | "BUSY" | "OFFLINE";
+export type SkillLevel = "BEGINNER" | "INTERMEDIATE" | "EXPERT";
+
+export interface WorkerEnrollmentRequest {
+  displayName: string;
+  primaryCategoryId: string;
+  skills: Array<{ skillId: string; experienceYears: number; level: SkillLevel }>;
   bio?: string;
-  hourlyRate?: number;
+  languages: string[];
+  serviceLocation: { type: "Point"; coordinates: [number, number] };
+  serviceArea: { city: string; pincode: string };
   serviceRadiusKm: number;
-  city: string;
-  pincode: string;
-  coordinates?: [number, number];
-  isAvailable: boolean;
+  pricing: { hourlyRate?: number; customRateDescription?: string; currency: "INR" };
+  availabilityStatus: WorkerAvailability;
 }
 
-export interface WorkerSkillOption {
-  id: string;
-  name: string;
-  category: string;
-}
-
-export interface WorkerJobOffer {
-  id: string;
-  jobId: string;
-  category: string;
-  title: string;
-  description: string;
-  approximateArea: string;
-  distanceKm: number;
-  urgency: "IMMEDIATE" | "TODAY" | "SCHEDULED";
-  estimatedPrice: number;
-  preferredTime: string;
-  expiresAt: string;
+export interface WorkerProfile {
+  id: string; userId: string; displayName: string; bio?: string | null; primaryCategoryId?: string;
+  skills: Array<{ skillId: string; skillName?: string; experienceYears: number; level: SkillLevel; verified: boolean }>;
+  languages: string[]; serviceLocation?: { type: "Point"; coordinates: [number, number] };
+  serviceArea?: { city?: string | null; pincode?: string | null; radiusKm: number };
+  serviceRadiusKm: number; availabilityStatus: WorkerAvailability; onboardingComplete: boolean;
+  pricing: { hourlyRate?: number | null; customRateDescription?: string | null; currency?: string };
+  rating: { average: number; count: number }; stats: { completedJobs: number; cancelledJobs: number };
 }
