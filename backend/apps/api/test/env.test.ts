@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateEnv } from '@kaamsetu/config';
+import { validateEnv, validateApiEnv, validateWorkerEnv } from '@kaamsetu/config';
 
 describe('Environment Variable Validation', () => {
   const validEnv = {
@@ -11,10 +11,10 @@ describe('Environment Variable Validation', () => {
     REDIS_URL: 'redis://localhost:6379',
     JWT_ACCESS_SECRET: 'this_is_a_32_character_jwt_access_secret_key!',
     JWT_REFRESH_SECRET: 'this_is_a_32_character_jwt_refresh_secret_key!',
-    CORS_ORIGINS: 'http://localhost:3000,http://localhost:5173',
+    CORS_ORIGINS: 'http://localhost:3000/,http://localhost:5173///',
   };
 
-  it('should succeed when all required variables are valid', () => {
+  it('should succeed and normalize CORS trailing slashes', () => {
     const config = validateEnv(validEnv);
     expect(config.NODE_ENV).toBe('development');
     expect(config.PORT).toBe(5000);
@@ -53,5 +53,32 @@ describe('Environment Variable Validation', () => {
     const invalid = { ...validEnv, PORT: '80' };
 
     expect(() => validateEnv(invalid)).toThrowError();
+  });
+
+  it('should reject wildcard CORS origin in production', () => {
+    const prodWithWildcard = {
+      ...validEnv,
+      NODE_ENV: 'production',
+      CORS_ORIGINS: '*',
+    };
+
+    expect(() => validateApiEnv(prodWithWildcard)).toThrowError(
+      /CORS_ORIGINS cannot contain wildcard "\*" in production/
+    );
+  });
+
+  it('should validate worker environment without requiring API secrets (JWT, CORS, PORT)', () => {
+    const workerEnv = {
+      NODE_ENV: 'production',
+      MONGODB_URI: 'mongodb+srv://user:pass@cluster.mongodb.net/kaamsetu',
+      REDIS_URL: 'rediss://user:pass@redis-host:6379',
+      WORKER_HEALTH_PORT: '5001',
+    };
+
+    const config = validateWorkerEnv(workerEnv);
+    expect(config.NODE_ENV).toBe('production');
+    expect(config.WORKER_HEALTH_PORT).toBe(5001);
+    expect(config.MONGODB_URI).toBe('mongodb+srv://user:pass@cluster.mongodb.net/kaamsetu');
+    expect(config.REDIS_URL).toBe('rediss://user:pass@redis-host:6379');
   });
 });

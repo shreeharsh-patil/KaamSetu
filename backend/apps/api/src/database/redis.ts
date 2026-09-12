@@ -4,6 +4,18 @@ import type { ServiceConnectionStatus } from '@kaamsetu/types';
 
 let redisClient: Redis | null = null;
 
+export function sanitizeRedisUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) {
+      parsed.password = '***';
+    }
+    return parsed.toString();
+  } catch {
+    return 'redis://[sanitized]';
+  }
+}
+
 export function getRedisClient(): Redis | null {
   return redisClient;
 }
@@ -13,12 +25,23 @@ export async function connectRedis(url: string, options: Partial<RedisOptions> =
     return redisClient;
   }
 
+  const isTls = url.startsWith('rediss://');
+
   const client = new Redis(url, {
     maxRetriesPerRequest: null,
     enableReadyCheck: true,
     lazyConnect: true,
+    connectTimeout: 10000, // 10s connection timeout
+    tls: isTls ? { rejectUnauthorized: false } : undefined,
     retryStrategy(times: number) {
-      const delay = Math.min(times * 100, 3000);
+      if (times > 10) {
+        logger.warn(
+          { times },
+          'Redis connection retry limit reached (10 attempts). Pausing retries.'
+        );
+        return null;
+      }
+      const delay = Math.min(times * 200, 3000);
       logger.warn({ times, delay }, 'Reconnecting to Redis...');
       return delay;
     },
@@ -48,10 +71,26 @@ export async function connectRedis(url: string, options: Partial<RedisOptions> =
   redisClient = client;
 
   try {
-    await client.connect();
+    // Bounded timeout for initial connection
+    await Promise.race([
+      client.connect(),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Redis initial connection timed out after 10000ms')),
+          10000
+        )
+      ),
+    ]);
     return client;
   } catch (error) {
-    logger.error({ err: error instanceof Error ? error.message : String(error) }, 'Failed to connect to Redis');
+    const sanitized = sanitizeRedisUrl(url);
+    logger.error(
+      {
+        err: error instanceof Error ? error.message : String(error),
+        sanitizedUrl: sanitized,
+      },
+      'Failed to connect to Redis'
+    );
     throw error;
   }
 }

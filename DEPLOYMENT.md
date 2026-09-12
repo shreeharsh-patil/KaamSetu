@@ -343,22 +343,69 @@ and `.next` output.
 Set these Vercel variables for Production and Preview:
 
 ```text
-NEXT_PUBLIC_API_URL=https://api.example.com/api/v1
-NEXT_PUBLIC_SOCKET_URL=https://api.example.com
-NEXT_PUBLIC_APP_URL=https://app.example.com
+NEXT_PUBLIC_API_URL=https://<your-render-service>.onrender.com/api/v1
+NEXT_PUBLIC_SOCKET_URL=https://<your-render-service>.onrender.com
+NEXT_PUBLIC_APP_URL=https://<your-frontend>.vercel.app
 NEXT_PUBLIC_MAP_PROVIDER=osm
 ```
-
-Deploy the Express API using the included `render.yaml`, or use Railway/Fly.io
-with the `backend` directory as the service root. The API must stay persistent:
-Vercel functions are not suitable for Socket.IO connections or BullMQ workers.
 
 Set the API `CORS_ORIGINS` value to the exact Vercel/custom frontend origin:
 
 ```text
-CORS_ORIGINS=https://app.example.com,https://your-project.vercel.app
+CORS_ORIGINS=https://<your-frontend>.vercel.app
 ```
 
-Use managed MongoDB Atlas and Redis (for example Upstash Redis or Redis Cloud).
-After deployment, verify `https://api.example.com/health` and
-`https://api.example.com/ready` before opening the Vercel site.
+---
+
+## 12. Render Deployment Guide (1-Click Blueprint & Manual Setup)
+
+KaamSetu is fully optimized for **Render** (Node.js runtime, Express REST API, Socket.IO WebSockets, and BullMQ task processing).
+
+### Option A: 1-Click Render Blueprint Deployment (Recommended)
+
+1. **Push your code** to GitHub or GitLab.
+2. In the [Render Dashboard](https://dashboard.render.com), click **New +** → **Blueprint**.
+3. Select your `KaamSetu` repository.
+4. Render automatically parses `render.yaml` and provisions:
+   - **`kaamsetu-api`** (Web Service): Runs the Express REST API & Socket.IO server on Node.js 22+.
+   - **`kaamsetu-redis`** (Render Key Value): Managed internal key-value store for queues, cache, and rate-limiting.
+5. Provide the required manual environment variables prompted in the dashboard:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string (e.g. `mongodb+srv://<user>:<password>@cluster0.mongodb.net/kaamsetu?retryWrites=true&w=majority`).
+   - `CORS_ORIGINS`: Your frontend URL (e.g. `https://your-frontend.vercel.app`). Trailing slashes are automatically stripped.
+6. Click **Apply**. Render will automatically build the monorepo and start the services.
+
+### Free Tier vs. Production Multi-Service Architecture
+
+- **Free / Demo Tier (`render.yaml`)**:
+  - Web Service: `plan: free`
+  - Key Value: `type: keyvalue`, `plan: free`, `maxmemoryPolicy: noeviction`
+  - Worker: Runs in-process with resilient fallbacks. (Render does not support free-tier background workers).
+  - Resilient Redis boot: `REQUIRE_REDIS="false"` allows the API to boot and respond to `/health` even during transient Redis startup.
+- **Production Architecture (`render.production.yaml`)**:
+  - Web Service: `plan: starter` (paid tier with zero spin-down)
+  - Key Value: `plan: starter`
+  - Dedicated Background Worker: `kaamsetu-worker` (`type: worker`, `plan: starter`) handling asynchronous notifications, audio transcription, and batch translation.
+  - Strict Redis enforcement: `REQUIRE_REDIS="true"`.
+
+### MongoDB Atlas Configuration for Render
+
+Render web services use dynamic IP addresses. In your MongoDB Atlas cluster:
+1. Navigate to **Network Access** → **IP Access List**.
+2. Click **Add IP Address**.
+3. Choose **Allow Access from Anywhere** (`0.0.0.0/0`) or configure Render's static outbound IP addresses if using an upgraded Team/Enterprise Render plan.
+4. Ensure your database user credentials in `MONGODB_URI` have `readWrite` permissions on the target database.
+
+### Health and Readiness Verification
+
+Once deployed, verify your service status:
+- **Liveness probe**: `https://<your-render-service>.onrender.com/health` (returns `{"status":"ok"}` with HTTP 200)
+- **Readiness probe**: `https://<your-render-service>.onrender.com/ready` (returns MongoDB and Redis connectivity status)
+
+### Local Deployment Verification
+
+Before pushing to git, you can run the automated verification suite:
+```bash
+pnpm verify:deployment
+```
+This validates all build artifacts, env validation schemas, CORS guards, and blueprint configurations.
+

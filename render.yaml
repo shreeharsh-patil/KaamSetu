@@ -1,13 +1,29 @@
+# ==============================================================================
+# KaamSetu Render Blueprint Infrastructure Specification
+# https://render.com/docs/blueprint-spec
+#
+# Free/Demo Tier Architecture:
+# - Web Service: kaamsetu-api (plan: free)
+# - Key Value:   kaamsetu-redis (type: keyvalue, plan: free, maxmemoryPolicy: noeviction)
+# - Database:    MongoDB Atlas (managed externally, MONGODB_URI sync: false)
+#
+# Note on Background Workers:
+# Render does not offer a free tier for 'type: worker' background services.
+# The API includes resilient in-process fallbacks when running without a dedicated worker.
+# To enable a dedicated background worker on a paid plan (starter $7/mo), uncomment
+# the worker service block below or use render.production.yaml.
+# ==============================================================================
+
 services:
   # ----------------------------------------------------------------------------
-  # KaamSetu Express REST API & Socket.IO Realtime Server
+  # 1. KaamSetu Express REST API & Socket.IO Realtime Gateway
   # ----------------------------------------------------------------------------
   - type: web
     name: kaamsetu-api
     runtime: node
-    plan: starter
-    region: oregon # or frankfurt, singapore, etc.
-    buildCommand: corepack enable && pnpm install && pnpm build:backend
+    plan: free
+    region: singapore
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:backend
     startCommand: pnpm start
     healthCheckPath: /health
     autoDeploy: true
@@ -19,55 +35,63 @@ services:
       - key: API_PREFIX
         value: /api/v1
       - key: MONGODB_URI
-        sync: false # Set in Render Dashboard (e.g. MongoDB Atlas)
+        sync: false # Set in Render Dashboard from MongoDB Atlas
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: kaamsetu-redis
           property: connectionString
+      - key: REQUIRE_REDIS
+        value: "false" # Allows graceful startup while Redis initializes
       - key: JWT_ACCESS_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        sync: false # Set to your frontend URL, e.g. https://your-frontend.vercel.app
+        sync: false # Set to frontend URL, e.g. https://kaamsetu.vercel.app
       - key: STORAGE_PROVIDER
-        value: mock # Change to 's3' if using AWS S3
+        value: mock
       - key: S3_BUCKET
         value: kaamsetu-uploads
       - key: S3_REGION
         value: ap-south-1
+      - key: LOG_LEVEL
+        value: info
 
   # ----------------------------------------------------------------------------
-  # KaamSetu BullMQ Background Worker (Optional / Dedicated worker)
+  # 2. Managed Redis / Render Key Value (BullMQ, Caching & Realtime State)
+  # Modern Render Key Value replacing deprecated redis block
   # ----------------------------------------------------------------------------
-  - type: worker
-    name: kaamsetu-worker
-    runtime: node
-    plan: starter
-    region: oregon
-    buildCommand: corepack enable && pnpm install && pnpm build:backend
-    startCommand: node backend/apps/worker/dist/index.js
-    autoDeploy: true
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGODB_URI
-        sync: false
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: kaamsetu-redis
-          property: connectionString
-      - key: STORAGE_PROVIDER
-        value: mock
-
-# ------------------------------------------------------------------------------
-# Managed Redis for BullMQ Queues and Realtime State
-# ------------------------------------------------------------------------------
-redis:
-  - name: kaamsetu-redis
+  - type: keyvalue
+    name: kaamsetu-redis
     plan: free
-    region: oregon
-    maxmemoryPolicy: noeviction
-    ipAllowList: [] # internal access only
+    region: singapore
+    ipAllowList: [] # Internal service access only
+    maxmemoryPolicy: noeviction # Required for BullMQ job queue reliability
+
+  # ----------------------------------------------------------------------------
+  # 3. KaamSetu BullMQ Dedicated Background Worker (Optional / Paid Starter Plan)
+  # Uncomment the following block if deploying on a paid Render plan:
+  # ----------------------------------------------------------------------------
+  # - type: worker
+  #   name: kaamsetu-worker
+  #   runtime: node
+  #   plan: starter
+  #   region: singapore
+  #   buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:backend
+  #   startCommand: node backend/apps/worker/dist/index.js
+  #   autoDeploy: true
+  #   envVars:
+  #     - key: NODE_ENV
+  #       value: production
+  #     - key: MONGODB_URI
+  #       sync: false
+  #     - key: REDIS_URL
+  #       fromService:
+  #         type: keyvalue
+  #         name: kaamsetu-redis
+  #         property: connectionString
+  #     - key: STORAGE_PROVIDER
+  #       value: mock
+  #     - key: LOG_LEVEL
+  #       value: info

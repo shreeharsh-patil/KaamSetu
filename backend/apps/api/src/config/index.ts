@@ -1,9 +1,9 @@
-import { validateEnv, EnvConfig } from '@kaamsetu/config';
+import { validateApiEnv, ApiEnvConfig } from '@kaamsetu/config';
 import { createLogger, Logger } from '@kaamsetu/logger';
 
 // Validate environment variables on application startup.
 // Will throw an error and halt execution immediately if invalid.
-export const env: EnvConfig = validateEnv();
+export const env: ApiEnvConfig = validateApiEnv();
 
 export const logger: Logger = createLogger({
   level: env.LOG_LEVEL,

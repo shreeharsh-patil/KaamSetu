@@ -2,10 +2,10 @@ import http from 'http';
 import mongoose from 'mongoose';
 import { Queue, Worker, Job } from 'bullmq';
 import { Redis } from 'ioredis';
-import { validateEnv } from '@kaamsetu/config';
+import { validateWorkerEnv } from '@kaamsetu/config';
 import { createLogger } from '@kaamsetu/logger';
 
-const env = validateEnv();
+const env = validateWorkerEnv();
 const logger = createLogger({
   level: env.LOG_LEVEL,
   isProduction: env.NODE_ENV === 'production',
@@ -21,6 +21,16 @@ logger.info(
 const redisConnection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
   lazyConnect: true,
+  connectTimeout: 10000,
+  retryStrategy(times: number) {
+    if (times > 10) {
+      logger.warn({ times }, 'Worker Redis retry limit reached (10 attempts). Pausing retries.');
+      return null;
+    }
+    const delay = Math.min(times * 200, 3000);
+    logger.warn({ times, delay }, 'Worker reconnecting to Redis...');
+    return delay;
+  },
 });
 
 redisConnection.on('error', (err) => {
