@@ -164,24 +164,6 @@ export function Hero({ onSearch }: HeroProps) {
             transform: isDesktop ? `translateY(${(1 - Math.max(0.65, opacity)) * 20}px)` : "none",
           }}
         >
-          {/* Header Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:px-6 border-b border-border/80 bg-muted/40">
-            <div className="flex items-center gap-3">
-              <span className="flex h-3 w-3 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-              </span>
-              <span className="font-display font-semibold text-xs sm:text-sm">Live marketplace pulse</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                Mumbai, Bengaluru &amp; Delhi NCR
-              </span>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground numeric">
-              <span>Avg match time 82s</span>
-              <span>Escrow on every job</span>
-            </div>
-          </div>
-
           {/* Showcase Content */}
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
             {/* Stat 1 */}
