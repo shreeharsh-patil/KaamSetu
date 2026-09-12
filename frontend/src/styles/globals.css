@@ -391,6 +391,12 @@ html {
   animation: gradient-flow 3s linear infinite;
 }
 
+@media (min-width: 1024px) {
+  .bottom-gradient-bar {
+    top: 68px;
+  }
+}
+
 @keyframes gradient-flow {
   0% {
     background-position: 0% 50%;

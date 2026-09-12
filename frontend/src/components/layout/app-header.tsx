@@ -36,14 +36,22 @@ function useIsAuthenticatedDashboard(): boolean {
   );
 }
 
-// Guest landing navigation
-const guestNavItems = [
-  { href: "/#services", label: "Services", number: "01" },
-  { href: "/#how-it-works", label: "How It Works", number: "02" },
-  { href: "/#reviews", label: "Reviews", number: "03" },
-  { href: "/#guarantees", label: "Guarantees", number: "04" },
-  { href: "/#insights", label: "Insights", number: "05" },
-  { href: "/voice-ai", label: "Voice AI", number: "06" },
+// Primary desktop guest navigation (streamlined to fit without crowding)
+const desktopNavItems = [
+  { href: "/#services", label: "Services" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/#reviews", label: "Reviews" },
+  { href: "/voice-ai", label: "Voice AI" },
+];
+
+// Full guest navigation for mobile menu
+const mobileNavItems = [
+  { href: "/#services", label: "Services" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/#reviews", label: "Reviews" },
+  { href: "/#guarantees", label: "Guarantees" },
+  { href: "/#insights", label: "Insights" },
+  { href: "/voice-ai", label: "Voice AI" },
 ];
 
 export function AppHeader() {
@@ -59,7 +67,7 @@ export function AppHeader() {
   const isHomePage = pathname === "/";
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 30);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -86,7 +94,7 @@ export function AppHeader() {
       const targetId = href.replace("/#", "");
       const element = document.getElementById(targetId);
       if (element) {
-        const offset = 80;
+        const offset = 72;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = element.getBoundingClientRect().top;
         const offsetPosition = elementRect - bodyRect - offset;
@@ -107,54 +115,46 @@ export function AppHeader() {
         "sticky top-0 z-50 transition-all duration-200",
         isScrolled || !isHomePage
           ? "bg-background/95 backdrop-blur-md border-b border-border shadow-xs"
-          : "bg-background/80 backdrop-blur-sm border-b border-border/40"
+          : "bg-background/85 backdrop-blur-sm border-b border-border/40"
       )}
     >
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12">
-        <nav className="flex items-center justify-between h-16 md:h-20">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="flex items-center justify-between h-16 lg:h-[68px] gap-4">
           {/* Brand Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 font-semibold text-lg tracking-tight group"
+            className="flex items-center gap-2.5 font-semibold text-lg tracking-tight group shrink-0"
           >
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs transition-transform group-hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
-              }}
-            >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
               <Hammer className="h-4 w-4" />
             </span>
-            <div className="flex flex-col">
-              <span className="font-sans font-bold text-xl tracking-tight text-foreground">
+            <div className="flex flex-col shrink-0">
+              <span className="font-sans font-bold text-lg sm:text-xl tracking-tight text-foreground leading-tight whitespace-nowrap">
                 KaamSetu
               </span>
-              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase -mt-0.5">
+              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase whitespace-nowrap leading-none mt-0.5">
                 Hyperlocal Marketplace
               </span>
             </div>
           </Link>
 
           {/* Desktop Guest Nav */}
-          <div className="hidden lg:flex items-center gap-7">
-            {guestNavItems.map((item) => (
+          <div className="hidden lg:flex items-center gap-5 xl:gap-7">
+            {desktopNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={(e) => handleSmoothScroll(e, item.href)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap py-1"
               >
-                <span>{item.label}</span>
-                <span className="text-xs ml-1 opacity-40 group-hover:opacity-80 transition-opacity font-mono">
-                  ({item.number})
-                </span>
+                {item.label}
               </Link>
             ))}
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
-            <LanguageSelector className="inline-flex scale-90 sm:scale-100" />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <LanguageSelector className="inline-flex h-9 scale-95 sm:scale-100" />
 
             {/* Theme Toggle */}
             <button
@@ -162,7 +162,7 @@ export function AppHeader() {
               onClick={() =>
                 setTheme(resolvedTheme === "dark" ? "light" : "dark")
               }
-              className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors hover:bg-secondary"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted border border-border/60 shrink-0"
               aria-label="Toggle theme"
             >
               {resolvedTheme === "dark" ? (
@@ -174,7 +174,7 @@ export function AppHeader() {
 
             {/* Auth CTA or logout */}
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Link
                   href={
                     user.role === "ADMIN" || user.role === "SUPPORT"
@@ -183,10 +183,10 @@ export function AppHeader() {
                       ? "/worker"
                       : "/customer"
                   }
-                  className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-xs font-semibold border border-border"
+                  className="hidden sm:inline-flex items-center gap-2 px-3 h-9 rounded-lg bg-secondary text-xs font-semibold border border-border whitespace-nowrap"
                 >
-                  <UserIcon className="w-3.5 h-3.5 text-primary" />
-                  <span>
+                  <UserIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="whitespace-nowrap">
                     {user.fullName
                       ? user.fullName.split(" ")[0]
                       : t("nav.dashboard", "Dashboard")}
@@ -195,33 +195,26 @@ export function AppHeader() {
                 <button
                   type="button"
                   onClick={() => logout()}
-                  className="hidden sm:inline-flex p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors hover:bg-secondary"
+                  className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted border border-border/60 shrink-0"
                   title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 <Link
                   href="/login"
-                  className="hidden sm:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
+                  className="hidden sm:inline-flex items-center h-9 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2.5 sm:px-3 whitespace-nowrap"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/customer/jobs/new"
-                  className="inline-flex items-center justify-center px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-full text-white transition-all hover:shadow-xl relative overflow-hidden group shadow-md"
-                  style={{
-                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                    boxShadow: "0 4px 18px rgba(32, 62, 236, 0.35)",
-                  }}
+                  className="inline-flex items-center justify-center h-9 sm:h-10 px-3.5 sm:px-4 text-xs sm:text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap shadow-xs"
                 >
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    Book Service
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </span>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md bg-gradient-to-r from-[#203eec] to-[#00d4ff]" />
+                  <span>Book Service</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 ml-1 shrink-0" />
                 </Link>
               </div>
             )}
@@ -230,13 +223,13 @@ export function AppHeader() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5" />
               )}
             </button>
           </div>
@@ -246,18 +239,15 @@ export function AppHeader() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-b border-border bg-background/95 backdrop-blur-xl px-6 py-6 space-y-4 animate-menu-drop">
-          <div className="flex flex-col space-y-3">
-            {guestNavItems.map((item) => (
+          <div className="flex flex-col space-y-2">
+            {mobileNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={(e) => handleSmoothScroll(e, item.href)}
-                className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-1.5 border-b border-border/40"
+                className="flex items-center justify-between text-base font-medium text-muted-foreground hover:text-foreground py-2 border-b border-border/40 whitespace-nowrap"
               >
                 <span>{item.label}</span>
-                <span className="text-xs font-mono text-muted-foreground">
-                  ({item.number})
-                </span>
               </Link>
             ))}
           </div>
@@ -270,7 +260,7 @@ export function AppHeader() {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border border-border text-sm font-semibold"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-semibold"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -280,19 +270,16 @@ export function AppHeader() {
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center py-2.5 rounded-full border border-border text-sm font-semibold"
+                  className="w-full flex items-center justify-center py-2.5 rounded-lg border border-border text-sm font-semibold"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/customer/jobs/new"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center py-3 rounded-full text-white text-sm font-semibold"
-                  style={{
-                    background: "linear-gradient(135deg, #203eec 0%, #00d4ff 100%)",
-                  }}
+                  className="w-full flex items-center justify-center py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-xs"
                 >
-                  Book Service Now
+                  Book Service
                 </Link>
               </>
             )}

@@ -71,14 +71,14 @@ export function Hero({ onSearch }: HeroProps) {
   };
 
   return (
-    <section className="min-h-[90vh] flex flex-col justify-center pt-8 md:pt-14 relative overflow-hidden">
+    <section className="relative overflow-hidden pt-8 md:pt-12 pb-16 md:pb-24">
       {/* 3D orb asset, tinted into the brand's navy/indigo family */}
-      <div className="absolute -right-32 md:-right-48 top-12 md:top-20 w-[460px] h-[460px] md:w-[740px] md:h-[740px] pointer-events-none animate-orb-rotate -z-10 scale-110 opacity-80">
+      <div className="absolute -right-32 md:-right-48 top-6 md:top-8 w-[440px] h-[440px] md:w-[680px] md:h-[680px] pointer-events-none animate-orb-rotate -z-10 scale-110 opacity-70">
         <Image
           src="/images/orb.png"
           alt=""
-          width={740}
-          height={740}
+          width={680}
+          height={680}
           className="w-full h-full object-contain orb-brand"
           priority
         />
@@ -88,7 +88,7 @@ export function Hero({ onSearch }: HeroProps) {
       <div className="absolute top-1/4 -left-48 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <div className="max-w-[1280px] mx-auto px-6 md:px-12 py-12 md:py-20 w-full">
+      <div className="max-w-[1280px] mx-auto px-6 md:px-8 lg:px-10 w-full">
         <div className="max-w-4xl">
 
 
@@ -107,7 +107,7 @@ export function Hero({ onSearch }: HeroProps) {
             <RevealWord word="verified." delay={0.42} />
           </h1>
 
-          <p className="mt-7 max-w-xl leading-relaxed text-base sm:text-lg text-muted-foreground">
+          <p className="mt-6 max-w-xl leading-relaxed text-base sm:text-lg text-muted-foreground">
             Post your requirement, get matched with verified local tradespeople,
             and approve payment only when the job is completed to your satisfaction.
           </p>
@@ -115,7 +115,7 @@ export function Hero({ onSearch }: HeroProps) {
           {/* Interactive Search Bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="mt-8 flex flex-col sm:flex-row items-center gap-3 p-2 bg-card/80 backdrop-blur-md rounded-2xl border border-border shadow-lg max-w-xl"
+            className="mt-8 flex flex-col sm:flex-row items-center gap-3 p-2 bg-card/80 backdrop-blur-md rounded-2xl border border-border shadow-sm max-w-xl"
           >
             <div className="flex items-center gap-3 px-3 py-2 w-full">
               <Search className="w-5 h-5 text-muted-foreground shrink-0" />
@@ -129,34 +129,17 @@ export function Hero({ onSearch }: HeroProps) {
             </div>
             <Link
               href={searchQuery ? `/customer/jobs/new?query=${encodeURIComponent(searchQuery)}` : "/customer/jobs/new"}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-semibold text-white shrink-0 text-center transition-all duration-200"
-              style={{
-                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
-                boxShadow: "0 4px 18px rgba(32, 62, 236, 0.3)",
-              }}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 shrink-0 text-center transition-colors shadow-xs whitespace-nowrap"
             >
               Find Pro
             </Link>
           </form>
 
-
-
           {/* Primary & Secondary Dual CTAs */}
           <div className="flex flex-wrap items-center gap-4 mt-8">
             <Link
               href="/customer/jobs/new"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white rounded-full transition-all relative overflow-hidden group"
-              style={{
-                background: "linear-gradient(135deg, #162044 0%, #203eec 100%)",
-                boxShadow: "0 4px 20px rgba(32, 62, 236, 0.3)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 8px 28px rgba(32, 62, 236, 0.45)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(32, 62, 236, 0.3)";
-              }}
+              className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl shadow-xs transition-colors whitespace-nowrap group"
             >
               Post a Job in 60s
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -164,7 +147,7 @@ export function Hero({ onSearch }: HeroProps) {
 
             <Link
               href="/worker"
-              className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold rounded-full border border-border hover:bg-secondary transition-colors text-foreground"
+              className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold rounded-xl border border-border hover:bg-secondary transition-colors text-foreground whitespace-nowrap"
             >
               Join as Worker &amp; Earn
             </Link>
@@ -173,7 +156,7 @@ export function Hero({ onSearch }: HeroProps) {
       </div>
 
       {/* Interactive Platform Live Snapshot with parallax reveal */}
-      <div className="w-full max-w-[1280px] mx-auto px-6 md:px-12 mt-4 md:mt-8">
+      <div className="w-full max-w-[1280px] mx-auto px-6 md:px-8 lg:px-10 mt-10 md:mt-14">
         <div
           className="relative rounded-2xl md:rounded-3xl border border-border bg-card/60 backdrop-blur-xl overflow-hidden shadow-2xl transition-all duration-300"
           style={{
