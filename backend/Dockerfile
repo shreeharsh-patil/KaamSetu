@@ -42,7 +42,7 @@ COPY apps/ ./apps/
 RUN pnpm build
 
 # Prune devDependencies to keep runtime lightweight
-RUN CI=true pnpm prune --prod
+RUN pnpm install --prod --ignore-scripts
 
 # ==============================================================================
 # Stage 3: Production Express API Image (Default Target)

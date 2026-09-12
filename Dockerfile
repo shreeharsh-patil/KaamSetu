@@ -27,7 +27,7 @@ COPY backend/packages/ ./backend/packages/
 COPY backend/apps/ ./backend/apps/
 
 RUN pnpm --filter "@kaamsetu/*" build
-RUN CI=true pnpm prune --prod
+RUN pnpm install --prod --ignore-scripts
 
 FROM node:22-alpine AS runner
 RUN apk add --no-cache dumb-init wget

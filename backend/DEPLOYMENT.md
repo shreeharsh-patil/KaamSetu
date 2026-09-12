@@ -57,7 +57,7 @@ KaamSetu uses a multi-stage Docker build with non-root execution and minimal run
 - **Process supervisor**: `dumb-init` handles PID 1 signal forwarding (`SIGTERM`, `SIGINT`) and prevents zombie process accumulation.
 - **Non-root user**: All runtime containers run as the built-in non-root user `node` (`uid=1000`, `gid=1000`).
 - **Healthchecks**: Built-in container health probes periodically test `/health` via `wget`.
-- **Pruned Dependencies**: Builder stage compiles TypeScript and runs `pnpm prune --prod` to eliminate development dependencies from production runtime images.
+- **Pruned Dependencies**: Builder stage compiles TypeScript and runs `pnpm install --prod --ignore-scripts` to eliminate development dependencies across the monorepo for production runtime images.
 
 ### Local Development with Docker Compose
 
