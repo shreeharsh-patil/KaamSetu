@@ -31,7 +31,7 @@ const TEST_MONGODB_URI =
   process.env['MONGODB_URI'] || 'mongodb://localhost:27017/kaamsetu_test';
 
 const PHONE_PREFIX = '+9198765'; // isolated prefix (5 digits) + 5-digit suffix = valid 10 digits
-const SLUG_PREFIX = 'phase9-';
+const SLUG_PREFIX = 'auditfix-'; // unique prefix — must not overlap other suites' slug cleanup patterns
 
 describe('Audit fixes regression suite', () => {
   let customer: { id: string; token: string };

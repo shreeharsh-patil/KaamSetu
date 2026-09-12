@@ -7,12 +7,13 @@ import {
   getUploadById,
 } from './upload.controller.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
+import { uploadRateLimiter } from '../../middlewares/rate-limiter.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 
 export const uploadRoutes = Router();
 
 // Request presigned upload URL (Phase 10)
-uploadRoutes.post('/presign', authenticate(), asyncHandler(presignUpload));
+uploadRoutes.post('/presign', authenticate(), uploadRateLimiter, asyncHandler(presignUpload));
 
 // Confirm direct upload completion (Phase 10)
 uploadRoutes.post('/complete', authenticate(), asyncHandler(completeUpload));

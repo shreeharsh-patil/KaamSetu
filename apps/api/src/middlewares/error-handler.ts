@@ -45,6 +45,27 @@ export function errorHandlerMiddleware(
     code = 'BAD_REQUEST';
     message = 'Malformed JSON in request body';
   }
+  // 4. Request payload too large (413)
+  else if (
+    (typeof err === 'object' && err !== null && ('type' in err && (err as { type?: string }).type === 'entity.too.large')) ||
+    (typeof err === 'object' && err !== null && ('status' in err && (err as { status?: number }).status === 413))
+  ) {
+    statusCode = 413;
+    code = 'PAYLOAD_TOO_LARGE';
+    message = 'Request payload exceeds maximum allowed size';
+  }
+  // 5. CORS origin rejection
+  else if (err instanceof Error && err.message.includes('not allowed by CORS policy')) {
+    statusCode = 403;
+    code = 'FORBIDDEN';
+    message = 'CORS origin not allowed';
+  }
+  // 6. Direct JWT errors (JsonWebTokenError, TokenExpiredError)
+  else if (err instanceof Error && (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.name === 'NotBeforeError')) {
+    statusCode = 401;
+    code = 'UNAUTHORIZED';
+    message = err.name === 'TokenExpiredError' ? 'Token has expired' : 'Invalid or malformed authentication token';
+  }
   // 4. Mongoose specific errors
   else if (typeof err === 'object' && err !== null && 'name' in err) {
     const errorObj = err as { name: string; code?: number; errors?: Record<string, { message: string; path?: string }>; message?: string };

@@ -7,3 +7,6 @@ export * from './forbidden-error.js';
 export * from './conflict-error.js';
 export * from './internal-server-error.js';
 export * from './invalid-state-transition-error.js';
+export * from './too-many-requests-error.js';
+export * from './payload-too-large-error.js';
+export * from './request-timeout-error.js';

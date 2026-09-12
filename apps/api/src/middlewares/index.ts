@@ -5,3 +5,7 @@ export * from './security.js';
 export * from './not-found.js';
 export * from './error-handler.js';
 export * from './auth.middleware.js';
+export * from './rate-limiter.js';
+export * from './nosql-sanitizer.js';
+export * from './hpp.js';
+export * from './request-timeout.js';

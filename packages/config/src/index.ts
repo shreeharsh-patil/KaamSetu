@@ -77,6 +77,9 @@ const envSchema = z.object({
     .default('true'),
   CDN_BASE_URL: z.string().optional(),
   STORAGE_PROVIDER: z.enum(['s3', 'mock']).default('mock'),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(300),
+  REQUEST_TIMEOUT_MS: z.coerce.number().default(30000),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

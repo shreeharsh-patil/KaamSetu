@@ -20,6 +20,17 @@ const SENSITIVE_KEYS = [
   'creditCard',
   'cardNumber',
   'cvv',
+  'otp',
+  'code',
+  'pin',
+  'aadhaar',
+  'pan',
+  'ssn',
+  'bankAccount',
+  'secretKey',
+  'accessKey',
+  'sessionSecret',
+  'privateKey',
 ];
 
 export function createLogger(options: CreateLoggerOptions = {}): Logger {
