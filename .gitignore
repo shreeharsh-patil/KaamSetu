@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+*/node_modules/
 .pnpm-store/
 
 # Build artifacts
@@ -7,6 +8,12 @@ dist/
 build/
 .turbo/
 *.tsbuildinfo
+
+# Next.js build outputs
+.next/
+*/.next/
+out/
+*/out/
 
 # Logs
 logs/
@@ -20,6 +27,7 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+*/.env*.local
 !.env.example
 
 # Testing
@@ -32,3 +40,4 @@ Thumbs.db
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+

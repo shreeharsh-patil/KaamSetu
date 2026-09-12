@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base surfaces - KaamBazaar Clean Slate */
+    --background: 215 28% 97%;
+    --foreground: 222 47% 11%;
+
+    /* Card & Popovers */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary: KaamBazaar Deep Royal Navy & Action Indigo */
+    --primary: 226 68% 34%;
+    --primary-foreground: 210 40% 98%;
+    --primary-hover: 226 72% 26%;
+
+    /* Secondary: Soft Slate-Blue Pill Surface */
+    --secondary: 214 32% 94%;
+    --secondary-foreground: 222 47% 18%;
+
+    /* Muted: Subtle Dividers & Labels */
+    --muted: 210 25% 94%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent: Warm Amber (Service/Ratings) */
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Semantic States */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
+
+    --success: 152 69% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    /* Borders & Inputs */
+    --border: 214 24% 90%;
+    --input: 214 24% 90%;
+    --ring: 226 68% 34%;
+
+    /* Border Radius tokens - smooth rounded cards and pills */
+    --radius: 0.875rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 10%;
+    --primary-hover: 217 91% 68%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 10%;
+
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 10%;
+
+    --success: 152 69% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased min-h-screen flex flex-col font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Accessible focus indicators */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Ensure interactive touch targets adhere to 44px minimum for mobile ergonomics */
+  button, 
+  a, 
+  input, 
+  select, 
+  textarea {
+    touch-action: manipulation;
+  }
+}
+
+/* Accessible utility for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* KaamBazaar Specific Design Utilities */
+.hero-navy-card {
+  background: linear-gradient(135deg, #162044 0%, #1e2e6b 60%, #172454 100%);
+  color: #ffffff;
+}
+
+.hero-navy-card-hover {
+  transition: all 0.2s ease-in-out;
+}
+.hero-navy-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(22, 32, 68, 0.25);
+}
+
+.bazaar-card-shadow {
+  box-shadow: 0 2px 14px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+}
+
+.bazaar-pill-tab {
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+}
+

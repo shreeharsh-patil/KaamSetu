@@ -1,0 +1,18 @@
+{
+  "name": "KaamSetu - Hyperlocal Blue-Collar Labor Network",
+  "short_name": "KaamSetu",
+  "description": "Book trusted local verified plumbers, electricians, carpenters and painters with OTP-protected completion.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
